@@ -19,7 +19,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datafye.gbpoc.client.domain;
+package com.datafye.samples.rest.domain;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -32,6 +32,12 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class GetLiveTopOfBookQuotesResponse {
-    private Quote[] quotes;
+public class Candle {
+    private String symbol;
+    private long datetime;
+    private double open;
+    private double high;
+    private double low;
+    private double close;
+    private long volume;
 }

@@ -19,21 +19,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datafye.gbpoc.client;
-
-import java.util.Date;
-import java.util.TimeZone;
-import java.util.concurrent.TimeUnit;
+package com.datafye.samples.java;
 
 import jargs.gnu.CmdLineParser;
 
 import com.neeve.aep.annotations.EventHandler;
-import com.neeve.config.Config;
-import com.neeve.trace.Tracer;
 
-import com.nv.datafye.roe.*;
-
-import com.datafye.trade.live.Client;
+import com.datafye.roe.*;
+import com.datafye.client.synthetic.FeedClient;
 
 public class StreamLiveTrades {
     private int _numTradesReceived = 0;
@@ -44,72 +37,69 @@ public class StreamLiveTrades {
         System.exit(-1);
     }
 
-    /* 
-     * This block of code issues a synchronous request to the live trade server to start streaming 
-     * trades for the requested symbols. Trades streamed by the trade server will be dispatched to the
-     * onLiveTradeDataMessage() message handler (see below). Control messages will be dispatched 
+    /*
+     * This block of code issues a synchronous request to the live feed server to start streaming
+     * trades for the requested symbols. Trades streamed by the feed server will be dispatched to the
+     * onLiveTradeDataMessage() message handler (see below). Control messages will be dispatched
      * to the message handler that has the control message type as the argument of the handler. For example,
-     * if trading is halted on a symbol, then a LiveTradeHaltMessage message will be dispatched
-     * to the onLiveTradeHaltMessage() handler (see below) and, correspondingly, when the trading 
-     * is resumed on the symbol, then a LiveTradeResumeMessage message will be dispatched to the 
+     * if trading is halted on a symbol, then a LiveStocksTradeHaltMessage message will be dispatched
+     * to the onLiveTradeHaltMessage() handler (see below) and, correspondingly, when the trading
+     * is resumed on the symbol, then a LiveStocksTradeResumeMessage message will be dispatched to the
      * onLiveTradeResumeMessage message handler.
      */
-    final private void subscribe(final Client client, final String[] symbols) throws Exception {
-        SubscribeLiveTradesRequestMessage request = SubscribeLiveTradesRequestMessage.create();
-        request.setMarket(Market.SIP);
+    final private void subscribe(final FeedClient client, final String[] symbols) throws Exception {
+        SubscribeLiveStocksTradesRequestMessage request = SubscribeLiveStocksTradesRequestMessage.create();
         request.setSymbols(symbols);
-        SubscribeLiveTradesResponseMessage response = client.subscribeLiveTrades(request);
+        SubscribeLiveStocksTradesResponseMessage response = client.subscribeLiveTrades(request);
         try {
             if (response.getStatus() != null) {
                 throw new Exception(response.getStatus());
             }
         }
-        finally { 
+        finally {
             response.dispose();
         }
     }
 
-    /* 
-     * This block of code issues a synchronous request to the live trade server to stop streaming 
-     * trades for the previously subscribed symbols. Note that unsubscribing to symbols does not stop the 
+    /*
+     * This block of code issues a synchronous request to the live feed server to stop streaming
+     * trades for the previously subscribed symbols. Note that unsubscribing to symbols does not stop the
      * flow of control messages that are not tied to particular symbols. Those messages continue to flow
      * until the stream connection is closed.
      */
-    final private void unsubscribe(final Client client, final String[] symbols) throws Exception {
-        UnsubscribeLiveTradesRequestMessage request = UnsubscribeLiveTradesRequestMessage.create();
-        request.setMarket(Market.SIP);
+    final private void unsubscribe(final FeedClient client, final String[] symbols) throws Exception {
+        UnsubscribeLiveStocksTradesRequestMessage request = UnsubscribeLiveStocksTradesRequestMessage.create();
         request.setSymbols(symbols);
-        UnsubscribeLiveTradesResponseMessage response = client.unsubscribeLiveTrades(request);
+        UnsubscribeLiveStocksTradesResponseMessage response = client.unsubscribeLiveTrades(request);
         try {
             if (response.getStatus() != null) {
                 throw new Exception(response.getStatus());
             }
         }
-        finally { 
+        finally {
             response.dispose();
         }
     }
 
     final private void run(final String commaSeparatedSymbols) throws Exception {
-        // create the live trades client
-        // ...this is the same client one uses to synchronously fetch live candles too (see the GetLiveCandles.java sample program)
-        final Client client = new Client("gbpoc", "0");
+        // create the live feed client
+        final FeedClient client = new FeedClient("samples", "0");
         try {
             // split into individual symbols
             final String[] symbols = commaSeparatedSymbols.split(",");
 
             // open the trade stream
-            // ...this will open the underlying messaging connection to the live trade service
+            // ...this will open the underlying messaging connection to the live feed service
             client.openStream(this);
             try {
-                // we firs unsubscribe from all subscribed symbols. 
+                // we first unsubscribe from all subscribed symbols.
                 // ...this is done here to clear all existing subscriptions so we only get what we have subscribed to.
                 unsubscribe(client, new String[] {"*"});
 
                 // subscribe to the symbols
                 subscribe(client, symbols);
 
-                // we sleep until a 1000 trades are received
+                // we sleep until 1000 trades are received
                 while (_numTradesReceived < 1000) {
                     Thread.sleep(100);
                 }
@@ -119,28 +109,33 @@ public class StreamLiveTrades {
                     // unsubscribe to the symbols
                     unsubscribe(client, symbols);
                 }
-                finally { 
+                finally {
                     // close the trade stream
-                    // ...this will close the underlying messaging connection to the live trade service
-                    client.closeStream(); 
+                    // ...this will close the underlying messaging connection to the live feed service
+                    client.closeStream();
                 }
             }
         }
         finally {
-            client.close(); 
+            client.close();
         }
     }
 
     /*
-     * This is the handler of the trade messages. The handler is invoked as and when 
-     * the live trade client receives trades and trade events for the subscribed symbols 
+     * This is the handler of the trade messages. The handler is invoked as and when
+     * the live feed client receives trades for the subscribed symbols
      */
     @EventHandler
-    final public void onLiveTradeDataMessage(final LiveTradeDataMessage message) {
-        /***** 
-         * Note: Live trade data messages is currently not supported. When supported 
-         *       and subscribed to, then they would arrive in this handler 
-         ******/
+    final public void onLiveTradeDataMessage(final LiveStocksTradeDataMessage message) {
+        // print the message
+        StringBuilder sb = new StringBuilder("<-- LiveStocksTradeDataMessage {");
+        sb.append(message.getMarket()).append(",");
+        sb.append(message.getSymbol()).append(",");
+        sb.append(message.getExchangeTimestamp()).append(",");
+        sb.append(message.getExchangeID()).append(",");
+        sb.append(message.getTradePrice()).append(",");
+        sb.append(message.getTradeSize()).append("}");
+        System.out.println(sb.toString());
 
         // update the receive count
         _numTradesReceived++;
@@ -150,7 +145,7 @@ public class StreamLiveTrades {
      * This is the handler of the trading halt message and is invoked when trading is halted on a symbol
      */
     @EventHandler
-    final public void onLiveTradeHaltMessage(final LiveTradeHaltMessage message) {
+    final public void onLiveTradeHaltMessage(final LiveStocksTradeHaltMessage message) {
         System.out.println(message.toString());
     }
 
@@ -158,17 +153,13 @@ public class StreamLiveTrades {
      * This is the handler of the trading resume message and is invoked when trading is resumed on a symbol
      */
     @EventHandler
-    final public void onLiveTradeResumeMessage(final LiveTradeResumeMessage message) {
-        /***** 
-         * Note: Live trade resume messages is currently not supported. When supported 
-         *       and subscribed to, then they would arrive in this handler 
-         ******/
+    final public void onLiveTradeResumeMessage(final LiveStocksTradeResumeMessage message) {
         System.out.println(message.toString());
     }
 
-    /* 
-     * Note: The above two handlers are examples of control message handlers. You should implement 
-     *       a handler for each control message type that you are interested in.  
+    /*
+     * Note: The above two handlers are examples of control message handlers. You should implement
+     *       a handler for each control message type that you are interested in.
      */
 
 

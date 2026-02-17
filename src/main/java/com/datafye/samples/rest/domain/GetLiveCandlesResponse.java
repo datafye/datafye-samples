@@ -19,7 +19,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datafye.gbpoc.client.domain;
+package com.datafye.samples.rest.domain;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -32,13 +32,8 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class Quote {
+public class GetLiveCandlesResponse {
+    private boolean empty;
     private String symbol;
-    private long timestamp;
-    private int bidExchangeID;
-    private double bidPrice;
-    private int bidSize;
-    private int askExchangeID;
-    private double askPrice;
-    private int askSize;
+    private Candle[] candles;
 }

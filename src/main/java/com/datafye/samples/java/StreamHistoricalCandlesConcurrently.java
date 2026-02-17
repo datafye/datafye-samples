@@ -19,32 +19,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datafye.gbpoc.client;
+package com.datafye.samples.java;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.TimeZone;
-import java.util.concurrent.TimeUnit;
 
 import jargs.gnu.CmdLineParser;
 
 import com.neeve.aep.annotations.EventHandler;
 import com.neeve.lang.XStringDeserializer;
 
-import com.nv.datafye.roe.*;
+import com.datafye.roe.*;
+import com.datafye.client.sip.HistoryClient;
+import com.datafye.sip.history.Client.Stream;
 
-import com.datafye.gbpoc.client.domain.Candle;
-import com.datafye.ohlc.historical.Client;
-import com.datafye.ohlc.historical.Stream;
+import com.datafye.samples.rest.domain.Candle;
 
+/**
+ * Streams multiple historical OHLC streams concurrently using the SIP History client.
+ *
+ * Note: Streaming requires the SIP History client which provides
+ * the Stream class and openStream method. The Synthetic History
+ * client does not yet support streaming.
+ */
 public class StreamHistoricalCandlesConcurrently {
     final private static class Streamer implements Runnable {
-        final private class CandlePopulator extends MinuteOHLCMessage.Deserializer.AbstractCallbackImpl {
+        final private class CandlePopulator extends StocksMinuteOHLCMessage.Deserializer.AbstractCallbackImpl {
             private Candle _candle;
 
-            void populate(Candle candle, MinuteOHLCMessage message) {
+            void populate(Candle candle, StocksMinuteOHLCMessage message) {
                 _candle = candle;
                 message.deserializer().run(this);
             }
@@ -85,7 +91,7 @@ public class StreamHistoricalCandlesConcurrently {
             }
         }
 
-        final private Client _client;
+        final private HistoryClient _client;
         final private Date _from;
         final private int _rate;
         final private Candle _candle;
@@ -93,7 +99,7 @@ public class StreamHistoricalCandlesConcurrently {
         final private GregorianCalendar _calendar;
         private boolean _done;
 
-        Streamer(final Client client, final Date from, final int rate) {
+        Streamer(final HistoryClient client, final Date from, final int rate) {
             _client = client;
             _from = from;
             _rate = rate;
@@ -102,7 +108,7 @@ public class StreamHistoricalCandlesConcurrently {
             _calendar = new GregorianCalendar(TimeZone.getTimeZone("America/New_York"));
         }
 
-        final private OpenHistoricalOHLCStreamResponseMessage openStream(final OpenHistoricalOHLCStreamRequestMessage request) {
+        final private OpenHistoricalStocksOHLCStreamResponseMessage openStream(final OpenHistoricalStocksOHLCStreamRequestMessage request) {
             synchronized(_client) {
                 return _client.openHistoricalOHLCStream(request);
             }
@@ -110,8 +116,8 @@ public class StreamHistoricalCandlesConcurrently {
 
         /**
          * This method handles the "Stream start" message i.e. the message sent by
-         * the server as the first message of a stream to indicate the start of the 
-         * stream 
+         * the server as the first message of a stream to indicate the start of the
+         * stream
          */
         @EventHandler
         final public void onStreamStart(final HistoricalOHLCStreamStartMessage message) {
@@ -119,18 +125,18 @@ public class StreamHistoricalCandlesConcurrently {
         }
 
         /**
-         * This method handles the "Stream data" message i.e. the a data message 
-         * containing the candle data 
+         * This method handles the "Stream data" message i.e. the a data message
+         * containing the candle data
          */
         @EventHandler
-        final public void onStreamData(final MinuteOHLCMessage message) {
+        final public void onStreamData(final StocksMinuteOHLCMessage message) {
             _candlePopulator.populate(_candle, message);
         }
 
         /**
-         * This method handles the "Stream end " message i.e. the message sent by
-         * the server as the last message of a stream to indicate the end of the 
-         * stream 
+         * This method handles the "Stream end" message i.e. the message sent by
+         * the server as the last message of a stream to indicate the end of the
+         * stream
          */
         @EventHandler
         final public void onStreamEnd(final HistoricalOHLCStreamEndMessage message) {
@@ -149,36 +155,35 @@ public class StreamHistoricalCandlesConcurrently {
         @Override
         final public void run() {
             try {
-                // Step 1: Open the stream on the server side
+                // step 1: open the stream on the server side
                 _calendar.clear();
                 _calendar.setTime(_from);
-                OpenHistoricalOHLCStreamRequestMessage request = OpenHistoricalOHLCStreamRequestMessage.create();
-                request.setMarket(Market.SIP);
+                OpenHistoricalStocksOHLCStreamRequestMessage request = OpenHistoricalStocksOHLCStreamRequestMessage.create();
                 request.setFrequency(OHLCFrequency.Minute);
                 _calendar.set(Calendar.HOUR, 4);
                 request.setFromAsTimestamp(_calendar.getTimeInMillis());
                 _calendar.set(Calendar.HOUR, 20);
                 request.setToAsTimestamp(_calendar.getTimeInMillis());
-                OpenHistoricalOHLCStreamResponseMessage response = openStream(request);
+                OpenHistoricalStocksOHLCStreamResponseMessage response = openStream(request);
 
-                // Step 2. Unpack the response and open the stream on the client side
+                // step 2: unpack the response and open the stream on the client side
                 long streamId = response.getStreamId();
                 String connectionDescriptor = response.getStreamConnectionDescriptor();
-                response.dispose(); // since we're done with it
+                response.dispose();
                 Stream stream = _client.openStream(streamId, connectionDescriptor, this);
 
-                // Step 3. Start the stream
+                // step 3: start the stream
                 stream.start(_rate);
 
-                // Wait for stream to be done
-                synchronized(this){ 
+                // wait for stream to be done
+                synchronized(this) {
                     while (!_done) {
                         wait();
                     }
                 }
 
-                // Close the stream
-                stream.close(); 
+                // close the stream
+                stream.close();
             }
             catch (Throwable e) {
                 e.printStackTrace();
@@ -248,7 +253,7 @@ public class StreamHistoricalCandlesConcurrently {
             System.out.println("}");
 
             // create the client
-            final Client client = new com.datafye.ohlc.historical.Client("gbpoc", String.valueOf(instance));
+            final HistoryClient client = new HistoryClient("samples", String.valueOf(instance));
 
             // run the streams
             final Thread streamers[] = new Thread[concurrency];
@@ -263,7 +268,7 @@ public class StreamHistoricalCandlesConcurrently {
                 streamers[i].join();
             }
 
-            // Close the client
+            // close the client
             client.close();
         }
         else {

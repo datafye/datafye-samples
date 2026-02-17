@@ -19,27 +19,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datafye.gbpoc.client;
+package com.datafye.samples.java;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
-import java.util.concurrent.TimeUnit;
 
 import jargs.gnu.CmdLineParser;
 
 import com.neeve.aep.annotations.EventHandler;
 import com.neeve.lang.XStringDeserializer;
 
-import com.nv.datafye.roe.*;
+import com.datafye.roe.*;
+import com.datafye.client.sip.HistoryClient;
+import com.datafye.sip.history.Client.Stream;
 
-import com.datafye.gbpoc.client.domain.Candle;
+import com.datafye.samples.rest.domain.Candle;
 
+/**
+ * Streams historical OHLC candles using the SIP History client.
+ *
+ * Note: Streaming requires the SIP History client which provides
+ * the Stream class and openStream method. The Synthetic History
+ * client does not yet support streaming.
+ */
 public class StreamHistoricalCandles {
-    final private class CandlePopulator extends MinuteOHLCMessage.Deserializer.AbstractCallbackImpl {
+    final private class CandlePopulator extends StocksMinuteOHLCMessage.Deserializer.AbstractCallbackImpl {
         private Candle _candle;
 
-        void populate(Candle candle, MinuteOHLCMessage message) {
+        void populate(Candle candle, StocksMinuteOHLCMessage message) {
             _candle = candle;
             message.deserializer().run(this);
         }
@@ -101,52 +109,51 @@ public class StreamHistoricalCandles {
 
     final private void run(final String symbol, final Date from, final Date to, final int rate) throws Exception {
         // create the client
-        com.datafye.ohlc.historical.Client client = new com.datafye.ohlc.historical.Client("gbpoc", "0");
-        
+        HistoryClient client = new HistoryClient("samples", "0");
+
         // streaming historical OHLCs is a three step process
-        //  1. Open the stream on the server side
-        //  2. Use the information returned by the server to open the stream on the client side
-        //  3. Start the stream
-        // The maximum time lapse between the time the server opens the stream and the stream is
-        // opened on the client is returned by the server. A stream error will be surfaced if 
+        //  1. open the stream on the server side
+        //  2. use the information returned by the server to open the stream on the client side
+        //  3. start the stream
+        // the maximum time lapse between the time the server opens the stream and the stream is
+        // opened on the client is returned by the server. a stream error will be surfaced if
         // the stream is not opened on the client side within the allotted time
 
-        // Step 1: Open the stream on the server side
-        OpenHistoricalOHLCStreamRequestMessage request = OpenHistoricalOHLCStreamRequestMessage.create();
-        request.setMarket(Market.SIP);
+        // step 1: open the stream on the server side
+        OpenHistoricalStocksOHLCStreamRequestMessage request = OpenHistoricalStocksOHLCStreamRequestMessage.create();
         request.setFrequency(OHLCFrequency.Minute);
         request.setSymbol(symbol);
         request.setFromAsTimestamp(from.getTime());
         request.setToAsTimestamp(to.getTime());
-        OpenHistoricalOHLCStreamResponseMessage response = client.openHistoricalOHLCStream(request);
+        OpenHistoricalStocksOHLCStreamResponseMessage response = client.openHistoricalOHLCStream(request);
 
-        // Step 2. Unpack the response and open the stream on the client side
+        // step 2: unpack the response and open the stream on the client side
         long streamId = response.getStreamId();
         String connectionDescriptor = response.getStreamConnectionDescriptor();
-        response.dispose(); // since we're done with it
-        com.datafye.ohlc.historical.Stream stream = client.openStream(streamId, connectionDescriptor, this);
+        response.dispose();
+        Stream stream = client.openStream(streamId, connectionDescriptor, this);
 
-        // Step 3. Start the stream
+        // step 3: start the stream
         stream.start(rate);
 
-        // Wait for stream to be done
-        synchronized(this){ 
+        // wait for stream to be done
+        synchronized(this) {
             while (!_done) {
                 wait();
             }
         }
 
-        // Close the stream
-        stream.close(); 
+        // close the stream
+        stream.close();
 
-        // Close the client
+        // close the client
         client.close();
     }
 
     /**
      * This method handles the "Stream start" message i.e. the message sent by
-     * the server as the first message of a stream to indicate the start of the 
-     * stream 
+     * the server as the first message of a stream to indicate the start of the
+     * stream
      */
     @EventHandler
     final public void onStreamStart(final HistoricalOHLCStreamStartMessage message) {
@@ -154,18 +161,18 @@ public class StreamHistoricalCandles {
     }
 
     /**
-     * This method handles the "Stream data" message i.e. the a data message 
-     * containing the candle data 
+     * This method handles the "Stream data" message i.e. the a data message
+     * containing the candle data
      */
     @EventHandler
-    final public void onStreamData(final MinuteOHLCMessage message) {
+    final public void onStreamData(final StocksMinuteOHLCMessage message) {
         _candlePopulator.populate(_candle, message);
     }
 
     /**
-     * This method handles the "Stream end " message i.e. the message sent by
-     * the server as the last message of a stream to indicate the end of the 
-     * stream 
+     * This method handles the "Stream end" message i.e. the message sent by
+     * the server as the last message of a stream to indicate the end of the
+     * stream
      */
     @EventHandler
     final public void onStreamEnd(final HistoricalOHLCStreamEndMessage message) {

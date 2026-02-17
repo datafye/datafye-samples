@@ -19,21 +19,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datafye.gbpoc.client;
-
-import java.util.Date;
-import java.util.TimeZone;
-import java.util.concurrent.TimeUnit;
+package com.datafye.samples.java;
 
 import jargs.gnu.CmdLineParser;
 
 import com.neeve.aep.annotations.EventHandler;
-import com.neeve.config.Config;
-import com.neeve.trace.Tracer;
 
-import com.nv.datafye.roe.*;
-
-import com.datafye.quote.live.Client;
+import com.datafye.roe.*;
+import com.datafye.client.synthetic.FeedClient;
 
 public class StreamLiveTopOfBook {
     private int _numQuotesReceived = 0;
@@ -44,72 +37,69 @@ public class StreamLiveTopOfBook {
         System.exit(-1);
     }
 
-    /* 
-     * This block of code issues a synchronous request to the live quote server to start streaming top-of-book 
-     * quotes for the requested symbols. Quotes streamed by the quote server will be dispatched to the
-     * onLiveTopOfBookQuoteDataMessage() message handler (see below). Control messages will be dispatched 
+    /*
+     * This block of code issues a synchronous request to the live feed server to start streaming top-of-book
+     * quotes for the requested symbols. Quotes streamed by the feed server will be dispatched to the
+     * onLiveTopOfBookQuoteDataMessage() message handler (see below). Control messages will be dispatched
      * to the message handler that has the control message type as the argument of the handler. For example,
-     * if trading is halted on a symbol, then a LiveTopOfBookQuoteHaltMessage message will be dispatched
-     * to the onLiveTopOfBookQuoteHaltMessage() handler (see below) and, correspondingly, when the trading 
-     * is resumed on the symbol, then a LiveTopOfBookQuoteResumeMessage message will be dispatched to the 
+     * if trading is halted on a symbol, then a LiveTopOfBookStocksQuoteHaltMessage message will be dispatched
+     * to the onLiveTopOfBookQuoteHaltMessage() handler (see below) and, correspondingly, when the trading
+     * is resumed on the symbol, then a LiveTopOfBookStocksQuoteResumeMessage message will be dispatched to the
      * onLiveTopOfBookQuoteResumeMessage message handler.
      */
-    final private void subscribe(final Client client, final String[] symbols) throws Exception {
-        SubscribeLiveTopOfBookQuotesRequestMessage request = SubscribeLiveTopOfBookQuotesRequestMessage.create();
-        request.setMarket(Market.SIP);
+    final private void subscribe(final FeedClient client, final String[] symbols) throws Exception {
+        SubscribeLiveTopOfBookStocksQuotesRequestMessage request = SubscribeLiveTopOfBookStocksQuotesRequestMessage.create();
         request.setSymbols(symbols);
-        SubscribeLiveTopOfBookQuotesResponseMessage response = client.subscribeLiveTopOfBookQuotes(request);
+        SubscribeLiveTopOfBookStocksQuotesResponseMessage response = client.subscribeLiveTopOfBookQuotes(request);
         try {
             if (response.getStatus() != null) {
                 throw new Exception(response.getStatus());
             }
         }
-        finally { 
+        finally {
             response.dispose();
         }
     }
 
-    /* 
-     * This block of code issues a synchronous request to the live quote server to stop streaming top-of-book
-     * quotes for the previously subscribed symbols. Note that unsubscribing to symbols does not stop the 
+    /*
+     * This block of code issues a synchronous request to the live feed server to stop streaming top-of-book
+     * quotes for the previously subscribed symbols. Note that unsubscribing to symbols does not stop the
      * flow of control messages that are not tied to particular symbols. Those messages continue to flow
      * until the stream connection is closed.
      */
-    final private void unsubscribe(final Client client, final String[] symbols) throws Exception {
-        UnsubscribeLiveTopOfBookQuotesRequestMessage request = UnsubscribeLiveTopOfBookQuotesRequestMessage.create();
-        request.setMarket(Market.SIP);
+    final private void unsubscribe(final FeedClient client, final String[] symbols) throws Exception {
+        UnsubscribeLiveTopOfBookStocksQuotesRequestMessage request = UnsubscribeLiveTopOfBookStocksQuotesRequestMessage.create();
         request.setSymbols(symbols);
-        UnsubscribeLiveTopOfBookQuotesResponseMessage response = client.unsubscribeLiveTopOfBookQuotes(request);
+        UnsubscribeLiveTopOfBookStocksQuotesResponseMessage response = client.unsubscribeLiveTopOfBookQuotes(request);
         try {
             if (response.getStatus() != null) {
                 throw new Exception(response.getStatus());
             }
         }
-        finally { 
+        finally {
             response.dispose();
         }
     }
 
     final private void run(final String commaSeparatedSymbols) throws Exception {
-        // create the live quotes client
-        // ...this is the same client one uses to synchronously fetch live candles too (see the GetLiveCandles.java sample program)
-        final Client client = new Client("gbpoc", "0");
+        // create the live feed client
+        final FeedClient client = new FeedClient("samples", "0");
         try {
             // split into individual symbols
             final String[] symbols = commaSeparatedSymbols.split(",");
 
             // open the quote stream
-            // ...this will open the underlying messaging connection to the live quote service
+            // ...this will open the underlying messaging connection to the live feed service
             client.openStream(this);
             try {
-                // we firs unsubscribe from all subscribed symbols. 
+                // we first unsubscribe from all subscribed symbols.
                 // ...this is done here to clear all existing subscriptions so we only get what we have subscribed to.
                 unsubscribe(client, new String[] {"*"});
 
                 // subscribe to the symbols
                 subscribe(client, symbols);
 
-                // we sleep until a 1000 messages are received
+                // we sleep until 1000 messages are received
                 while (_numQuotesReceived < 1000) {
                     Thread.sleep(100);
                 }
@@ -119,30 +109,29 @@ public class StreamLiveTopOfBook {
                     // unsubscribe to the symbols
                     unsubscribe(client, symbols);
                 }
-                finally { 
+                finally {
                     // close the quote stream
-                    // ...this will close the underlying messaging connection to the live quote service
-                    client.closeStream(); 
+                    // ...this will close the underlying messaging connection to the live feed service
+                    client.closeStream();
                 }
             }
         }
         finally {
-            client.close(); 
+            client.close();
         }
     }
 
     /*
-     * This is the handler of the top of book quote messages. The handler is invoked as and when 
-     * the live quote client receives top-of-book quotes for the subscribed symbols 
+     * This is the handler of the top of book quote messages. The handler is invoked as and when
+     * the live feed client receives top-of-book quotes for the subscribed symbols
      */
     @EventHandler
-    final public void onLiveTopOfBookQuoteDataMessage(final LiveTopOfBookQuoteDataMessage message) {
+    final public void onLiveTopOfBookQuoteDataMessage(final LiveTopOfBookStocksQuoteDataMessage message) {
         // print the message
-        StringBuilder sb = new StringBuilder("<-- LiveTopOfBookQuoteDataMessage {");
+        StringBuilder sb = new StringBuilder("<-- LiveTopOfBookStocksQuoteDataMessage {");
         sb.append(message.getMarket()).append(",");
         sb.append(message.getSymbol()).append(",");
         sb.append(message.getExchangeTimestamp()).append(",");
-        sb.append(message.getSipTimestamp()).append(",");
         sb.append(message.getBidExchangeID()).append(",");
         sb.append(message.getBidPrice()).append(",");
         sb.append(message.getBidSize()).append(",");
@@ -159,7 +148,7 @@ public class StreamLiveTopOfBook {
      * This is the handler of the trading halt message and is invoked when trading is halted on a symbol
      */
     @EventHandler
-    final public void onLiveTopOfBookQuoteHaltMessage(final LiveTopOfBookQuoteHaltMessage message) {
+    final public void onLiveTopOfBookQuoteHaltMessage(final LiveTopOfBookStocksQuoteHaltMessage message) {
         System.out.println(message.toString());
     }
 
@@ -167,13 +156,13 @@ public class StreamLiveTopOfBook {
      * This is the handler of the trading resume message and is invoked when trading is resumed on a symbol
      */
     @EventHandler
-    final public void onLiveTopOfBookQuoteResumeMessage(final LiveTopOfBookQuoteResumeMessage message) {
+    final public void onLiveTopOfBookQuoteResumeMessage(final LiveTopOfBookStocksQuoteResumeMessage message) {
         System.out.println(message.toString());
     }
 
-    /* 
-     * Note: The above two handlers are examples of control message handlers. You should implement 
-     *       a handler for each control message type that you are interested in.  
+    /*
+     * Note: The above two handlers are examples of control message handlers. You should implement
+     *       a handler for each control message type that you are interested in.
      */
 
 

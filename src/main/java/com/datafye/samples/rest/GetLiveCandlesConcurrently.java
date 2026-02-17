@@ -19,31 +19,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datafye.gbpoc.client;
+package com.datafye.samples.rest;
 
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 import jargs.gnu.CmdLineParser;
 
 import okhttp3.HttpUrl;
-import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import okhttp3.RequestBody;
 import okhttp3.Response;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import com.neeve.config.Config;
 
-import com.nv.datafye.roe.*;
-
-import com.datafye.gbpoc.client.domain.*;
+import com.datafye.samples.rest.domain.*;
 
 public class GetLiveCandlesConcurrently {
     final private static class Fetcher implements Runnable {
@@ -66,11 +61,10 @@ public class GetLiveCandlesConcurrently {
                 long totalCount = 0;
                 for (String symbol: _symbols) {
                     long start = System.currentTimeMillis();
-                    HttpUrl.Builder urlBuilder = HttpUrl.parse("http://" + Config.getValue("gb-poc.datafye.ohlc.apiep") + "/datafye-ohlc-api/candles/live").newBuilder();
-                    urlBuilder.addQueryParameter("market", "SIP");
+                    HttpUrl.Builder urlBuilder = HttpUrl.parse("http://" + Config.getValue("datafye-samples.api.endpoint") + "/datafye-api/v1/stocks/live/agg/ohlc").newBuilder();
+                    urlBuilder.addQueryParameter("dataset", "Synthetic");
                     urlBuilder.addQueryParameter("frequency", "Minute");
                     urlBuilder.addQueryParameter("symbol", symbol);
-                    urlBuilder.addQueryParameter("history", "1");
                     Request request = new Request.Builder().url(urlBuilder.build().toString()).addHeader("Accept", "application/json").build();
                     Response response = webClient.newCall(request).execute();
                     GetLiveCandlesResponse candlesResponse = objectMapper.readValue(response.body().string(), GetLiveCandlesResponse.class);
@@ -81,8 +75,8 @@ public class GetLiveCandlesConcurrently {
                     totalCount += candlesResponse.getCandles() != null ? candlesResponse.getCandles().length : 0;
                 }
 
-                // average time
-                System.out.println("Fetched '" + (totalCount/100) + "' candles in " + (totalTime/100) + " milliseconds.");
+                // total time
+                System.out.println("Fetched '" + totalCount + "' candles for " + _symbols.size() + " symbols in " + totalTime + " milliseconds.");
             }
             catch (Throwable e) {
                 e.printStackTrace();
@@ -96,24 +90,30 @@ public class GetLiveCandlesConcurrently {
         System.exit(-1);
     }
 
-    final private static Set<String> getSymbols() {
-        // create the client
-        com.datafye.reference.server.Client client = new com.datafye.reference.server.Client("gbpoc", "0");
-        try {
-            final HashSet<String> ret = new HashSet<String>();
-            GetSecurityMasterRequestMessage request = GetSecurityMasterRequestMessage.create();
-            request.setMarket(Market.SIP);
-            GetSecurityMasterResponseMessage response = client.getSecurityMaster(request);
-            for (Security s : response.getSecurities()) {
-                ret.add(s.getSymbol());
+    final private static Set<String> getSymbols() throws Exception {
+        // fetch symbols from the reference service via REST
+        final OkHttpClient webClient = new OkHttpClient.Builder().readTimeout(300, TimeUnit.SECONDS).build();
+        final ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+        HttpUrl.Builder urlBuilder = HttpUrl.parse("http://" + Config.getValue("datafye-samples.api.endpoint") + "/datafye-api/v1/stocks/reference/securities").newBuilder();
+        urlBuilder.addQueryParameter("dataset", "Synthetic");
+        Request request = new Request.Builder().url(urlBuilder.build().toString()).addHeader("Accept", "application/json").build();
+        Response response = webClient.newCall(request).execute();
+
+        final HashSet<String> ret = new HashSet<>();
+        JsonNode root = objectMapper.readTree(response.body().string());
+        JsonNode securities = root.get("securities");
+        if (securities != null && securities.isArray()) {
+            for (JsonNode security : securities) {
+                JsonNode symbolNode = security.get("symbol");
+                if (symbolNode != null) {
+                    ret.add(symbolNode.asText());
+                }
             }
-            System.out.println("Fetched '" + ret.size() + " symbols.");
-            return ret;
         }
-        finally { 
-            // close the client
-            client.close();
-        }
+        System.out.println("Fetched '" + ret.size() + "' symbols.");
+        return ret;
     }
 
     public static void main(String args[]) throws Exception {

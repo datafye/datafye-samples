@@ -1,195 +1,203 @@
-# Introduction
-This repository contains sample code used to access the Datafye services in the Private Cloud deployed for GainBox
+# Datafye Client Samples
 
-# What's in the Repo
-The repository contains the following programs
-| Name | Description| Program |
-|---|---|---|
-|Get Historical Candles | Sample code on how to fetch historical non-live (prior to current trading day) candles | com.datafye.gbpoc.client.GetHistoricalCandles |
-|Get Live Candles | Sample code on how to fetch historical live (current trading day) candles | com.datafye.gbpoc.client.GetLiveCandles |
-|Get Live Top-Of-Book | Sample code on how to fetch live (current trading day) top-of-book quotes | com.datafye.gbpoc.client.GetLiveTopOfBookQuotes |
-|Stream Live Top-Of-Book | Sample code on how to stream live (current trading day) top-of-book quotes | com.datafye.gbpoc.client.StreamLiveTopOfBookQuotes |
+Sample code demonstrating how to interact with the Datafye platform using both the REST API and native Java (Rumi) clients.
 
-# Prerequsites
-## Maven
-You will need Maven to build the code in this repo. Please download and install Maven v3.5.4 (the build has not been tested with later versions). 
-> You can download Maven from [here](https://maven.apache.org/index.html)
+## What's in the Repo
 
-## Java
-You will need Java 11 or above (not later than Java 17) to build and run the code.
+The samples are organized into two packages:
 
-### Running with Java 11/17
-To run the code in this repo using Java 11 and beyond, certain additional Java modules need to be opened. The following JVM params open the additional needed Java modules
+### REST API Samples (`com.datafye.samples.rest`)
+
+| Name | Description | Main Class |
+|------|-------------|------------|
+| Get Historical Candles | Fetch historical OHLC candles via REST | `com.datafye.samples.rest.GetHistoricalCandles` |
+| Get Live Candles | Fetch current trading day candles via REST | `com.datafye.samples.rest.GetLiveCandles` |
+| Get Live Top-Of-Book | Fetch live top-of-book quotes via REST | `com.datafye.samples.rest.GetLiveTopOfBook` |
+| Get Live Candles Concurrently | Concurrent REST candle fetches for all symbols | `com.datafye.samples.rest.GetLiveCandlesConcurrently` |
+
+### Java Client Samples (`com.datafye.samples.java`)
+
+| Name | Description | Main Class |
+|------|-------------|------------|
+| Get Historical Candles | Fetch historical OHLC candles via Java client | `com.datafye.samples.java.GetHistoricalCandles` |
+| Get Live Candles | Fetch current trading day candles via Java client | `com.datafye.samples.java.GetLiveCandles` |
+| Get Live Top-Of-Book | Fetch live top-of-book quotes via Java client | `com.datafye.samples.java.GetLiveTopOfBook` |
+| Stream Historical Candles | Stream historical OHLC candles via Java client | `com.datafye.samples.java.StreamHistoricalCandles` |
+| Stream Historical Candles Concurrently | Concurrent historical OHLC streams | `com.datafye.samples.java.StreamHistoricalCandlesConcurrently` |
+| Stream Live Top-Of-Book | Stream live top-of-book quotes via Java client | `com.datafye.samples.java.StreamLiveTopOfBook` |
+| Stream Live Trades | Stream live trades via Java client | `com.datafye.samples.java.StreamLiveTrades` |
+
+## Prerequisites
+
+### Maven
+Maven 3.8+ is required. Download from [here](https://maven.apache.org/index.html).
+
+### Java
+Java 17 is required.
+
+### JVM Options
+The following JVM options are required when running the samples:
 
 ```
---add-opens=java.base/jdk.internal.ref=ALL-UNNAMED --add-opens=java.base/sun.nio.ch=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.nio=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.management/sun.management=ALL-UNNAMED --illegal-access=warn
+--add-opens=java.base/jdk.internal.ref=ALL-UNNAMED --add-opens=java.base/sun.nio.ch=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.nio=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.management/sun.management=ALL-UNNAMED
 ```
 
-# Build
-Execute the following from the root directory of the repository
+For convenience, set these as an environment variable:
+
+```bash
+export JAVA_OPTS="--add-opens=java.base/jdk.internal.ref=ALL-UNNAMED --add-opens=java.base/sun.nio.ch=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.nio=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.management/sun.management=ALL-UNNAMED"
 ```
+
+### Datafye Platform
+The samples require a running Datafye platform. REST samples connect to the API service (default: `localhost:7776`). Java client samples connect to the backend services via Solace (default: `localhost:55555`).
+
+## Build
+
+Build the project from the repository root:
+
+```bash
 mvn clean install
 ```
-This will produce a `tar.gz` distribution named as `gb-poc-<version>-dist.tar.gz`. Unarchive the distribution in a directory of your choice
 
-## rumi.conf
-You will notice a configuration file, named `rumi.conf` in the `conf` folder. This contains config information, such as endpoint addresses for use by the REST and Java clients. 
+This produces a distribution archive: `datafye-samples-2.0-SNAPSHOT-distribution.tar.gz`. Extract it:
 
-# Run
-## Get Historical Candles Sample Program
-### REST Client
-`$JAVA_HOME/bin/java $JAVA_11_OPTS -cp "libs/*" com.datafye.gbpoc.client.GetHistoricalCandles -s <symbol> -f <yyyy-MM-dd'T'HH:mm:ss> -t <yyyy-MM-dd'T'HH:mm:ss>`
-> The `JAVA_11_OPTS` in the above command refers to the JVM options in the `Running with Java 11/17` section above
-
-Example:
-`$JAVA_HOME/bin/java $JAVA_11_OPTS -cp "libs/*" com.datafye.gbpoc.client.HistoricalCandles -s AAPL -f 2014-11-17T09:00:00 -t 2014-11-17T18:00:00`
-
-The above will use the Datafye OHLC REST client to fetch the _second_ frequency candles for the AAPL stock that were generated between 9am and 6pm on 2014-11-17. 
-
-A successful run of the above should produce an output as follows:
-
-```
-Parameters {
-...Symbol: AAPL
-...Use Java Client: no
-...From: 2014-11-17T09:00:00
-...To: 2014-11-17T18:00:00
-}
-Fetched '17650' candles for 'AAPL' in 30 milliseconds.
+```bash
+cd target
+tar -xzf datafye-samples-2.0-SNAPSHOT-distribution.tar.gz
+cd datafye-samples-2.0-SNAPSHOT
 ```
 
-### Java Client
-`$JAVA_HOME/bin/java $JAVA_11_OPTS -cp "libs/*" com.datafye.gbpoc.client.GetHistoricalCandles -s <symbol> -f <yyyy-MM-dd'T'HH:mm:ss> -t <yyyy-MM-dd'T'HH:mm:ss> -j`
-> The `JAVA_11_OPTS` in the above command refers to the JVM options in the `Running with Java 11/17` section above
- 
-Note the -j option at the end of the above command. That is what toggles the client to use the Java client.
+## Configuration
 
-Example:
-`$JAVA_HOME/bin/java $JAVA_11_OPTS -cp "libs/*" com.datafye.gbpoc.client.HistoricalCandles -s AAPL -f 2014-11-17T09:00:00 -t 2014-11-17T18:00:00 -j`
+The `conf/rumi.conf` file contains connection configuration for both REST and Java clients. By default, it points to `localhost` for all services and uses the Synthetic dataset.
 
-The above will use the Datafye OHLC Java client to fetch the _second_ frequency candles for the AAPL stock that were generated between 9am and 6pm on 2014-11-17. 
+## Run
 
-A successful run of the above should produce an output as follows:
+All examples below assume you are in the extracted distribution directory.
 
-```
-Parameters {
-...Symbol: AAPL
-...Use Java Client: yes
-...From: 2014-11-17T09:00:00
-...To: 2014-11-17T18:00:00
-}
-Fetched '17650' candles for 'AAPL' in 118 milliseconds.
+### REST Samples
+
+#### Get Historical Candles
+```bash
+java $JAVA_OPTS -cp "libs/*" com.datafye.samples.rest.GetHistoricalCandles \
+  -s AAPL -f 2024-01-15T09:00:00 -t 2024-01-15T18:00:00
 ```
 
-## Get Live Candles Sample Program
-### REST Client
-`$JAVA_HOME/bin/java $JAVA_11_OPTS -cp "libs/*" com.datafye.gbpoc.client.LiveCandles -s <symbol> `
-> The `JAVA_11_OPTS` in the above command refers to the JVM options in the `Running with Java 11/17` section above
+Options:
+- `-s, --symbol` (required): Stock symbol
+- `-c, --frequency` (default: Minute): Candle frequency (Second, Minute, Hour, Day)
+- `-f, --from` (required): Start time (format: `yyyy-MM-dd'T'HH:mm:ss`)
+- `-t, --to` (required): End time
 
-Example:
-`$JAVA_HOME/bin/java $JAVA_11_OPTS -cp "libs/*" com.datafye.gbpoc.client.GetLiveCandles -s AAPL`
-
-The above will use the Datafye OHLC REST client to fetch the _minute_ frequency candles for the AAPL stock that were generated between the beginning of trading 
-(including extended trading hours) and the current time on the current trading day
-
-A successful run of the above should produce an output as follows:
-
-```
-Parameters {
-...Symbol: AAPL
-...Use Java Client: no
-}
-Fetched '956' candles for 'AAPL' in 24 milliseconds.
+#### Get Live Candles
+```bash
+java $JAVA_OPTS -cp "libs/*" com.datafye.samples.rest.GetLiveCandles -s AAPL
 ```
 
-### Java Client
-`$JAVA_HOME/bin/java $JAVA_11_OPTS -cp "libs/*" com.datafye.gbpoc.client.GetLiveCandles -s <symbol> -j`
-> The `JAVA_11_OPTS` in the above command refers to the JVM options in the `Running with Java 11/17` section above
- 
-Note the -j option at the end of the above command. That is what toggles the client to use the Java client.
+Options:
+- `-s, --symbol` (required): Stock symbol
 
-Example:
-`$JAVA_HOME/bin/java $JAVA_11_OPTS -cp "libs/*" com.datafye.gbpoc.client.HistoricalCandles -s AAPL -j`
-
-The above will use the Datafye OHLC REST client to fetch the _minute_ frequency candles for the AAPL stock that were generated between the beginning of trading 
-(including extended trading hours) and the current time on the current trading day
-
-A successful run of the above should produce an output as follows:
-
-```
-Parameters {
-...Symbol: AAPL
-...Use Java Client: yes
-}
-Fetched '956' candles for 'AAPL' in 9 milliseconds.
+#### Get Live Top-Of-Book Quotes
+```bash
+java $JAVA_OPTS -cp "libs/*" com.datafye.samples.rest.GetLiveTopOfBook -s AAPL,MSFT,GOOGL
 ```
 
-## Get Live Top-Of-Book Quotes Sample Program
-### REST Client
-`$JAVA_HOME/bin/java $JAVA_11_OPTS -cp "libs/*" com.datafye.gbpoc.client.GetLiveTopOfBookQuotes -s <comma separated symbols> `
-> The `JAVA_11_OPTS` in the above command refers to the JVM options in the `Running with Java 11/17` section above
+Options:
+- `-s, --symbols` (required): Comma-separated symbols
 
-Example:
-`$JAVA_HOME/bin/java $JAVA_11_OPTS -cp "libs/*" com.datafye.gbpoc.client.LiveTopOfBookQuotes -s AAPL,AMZN,GOOG,MSFT`
-
-The above will use the Datafye Quote REST client to fetch the latest top-of-book quote for AAPL, AMZN, GOOG and MSFT
-
-A successful run of the above should produce an output as follows:
-
-```
-Parameters {
-...Symbols: AAPL,AMZN,GOOG,MSFT
-...Use Java Client: no
-}
-Fetched '4' quotes for [AAPL,AMZN,GOOG,MSFT] in 9 milliseconds.
+#### Get Live Candles Concurrently
+```bash
+java $JAVA_OPTS -cp "libs/*" com.datafye.samples.rest.GetLiveCandlesConcurrently -c 4
 ```
 
-### Java Client
-`$JAVA_HOME/bin/java $JAVA_11_OPTS -cp "libs/*" com.datafye.gbpoc.client.GetLiveTopOfBookQuotes -s <comma separated symbols> -j`
-> The `JAVA_11_OPTS` in the above command refers to the JVM options in the `Running with Java 11/17` section above
- 
-Note the -j option at the end of the above command. That is what toggles the client to use the Java client.
+Options:
+- `-c, --concurrency` (default: 1): Number of concurrent threads
 
-Example:
-`$JAVA_HOME/bin/java $JAVA_11_OPTS -cp "libs/*" com.datafye.gbpoc.client.LiveTopOfBookQuotes -s AAPL,AMZN,GOOG,MSFT -j`
+### Java Client Samples
 
-The above will use the Datafye Quote Java client to fetch the latest top-of-book quote for AAPL, AMZN, GOOG and MSFT
-
-A successful run of the above should produce an output as follows:
-
-```
-Parameters {
-...Symbol: AAPL,AMZN,GOOG,MSFT
-...Use Java Client: yes
-}
-Fetched '4' quotes for [AAPL,AMZN,GOOG,MSFT] in 9 milliseconds.
+#### Get Historical Candles
+```bash
+java $JAVA_OPTS -cp "libs/*" com.datafye.samples.java.GetHistoricalCandles \
+  -s AAPL -f 2024-01-15T09:00:00 -t 2024-01-15T18:00:00
 ```
 
-## Stream Live Top-Of-Book Quotes Sample Program
-### REST Client
-```
-Not available
-```
+Options:
+- `-s, --symbol` (required): Stock symbol
+- `-c, --frequency` (default: Minute): Candle frequency
+- `-f, --from` (required): Start time
+- `-t, --to` (required): End time
 
-### Java Client
-`$JAVA_HOME/bin/java $JAVA_11_OPTS -cp "libs/*" com.datafye.gbpoc.client.StreamLiveTopOfBookQuotes -s <comma separated symbols>`
-> The `JAVA_11_OPTS` in the above command refers to the JVM options in the `Running with Java 11/17` section above
- 
-Example:
-`$JAVA_HOME/bin/java $JAVA_11_OPTS -cp "libs/*" com.datafye.gbpoc.client.StreamLiveTopOfBookQuotes -s TSLA,IBM,NFLX,AMZN,GOOG,GOOGL,AAPL
-
-The above will use the Datafye Quote Java client to stream the latest top-of-book quote for AAPL, AMZN, GOOG, TSLA and others listed in the anove command line
-
-A successful run of the above should produce an output as follows:
-
-```
-Parameters {
-...Symbols: TSLA,IBM,NFLX,AMZN,GOOG,GOOGL,AAPL
-}
-<-- LiveTopOfBookQuoteDataMessage {SIP,GOOGL,1705491686065,0,12,141.81,100,11,141.9,200}
-<-- LiveTopOfBookQuoteDataMessage {SIP,AAPL,1705491686098,0,11,182.01,100,12,182.14,400}
-<-- LiveTopOfBookQuoteDataMessage {SIP,AMZN,1705491686625,0,11,152.15,100,11,152.31,100}
-<-- LiveTopOfBookQuoteDataMessage {SIP,AMZN,1705491687855,0,11,152.15,100,12,152.36,200}
-<-- LiveTopOfBookQuoteDataMessage {SIP,AMZN,1705491688160,0,11,152.15,100,11,152.31,100}
+#### Get Live Candles
+```bash
+java $JAVA_OPTS -cp "libs/*" com.datafye.samples.java.GetLiveCandles -s AAPL
 ```
 
+Options:
+- `-s, --symbol` (required): Stock symbol
+
+#### Get Live Top-Of-Book Quotes
+```bash
+java $JAVA_OPTS -cp "libs/*" com.datafye.samples.java.GetLiveTopOfBook -s AAPL,MSFT,GOOGL
+```
+
+Options:
+- `-s, --symbols` (required): Comma-separated symbols
+
+#### Stream Historical Candles
+```bash
+java $JAVA_OPTS -cp "libs/*" com.datafye.samples.java.StreamHistoricalCandles \
+  -s AAPL -f 2024-01-15T09:00:00 -t 2024-01-15T18:00:00 -r 1000
+```
+
+Options:
+- `-s, --symbol` (optional): Symbol to stream (omit for all symbols)
+- `-f, --from` (required): Start time
+- `-t, --to` (required): End time
+- `-r, --rate` (default: 0): Max streaming rate (0 = unlimited)
+
+> Note: Streaming samples use the SIP History client which provides streaming support. Ensure the SIP dataset is deployed and configured in `rumi.conf`.
+
+#### Stream Historical Candles Concurrently
+```bash
+java $JAVA_OPTS -cp "libs/*" com.datafye.samples.java.StreamHistoricalCandlesConcurrently \
+  -f 2024-01-15 -c 4 -r 1000
+```
+
+Options:
+- `-i, --instance` (default: 0): Client instance ID
+- `-c, --concurrency` (default: 1): Number of concurrent streams
+- `-f, --from` (required): Base date (format: `yyyy-MM-dd`)
+- `-r, --rate` (default: 0): Max streaming rate (0 = unlimited)
+
+#### Stream Live Top-Of-Book Quotes
+```bash
+java $JAVA_OPTS -cp "libs/*" com.datafye.samples.java.StreamLiveTopOfBook -s AAPL,MSFT,GOOGL,AMZN
+```
+
+Options:
+- `-s, --symbols` (required): Comma-separated symbols
+
+Streams live top-of-book quotes using the subscribe/unsubscribe pattern. The sample subscribes to the specified symbols, prints 1000 incoming quotes, then unsubscribes and exits.
+
+#### Stream Live Trades
+```bash
+java $JAVA_OPTS -cp "libs/*" com.datafye.samples.java.StreamLiveTrades -s AAPL,MSFT,GOOGL,AMZN
+```
+
+Options:
+- `-s, --symbols` (required): Comma-separated symbols
+
+Streams live trades using the subscribe/unsubscribe pattern. The sample subscribes to the specified symbols, prints 1000 incoming trades, then unsubscribes and exits.
+
+## REST API Endpoints
+
+The REST samples target the Datafye unified API at port 7776:
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /datafye-api/v1/stocks/history/ohlc` | Historical OHLC candles |
+| `GET /datafye-api/v1/stocks/live/agg/ohlc` | Current trading day candles |
+| `GET /datafye-api/v1/stocks/live/topofbook` | Live top-of-book quotes |
+| `GET /datafye-api/v1/stocks/reference/securities` | Security master |
+
+All endpoints accept a `dataset` query parameter (`SIP` or `Synthetic`, default: `SIP`). The samples default to `Synthetic`.

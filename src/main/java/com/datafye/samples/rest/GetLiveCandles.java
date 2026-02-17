@@ -19,19 +19,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datafye.gbpoc.client;
+package com.datafye.samples.rest;
 
-import java.util.Date;
-import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 import jargs.gnu.CmdLineParser;
 
 import okhttp3.HttpUrl;
-import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import okhttp3.RequestBody;
 import okhttp3.Response;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -39,19 +35,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import com.neeve.config.Config;
 
-import com.nv.datafye.roe.*;
-
-import com.datafye.gbpoc.client.domain.*;
+import com.datafye.samples.rest.domain.*;
 
 public class GetLiveCandles {
     final private static void printUsage() {
         System.err.println("    [{-s, --symbol the symbol to fetch the candles for (required)]");
-        System.err.println("    [{-j, --java use the Java client]");
         System.err.println("    [{-h, --help} print this help string]");
         System.exit(-1);
     }
 
-    final private static void runLiveREST(final String symbol) throws Exception {
+    final private static void run(final String symbol) throws Exception {
         // create client and response mapper
         final OkHttpClient webClient = new OkHttpClient.Builder().readTimeout(300, TimeUnit.SECONDS).build();
         final ObjectMapper objectMapper = new ObjectMapper();
@@ -62,8 +55,8 @@ public class GetLiveCandles {
         long totalCount = 0;
         for (int i = 0 ; i < 100 ; i++) {
             long start = System.currentTimeMillis();
-            HttpUrl.Builder urlBuilder = HttpUrl.parse("http://" + Config.getValue("gb-poc.datafye.ohlc.apiep") + "/datafye-ohlc-api/candles/live").newBuilder();
-            urlBuilder.addQueryParameter("market", "SIP");
+            HttpUrl.Builder urlBuilder = HttpUrl.parse("http://" + Config.getValue("datafye-samples.api.endpoint") + "/datafye-api/v1/stocks/live/agg/ohlc").newBuilder();
+            urlBuilder.addQueryParameter("dataset", "Synthetic");
             urlBuilder.addQueryParameter("frequency", "Minute");
             urlBuilder.addQueryParameter("symbol", symbol);
             Request request = new Request.Builder().url(urlBuilder.build().toString()).addHeader("Accept", "application/json").build();
@@ -80,39 +73,6 @@ public class GetLiveCandles {
         System.out.println("Fetched '" + (totalCount/100) + "' candles for '" + symbol + "' in " + (totalTime/100) + " milliseconds.");
     }
 
-    final private static void runLiveJava(final String symbol) {
-        // create the client
-        com.datafye.ohlc.live.Client client = new com.datafye.ohlc.live.Client("gbpoc", "0");
-        
-        // perform 100 fetches
-        long totalTime = 0;
-        long totalCount = 0;
-        for (int i = 0 ; i < 100 ; i++) {
-            // run and benchmark
-            long start = System.currentTimeMillis();
-            GetLiveOHLCsRequestMessage request = GetLiveOHLCsRequestMessage.create();
-            request.setMarket(Market.SIP);
-            request.setFrequency(OHLCFrequency.Minute);
-            request.setSymbol(symbol);
-            GetLiveOHLCsResponseMessage response = client.getLiveOHLCs(request);
-            final int candlesCount = response.getCandlesCount();
-            long stop = System.currentTimeMillis();
-
-            // update total
-            totalTime += (stop-start);
-            totalCount += candlesCount;
-
-            // dispose the response
-            response.dispose();
-        }
-
-        // average time
-        System.out.println("Fetched '" + (totalCount/100) + "' candles for '" + symbol + "' in " + (totalTime/100) + " milliseconds.");
-        
-        // close the client
-        client.close();
-    }
-
     public static void main(String args[]) throws Exception {
         // set default Rumi trace level
         System.setProperty("nv.trace.defaultLevel", "warn");
@@ -120,7 +80,6 @@ public class GetLiveCandles {
         // parse command line
         final CmdLineParser parser = new CmdLineParser();
         final CmdLineParser.Option symbolOption = parser.addStringOption('s', "symbol");
-        final CmdLineParser.Option javaOption = parser.addBooleanOption('j', "java");
         final CmdLineParser.Option helpOption = parser.addBooleanOption('h', "help");
 
         parser.parse(args);
@@ -129,22 +88,14 @@ public class GetLiveCandles {
             // ...symbol
             final String symbol = (String)parser.getOptionValue(symbolOption, null);
             if (symbol == null) printUsage();
-            // ...java or rest client?
-            final boolean useJava = (Boolean)parser.getOptionValue(javaOption, false);
 
             // dump parameters
             System.out.println("Parameters {");
             System.out.println("...Symbol: " + symbol);
-            System.out.println("...Use Java Client: " + (useJava ? "yes" : "no"));
             System.out.println("}");
 
             // execute
-            if (useJava) {
-                runLiveJava(symbol);
-            }
-            else {
-                runLiveREST(symbol);
-            }
+            run(symbol);
         }
         else {
             printUsage();
