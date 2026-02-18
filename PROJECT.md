@@ -57,6 +57,10 @@ src/main/java/com/datafye/samples/
 │   ├── StreamLiveTopOfBook.java
 │   └── StreamLiveTrades.java
 │
+bin/
+│   ├── run.sh                     # Master run script (Linux/macOS)
+│   └── run.bat                    # Master run script (Windows)
+│
 conf/
 │   └── rumi.conf                  # Optional Rumi runtime tuning (trace levels, etc.)
 │
@@ -91,7 +95,9 @@ This makes each sample completely self-contained — you can read a single file 
 
 The naming convention in the property keys is important: `{service}.{type}.{instance}.{property}`. The `client` suffix means request-reply connections. The `stream` suffix means long-lived pub/sub connections used for streaming data. This distinction matters because streaming samples need a separate Solace session from the one used for request-reply control messages (you can't multiplex both on the same session without blocking).
 
-**The build produces a self-contained distribution**. `mvn clean install` compiles the code, pulls all dependencies into `target/dependency/`, then the Maven Assembly Plugin packages everything into a `tar.gz` using the layout defined in `distribution.xml`. Extract it and you get a flat `libs/` directory with every JAR you need — no classpath headaches.
+**The build produces a self-contained distribution**. `mvn clean install` compiles the code, pulls all dependencies into `target/dependency/`, then the Maven Assembly Plugin packages everything into a `tar.gz` using the layout defined in `distribution.xml`. Extract it and you get a `libs/` directory with every JAR you need, plus a `bin/` directory with run scripts — no classpath headaches, no memorizing JVM flags.
+
+The `bin/run.sh` (and `run.bat` for Windows) is a single master script that maps friendly sample names to fully-qualified Java class names. Instead of typing `java --add-opens=java.base/jdk.internal.ref=ALL-UNNAMED ... -cp "libs/*" com.datafye.samples.rest.GetHistoricalCandles`, you type `bin/run.sh get-historical-candles-rest`. JVM options, classpath, and class resolution are all handled in one place. This is a deliberate design choice: 22 per-sample scripts would be 95% identical boilerplate, and if the JVM options ever change, you'd have to update all of them. One script, one place to maintain.
 
 ## The Three Communication Patterns
 
@@ -347,6 +353,7 @@ The old `GetHistoricalOHLCsRequestMessage` became `GetHistoricalStocksOHLCsReque
 
 | What | Where |
 |------|-------|
+| Run scripts | `bin/run.sh` (Linux/macOS), `bin/run.bat` (Windows) |
 | REST samples | `src/main/java/com/datafye/samples/rest/` |
 | Java client samples | `src/main/java/com/datafye/samples/java/` |
 | REST response POJOs | `src/main/java/com/datafye/samples/rest/domain/` |

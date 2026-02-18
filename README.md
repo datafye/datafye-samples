@@ -26,6 +26,7 @@ cd datafye-samples-2.0-SNAPSHOT
 ```
 
 The extracted distribution contains:
+- `bin/` — Run scripts (`run.sh` for Linux/macOS, `run.bat` for Windows)
 - `libs/` — All JARs (application + dependencies)
 - `conf/rumi.conf` — Optional Rumi runtime tuning (trace levels, etc.)
 
@@ -83,23 +84,20 @@ This provisions a Data Cloud with a Synthetic dataset containing 10 symbols (AAP
 
 For full details see the [Foundry: Data Cloud Only](https://docs.datafye.io/quickstart/foundry-data-cloud-only) quickstart, or explore other quickstart scenarios in the [Datafye docs](https://docs.datafye.io).
 
-### 2. Set JVM Options
+### 2. Run the Samples
 
-The Java Client samples require the following JVM options. Set them once as an environment variable:
+All commands below assume you are in the extracted distribution directory (`datafye-samples-2.0-SNAPSHOT`). Use `bin/run.sh` (Linux/macOS) or `bin\run.bat` (Windows) to run any sample. The scripts handle JVM options and classpath automatically.
+
+To see all available samples:
 
 ```bash
-export JAVA_OPTS="--add-opens=java.base/jdk.internal.ref=ALL-UNNAMED --add-opens=java.base/sun.nio.ch=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.nio=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.management/sun.management=ALL-UNNAMED"
+bin/run.sh --help
 ```
-
-### 3. Run the Samples
-
-All commands below assume you are in the extracted distribution directory (`datafye-samples-2.0-SNAPSHOT`).
 
 #### REST: Get Historical Candles
 
 ```bash
-java $JAVA_OPTS -cp "libs/*" com.datafye.samples.rest.GetHistoricalCandles \
-  -s AAPL -f 2024-01-15T09:00:00 -t 2024-01-15T18:00:00
+bin/run.sh get-historical-candles-rest -s AAPL -f 2024-01-15T09:00:00 -t 2024-01-15T18:00:00
 ```
 
 Options:
@@ -111,7 +109,7 @@ Options:
 #### REST: Get Live Candles
 
 ```bash
-java $JAVA_OPTS -cp "libs/*" com.datafye.samples.rest.GetLiveCandles -s AAPL
+bin/run.sh get-live-candles-rest -s AAPL
 ```
 
 Options:
@@ -120,7 +118,7 @@ Options:
 #### REST: Get Live Top-Of-Book Quotes
 
 ```bash
-java $JAVA_OPTS -cp "libs/*" com.datafye.samples.rest.GetLiveTopOfBook -s AAPL,MSFT,GOOGL
+bin/run.sh get-live-top-of-book-rest -s AAPL,MSFT,GOOGL
 ```
 
 Options:
@@ -129,7 +127,7 @@ Options:
 #### REST: Get Live Candles Concurrently
 
 ```bash
-java $JAVA_OPTS -cp "libs/*" com.datafye.samples.rest.GetLiveCandlesConcurrently -c 4
+bin/run.sh get-live-candles-concurrently-rest -c 4
 ```
 
 Options:
@@ -138,8 +136,7 @@ Options:
 #### Java: Get Historical Candles
 
 ```bash
-java $JAVA_OPTS -cp "libs/*" com.datafye.samples.java.GetHistoricalCandles \
-  -s AAPL -f 2024-01-15T09:00:00 -t 2024-01-15T18:00:00
+bin/run.sh get-historical-candles-java -s AAPL -f 2024-01-15T09:00:00 -t 2024-01-15T18:00:00
 ```
 
 Options:
@@ -151,7 +148,7 @@ Options:
 #### Java: Get Live Candles
 
 ```bash
-java $JAVA_OPTS -cp "libs/*" com.datafye.samples.java.GetLiveCandles -s AAPL
+bin/run.sh get-live-candles-java -s AAPL
 ```
 
 Options:
@@ -160,7 +157,7 @@ Options:
 #### Java: Get Live Top-Of-Book Quotes
 
 ```bash
-java $JAVA_OPTS -cp "libs/*" com.datafye.samples.java.GetLiveTopOfBook -s AAPL,MSFT,GOOGL
+bin/run.sh get-live-top-of-book-java -s AAPL,MSFT,GOOGL
 ```
 
 Options:
@@ -169,8 +166,7 @@ Options:
 #### Java: Stream Historical Candles
 
 ```bash
-java $JAVA_OPTS -cp "libs/*" com.datafye.samples.java.StreamHistoricalCandles \
-  -s AAPL -f 2024-01-15T09:00:00 -t 2024-01-15T18:00:00 -r 1000
+bin/run.sh stream-historical-candles-java -s AAPL -f 2024-01-15T09:00:00 -t 2024-01-15T18:00:00 -r 1000
 ```
 
 Options:
@@ -184,8 +180,7 @@ Options:
 #### Java: Stream Historical Candles Concurrently
 
 ```bash
-java $JAVA_OPTS -cp "libs/*" com.datafye.samples.java.StreamHistoricalCandlesConcurrently \
-  -f 2024-01-15 -c 4 -r 1000
+bin/run.sh stream-historical-candles-concurrently-java -f 2024-01-15 -c 4 -r 1000
 ```
 
 Options:
@@ -197,7 +192,7 @@ Options:
 #### Java: Stream Live Top-Of-Book Quotes
 
 ```bash
-java $JAVA_OPTS -cp "libs/*" com.datafye.samples.java.StreamLiveTopOfBook -s AAPL,MSFT,GOOGL,AMZN
+bin/run.sh stream-live-top-of-book-java -s AAPL,MSFT,GOOGL,AMZN
 ```
 
 Options:
@@ -208,7 +203,7 @@ Subscribes to live top-of-book quotes, prints 1000 incoming quotes, then unsubsc
 #### Java: Stream Live Trades
 
 ```bash
-java $JAVA_OPTS -cp "libs/*" com.datafye.samples.java.StreamLiveTrades -s AAPL,MSFT,GOOGL,AMZN
+bin/run.sh stream-live-trades-java -s AAPL,MSFT,GOOGL,AMZN
 ```
 
 Options:
