@@ -4,7 +4,7 @@ Sample code demonstrating how to interact with a [Datafye](https://developer.dat
 
 ## What is Datafye?
 
-[Datafye](https://developer.datafye.io) provides infrastructure for building and running algorithmic trading systems. At its core is the **Data Cloud** — a service that provides normalized, low-latency access to historical and live market data across multiple asset classes (equities, options, crypto, etc.) and data providers (Polygon, Alpaca, and others).
+Datafye provides infrastructure for building and running algorithmic trading systems. At its core is the **Data Cloud** — a service that provides normalized, low-latency access to historical and live market data across multiple asset classes (equities, options, crypto, etc.) and data providers (Polygon, Alpaca, and others).
 
 A Datafye deployment is a private, isolated environment — your own dedicated instance with its own compute, storage, and network resources. Deployments come in two types:
 
@@ -16,7 +16,7 @@ Each type has two flavors depending on whether you bring your own algo container
 - **Your own algo container** — Datafye provisions the Data Cloud (and broker connector for Trading Environments); you bring your own algo containers and connect them to the Data Cloud APIs. This is called *Data Cloud Only* for foundries and *Data Cloud + Broker* for trading environments.
 - **Datafye algo container** — Datafye provisions everything: the Data Cloud, algo container runtime, backtesting engine, and MCP server (plus broker connector for Trading Environments). You write your algo logic using the Datafye SDK; Datafye handles the rest. This is the *Full Stack* flavor.
 
-These samples are designed for the **Foundry: Data Cloud Only** scenario — they connect directly to a Data Cloud's REST and messaging endpoints to fetch and stream market data. Deployments can be provisioned locally on your machine (for development and testing) or in the cloud (for production) using the [Datafye CLI](https://docs.datafye.io/concepts-and-architecture/cli). You describe what data you need in a [data descriptor](https://docs.datafye.io/concepts-and-architecture/the-data-cloud/data-descriptors), and the CLI provisions the environment for you.
+These samples are designed for the **Foundry: Data Cloud Only** scenario — they connect directly to a Data Cloud's REST and messaging endpoints to fetch and stream market data. Deployments can be provisioned locally on your machine (for development and testing) or in the cloud (for production) using the [Datafye CLI](https://docs.datafye.io/concepts-and-architecture/cli). You describe what data you need in a [Data Descriptor](https://docs.datafye.io/concepts-and-architecture/the-data-cloud/data-descriptors), and the CLI provisions the environment for you.
 
 ## What These Samples Show
 
