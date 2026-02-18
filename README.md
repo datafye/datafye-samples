@@ -1,6 +1,6 @@
 # Datafye Client Samples
 
-Sample code demonstrating how to interact with a [Datafye](https://developer.datafye.io) deployment using both the REST API and the native Java Client API.
+Sample code demonstrating how to interact with a Datafye deployment using both the REST API and the native Java Client API.
 
 ## What is Datafye?
 
@@ -9,7 +9,7 @@ Datafye is a cloud platform that democratizes institutional-grade algorithmic tr
 - [developer.datafye.io](https://developer.datafye.io) — Get introduced to Datafye through guided questions and chat
 - [docs.datafye.io](https://docs.datafye.io) — Developer documentation
 
-These samples are designed for the [Foundry: Data Cloud Only](https://docs.datafye.io/quickstart/foundry-data-cloud-only) scenario — they connect directly to a Data Cloud's REST and messaging endpoints to fetch and stream market data. Deployments can be provisioned locally on your machine (for development and testing) or in the cloud (for production) using the [Datafye CLI](https://docs.datafye.io/concepts-and-architecture/cli). You describe what data you need in a [data descriptor](https://docs.datafye.io/concepts-and-architecture/the-data-cloud/data-descriptors), and the CLI provisions the environment for you.
+These samples are designed for the [Foundry: Data Cloud Only](https://docs.datafye.io/quickstart/foundry-data-cloud-only) scenario — they connect directly to a Data Cloud's REST and messaging endpoints to fetch and stream market data. Deployments can be provisioned locally on your machine (for development and testing) or in the cloud (for production) using the [Datafye CLI](https://docs.datafye.io/concepts-and-architecture/cli). You describe what data you need in a [Data Descriptor](https://docs.datafye.io/concepts-and-architecture/the-data-cloud/data-descriptors), and the CLI provisions the environment for you.
 
 ## What These Samples Show
 
