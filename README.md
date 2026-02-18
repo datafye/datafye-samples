@@ -216,3 +216,119 @@ Subscribes to live trades, prints 1000 incoming trades, then unsubscribes and ex
 Each sample embeds its connection config directly in a `static {}` block at the top of the class. By default they point to `solace.rumi.local:55555` (Solace broker) and `api.rest.rumi.local:7776` (REST API) — which is what the quickstart descriptor provisions. If your environment uses different hosts or ports, update the `System.setProperty()` calls in the sample you're running.
 
 The `conf/rumi.conf` file is included in the distribution for optional Rumi runtime tuning (trace levels, etc.) but is not required for connection configuration.
+
+## Sanity Tests
+
+A structured walkthrough to verify all samples against a locally provisioned Datafye environment. The tests use the Synthetic dataset and are organized by candle frequency. Each scenario fetches historical candles and streams live data.
+
+**Prerequisites:** A running local Datafye environment (see [Provision a Local Datafye Environment](#1-provision-a-local-datafye-environment) above). The Synthetic quickstart provides 10 symbols with 90 days of historical data and live tick/OHLC data. All commands assume you are in the extracted distribution directory.
+
+**What to look for:** Historical fetch samples run 100 iterations and print average candle count and latency. Verify candle counts are non-zero and consistent between REST and Java. Live streaming samples receive 1000 messages then exit automatically.
+
+### Scenario 1: Second Candles
+
+Historical second-frequency candles for AAPL, MSFT, and GOOGL on a single day. Fetch and stream for AAPL and MSFT over a 3-hour window.
+
+**Fetch historical candles (REST):**
+
+```bash
+bin/run.sh get-historical-candles-rest -s AAPL -c Second -f 2024-01-15T10:00:00 -t 2024-01-15T13:00:00
+bin/run.sh get-historical-candles-rest -s MSFT -c Second -f 2024-01-15T10:00:00 -t 2024-01-15T13:00:00
+```
+
+**Fetch historical candles (Java):**
+
+```bash
+bin/run.sh get-historical-candles-java -s AAPL -c Second -f 2024-01-15T10:00:00 -t 2024-01-15T13:00:00
+bin/run.sh get-historical-candles-java -s MSFT -c Second -f 2024-01-15T10:00:00 -t 2024-01-15T13:00:00
+```
+
+**Stream live data for AAPL and MSFT:**
+
+```bash
+bin/run.sh stream-live-top-of-book-java -s AAPL,MSFT
+bin/run.sh stream-live-trades-java -s AAPL,MSFT
+```
+
+### Scenario 2: Minute Candles
+
+Same structure as Scenario 1 but with minute-frequency candles, plus live candle fetching, live top-of-book, and concurrent access.
+
+**Fetch historical candles (REST):**
+
+```bash
+bin/run.sh get-historical-candles-rest -s AAPL -c Minute -f 2024-01-15T10:00:00 -t 2024-01-15T13:00:00
+bin/run.sh get-historical-candles-rest -s MSFT -c Minute -f 2024-01-15T10:00:00 -t 2024-01-15T13:00:00
+```
+
+**Fetch historical candles (Java):**
+
+```bash
+bin/run.sh get-historical-candles-java -s AAPL -c Minute -f 2024-01-15T10:00:00 -t 2024-01-15T13:00:00
+bin/run.sh get-historical-candles-java -s MSFT -c Minute -f 2024-01-15T10:00:00 -t 2024-01-15T13:00:00
+```
+
+**Fetch live candles:**
+
+```bash
+bin/run.sh get-live-candles-rest -s AAPL
+bin/run.sh get-live-candles-java -s AAPL
+bin/run.sh get-live-candles-rest -s MSFT
+bin/run.sh get-live-candles-java -s MSFT
+```
+
+**Fetch live top-of-book quotes:**
+
+```bash
+bin/run.sh get-live-top-of-book-rest -s AAPL,MSFT,GOOGL
+bin/run.sh get-live-top-of-book-java -s AAPL,MSFT,GOOGL
+```
+
+**Fetch live candles concurrently:**
+
+```bash
+bin/run.sh get-live-candles-concurrently-rest -c 4
+```
+
+**Stream live data:**
+
+```bash
+bin/run.sh stream-live-top-of-book-java -s AAPL,MSFT
+bin/run.sh stream-live-trades-java -s AAPL,MSFT
+```
+
+### Scenario 3: Day Candles
+
+Historical day-frequency candles for AAPL, MSFT, and GOOGL over a 5-day window (2024-01-15 through 2024-01-19). Fetch and stream for AAPL and MSFT over a 3-day subset.
+
+**Fetch historical candles (REST):**
+
+```bash
+bin/run.sh get-historical-candles-rest -s AAPL -c Day -f 2024-01-16T00:00:00 -t 2024-01-18T23:59:59
+bin/run.sh get-historical-candles-rest -s MSFT -c Day -f 2024-01-16T00:00:00 -t 2024-01-18T23:59:59
+```
+
+**Fetch historical candles (Java):**
+
+```bash
+bin/run.sh get-historical-candles-java -s AAPL -c Day -f 2024-01-16T00:00:00 -t 2024-01-18T23:59:59
+bin/run.sh get-historical-candles-java -s MSFT -c Day -f 2024-01-16T00:00:00 -t 2024-01-18T23:59:59
+```
+
+**Stream live data:**
+
+```bash
+bin/run.sh stream-live-top-of-book-java -s AAPL,MSFT,GOOGL
+bin/run.sh stream-live-trades-java -s AAPL,MSFT,GOOGL
+```
+
+### Historical Streaming (SIP Dataset)
+
+The historical streaming samples use the SIP History client, which requires SIP data provisioned with an external provider (e.g., Polygon). If your environment has SIP data:
+
+```bash
+bin/run.sh stream-historical-candles-java -s AAPL -f 2024-01-15T10:00:00 -t 2024-01-15T13:00:00 -r 1000
+bin/run.sh stream-historical-candles-concurrently-java -f 2024-01-15 -c 4 -r 1000
+```
+
+The stream sample prints a start message, streams candles, then prints an end message with the total count. The concurrent sample runs multiple streams in parallel across different date offsets.
