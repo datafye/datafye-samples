@@ -38,6 +38,10 @@ import com.neeve.config.Config;
 import com.datafye.samples.rest.domain.*;
 
 public class GetLiveTopOfBook {
+    static {
+        System.setProperty("datafye-samples.api.endpoint", "api.rest.rumi.local:7776");
+    }
+
     final private static void printUsage() {
         System.err.println("    [{-s, --symbols the symbols (comma separated) to fetch the top-of-book quote for (required)]");
         System.err.println("    [{-h, --help} print this help string]");
@@ -73,9 +77,6 @@ public class GetLiveTopOfBook {
     }
 
     public static void main(String args[]) throws Exception {
-        // set default Rumi trace level
-        System.setProperty("nv.trace.defaultLevel", "warn");
-
         // parse command line
         final CmdLineParser parser = new CmdLineParser();
         final CmdLineParser.Option symbolsOption = parser.addStringOption('s', "symbols");

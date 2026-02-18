@@ -27,7 +27,7 @@ cd datafye-samples-2.0-SNAPSHOT
 
 The extracted distribution contains:
 - `libs/` — All JARs (application + dependencies)
-- `conf/rumi.conf` — Connection configuration for all samples
+- `conf/rumi.conf` — Optional Rumi runtime tuning (trace levels, etc.)
 
 ## Samples
 
@@ -179,7 +179,7 @@ Options:
 - `-t, --to` (required) — End time
 - `-r, --rate` (default: `0`) — Max streaming rate (`0` = unlimited)
 
-> **Note:** Streaming samples use the SIP History client. Ensure the SIP dataset is deployed and configured in `rumi.conf`.
+> **Note:** Streaming samples use the SIP History client. Ensure the SIP dataset is deployed in your Datafye environment.
 
 #### Java: Stream Historical Candles Concurrently
 
@@ -218,4 +218,6 @@ Subscribes to live trades, prints 1000 incoming trades, then unsubscribes and ex
 
 ### Configuration
 
-Connection settings live in `conf/rumi.conf`. By default it points to `localhost` for all services and uses the Synthetic dataset — which is what the quickstart descriptor provisions. If your environment uses different hosts or ports, update `rumi.conf` accordingly.
+Each sample embeds its connection config directly in a `static {}` block at the top of the class. By default they point to `solace.rumi.local:55555` (Solace broker) and `api.rest.rumi.local:7776` (REST API) — which is what the quickstart descriptor provisions. If your environment uses different hosts or ports, update the `System.setProperty()` calls in the sample you're running.
+
+The `conf/rumi.conf` file is included in the distribution for optional Rumi runtime tuning (trace levels, etc.) but is not required for connection configuration.

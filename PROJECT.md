@@ -58,7 +58,7 @@ src/main/java/com/datafye/samples/
 │   └── StreamLiveTrades.java
 │
 conf/
-│   └── rumi.conf                  # Connection configuration for all clients
+│   └── rumi.conf                  # Optional Rumi runtime tuning (trace levels, etc.)
 │
 pom.xml                            # Maven build with assembly plugin
 distribution.xml                   # Packages everything into a deployable tar.gz
@@ -68,19 +68,28 @@ Notice how `rest/` has 4 samples and `java/` has 7. The extra 3 are the streamin
 
 ### How the Parts Connect
 
-**Configuration flows through `rumi.conf`**. Every client — REST and Java — reads its connection parameters from this file. The Rumi framework's `Config` class loads it automatically. A single file controls where every client connects:
+**Each sample embeds its own connection config** in a `static {}` block at the top of the class. This uses `System.setProperty()` calls that Rumi's `Config` class picks up automatically. For example, a REST sample sets the API endpoint:
 
-```properties
-# REST endpoint
-datafye-samples.api.endpoint=localhost:7776
-
-# Java client connections (each service gets its own Solace session)
-datafye-synthetic-feed.client.samples.connectionDescriptor=solace://localhost:55555&client_name=samples-synthetic-feed
-datafye-synthetic-history.client.samples.connectionDescriptor=solace://localhost:55555&client_name=samples-synthetic-history
-...
+```java
+static {
+    System.setProperty("datafye-samples.api.endpoint", "api.rest.rumi.local:7776");
+}
 ```
 
-The naming convention is important: `{service}.{client|stream}.{instance}.{property}`. The `client` suffix means request-reply connections. The `stream` suffix means long-lived pub/sub connections used for streaming data. This distinction matters because streaming samples need a separate Solace session from the one used for request-reply control messages (you can't multiplex both on the same session without blocking).
+And a Java streaming sample sets both its request-reply and streaming connections:
+
+```java
+static {
+    System.setProperty("datafye-synthetic-feed.client.samples.connectionDescriptor",
+        "solace://solace.rumi.local:55555&client_name=samples-synthetic-feed");
+    System.setProperty("datafye-synthetic-feed.stream.samples.connectionDescriptor",
+        "solace://solace.rumi.local:55555&client_name=samples-synthetic-feed-stream");
+}
+```
+
+This makes each sample completely self-contained — you can read a single file and understand everything it needs to run, without cross-referencing a separate config file. The `conf/rumi.conf` file still exists in the distribution for Rumi runtime tuning (e.g. `nv.trace.defaultLevel=warn`) but connection config lives in the code.
+
+The naming convention in the property keys is important: `{service}.{type}.{instance}.{property}`. The `client` suffix means request-reply connections. The `stream` suffix means long-lived pub/sub connections used for streaming data. This distinction matters because streaming samples need a separate Solace session from the one used for request-reply control messages (you can't multiplex both on the same session without blocking).
 
 **The build produces a self-contained distribution**. `mvn clean install` compiles the code, pulls all dependencies into `target/dependency/`, then the Maven Assembly Plugin packages everything into a `tar.gz` using the layout defined in `distribution.xml`. Extract it and you get a flat `libs/` directory with every JAR you need — no classpath headaches.
 
@@ -284,7 +293,7 @@ Every REST and Java request-reply sample runs 100 iterations and averages the ti
 
 ### 4. Configuration naming conventions matter
 
-In `rumi.conf`, the naming convention `{service}.{type}.{instance}.{property}` is load-bearing. Getting it wrong means the client connects to the wrong service or fails to connect at all. The `client` vs `stream` distinction is especially important — streaming samples need both a `client` connection (for control messages like open/close/subscribe/unsubscribe) and a `stream` connection (for the actual data flow).
+In the `System.setProperty()` calls, the naming convention `{service}.{type}.{instance}.{property}` is load-bearing. Getting it wrong means the client connects to the wrong service or fails to connect at all. The `client` vs `stream` distinction is especially important — streaming samples need both a `client` connection (for control messages like open/close/subscribe/unsubscribe) and a `stream` connection (for the actual data flow).
 
 ### 5. Concurrency patterns are deliberately simple
 
@@ -332,7 +341,7 @@ The old `GetHistoricalOHLCsRequestMessage` became `GetHistoricalStocksOHLCsReque
 
 **Sample code is documentation that compiles.** Every sample in this repository is a runnable program, not a code snippet in a wiki. If it compiles and runs, the documentation is correct. If the API changes and the sample breaks, the build fails. This is strictly better than prose documentation that can silently drift out of date.
 
-**Configuration belongs in configuration files.** Not a single connection URL is hardcoded. Every endpoint, every timeout, every Solace connection descriptor lives in `rumi.conf`. Changing environments (local to cloud, Synthetic to SIP) means editing one file, not recompiling.
+**Self-contained samples are the best documentation.** Each sample embeds its own connection config in a `static {}` block at the top of the class. You can read a single file and understand everything it needs — no hunting through external config files. For sample code, clarity and self-containment beat the DRY principle. The `conf/rumi.conf` file is still available for optional runtime tuning if needed.
 
 ## Quick Reference
 
@@ -341,6 +350,8 @@ The old `GetHistoricalOHLCsRequestMessage` became `GetHistoricalStocksOHLCsReque
 | REST samples | `src/main/java/com/datafye/samples/rest/` |
 | Java client samples | `src/main/java/com/datafye/samples/java/` |
 | REST response POJOs | `src/main/java/com/datafye/samples/rest/domain/` |
-| Connection config | `conf/rumi.conf` |
+| Connection config | Embedded in each sample's `static {}` block |
+| Runtime tuning | `conf/rumi.conf` (optional) |
 | Distribution archive | `target/datafye-samples-2.0-SNAPSHOT-distribution.tar.gz` |
-| Solace broker | `solace://localhost:55555` |
+| Solace broker | `solace://solace.rumi.local:55555` |
+| REST API | `api.rest.rumi.local:7776` |

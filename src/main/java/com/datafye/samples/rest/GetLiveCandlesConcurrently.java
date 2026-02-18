@@ -41,6 +41,10 @@ import com.neeve.config.Config;
 import com.datafye.samples.rest.domain.*;
 
 public class GetLiveCandlesConcurrently {
+    static {
+        System.setProperty("datafye-samples.api.endpoint", "api.rest.rumi.local:7776");
+    }
+
     final private static class Fetcher implements Runnable {
         final private Set<String> _symbols;
 
@@ -117,9 +121,6 @@ public class GetLiveCandlesConcurrently {
     }
 
     public static void main(String args[]) throws Exception {
-        // set default Rumi trace level
-        System.setProperty("nv.trace.defaultLevel", "warn");
-
         // parse command line
         final CmdLineParser parser = new CmdLineParser();
         final CmdLineParser.Option concurrencyOption = parser.addIntegerOption('c', "concurrency");

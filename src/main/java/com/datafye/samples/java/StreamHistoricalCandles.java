@@ -44,6 +44,13 @@ import com.datafye.samples.rest.domain.Candle;
  * client does not yet support streaming.
  */
 public class StreamHistoricalCandles {
+    static {
+        System.setProperty("datafye-sip-history.client.samples.connectionDescriptor",
+            "solace://solace.rumi.local:55555&client_name=samples-sip-history");
+        System.setProperty("datafye-sip-history.stream.samples.connectionDescriptor",
+            "solace://solace.rumi.local:55555&client_name=samples-sip-history-stream");
+    }
+
     final private class CandlePopulator extends StocksMinuteOHLCMessage.Deserializer.AbstractCallbackImpl {
         private Candle _candle;
 
@@ -189,9 +196,6 @@ public class StreamHistoricalCandles {
     }
 
     public static void main(String args[]) throws Exception {
-        // set default Rumi trace level
-        System.setProperty("nv.trace.defaultLevel", "warn");
-
         // parse command line
         final CmdLineParser parser = new CmdLineParser();
         final CmdLineParser.Option symbolOption = parser.addStringOption('s', "symbol");

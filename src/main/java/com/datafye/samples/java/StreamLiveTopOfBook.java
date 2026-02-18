@@ -29,6 +29,13 @@ import com.datafye.roe.*;
 import com.datafye.client.synthetic.FeedClient;
 
 public class StreamLiveTopOfBook {
+    static {
+        System.setProperty("datafye-synthetic-feed.client.samples.connectionDescriptor",
+            "solace://solace.rumi.local:55555&client_name=samples-synthetic-feed");
+        System.setProperty("datafye-synthetic-feed.stream.samples.connectionDescriptor",
+            "solace://solace.rumi.local:55555&client_name=samples-synthetic-feed-stream");
+    }
+
     private int _numQuotesReceived = 0;
 
     final private static void printUsage() {
@@ -167,9 +174,6 @@ public class StreamLiveTopOfBook {
 
 
     public static void main(String args[]) throws Exception {
-        // set default Rumi trace level
-        System.setProperty("nv.trace.defaultLevel", "warn");
-
         // parse command line
         final CmdLineParser parser = new CmdLineParser();
         final CmdLineParser.Option symbolsOption = parser.addStringOption('s', "symbols");

@@ -31,6 +31,11 @@ import com.datafye.roe.*;
 import com.datafye.client.synthetic.HistoryClient;
 
 public class GetHistoricalCandles {
+    static {
+        System.setProperty("datafye-synthetic-history.client.samples.connectionDescriptor",
+            "solace://solace.rumi.local:55555&client_name=samples-synthetic-history");
+    }
+
     final private static void printUsage() {
         System.err.println("    [{-s, --symbol the symbol to fetch the candles for (required)]");
         System.err.println("    [{-c, --frequency the candle frequency to fetch for]");
@@ -81,9 +86,6 @@ public class GetHistoricalCandles {
     }
 
     public static void main(String args[]) throws Exception {
-        // set default Rumi trace level
-        System.setProperty("nv.trace.defaultLevel", "warn");
-
         // parse command line
         final CmdLineParser parser = new CmdLineParser();
         final CmdLineParser.Option symbolOption = parser.addStringOption('s', "symbol");
