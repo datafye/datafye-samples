@@ -22,9 +22,9 @@ These samples are designed for the **Foundry: Data Cloud Only** scenario — the
 
 These samples demonstrate the two ways to access market data from a Datafye deployment's Data Cloud:
 
-1. **REST API** — Standard HTTP/JSON requests. The samples use [OkHttp](https://square.github.io/okhttp/) but any HTTP client in any language works. Good for straightforward request-response queries (historical candles, live quotes).
+1. **REST API** — Standard HTTP/JSON requests. The samples use [OkHttp](https://square.github.io/okhttp/) but any HTTP client in any language works. Good for straightforward request-response queries (historical candles, live quotes). WebSocket support for streaming will be available shortly.
 
-2. **Java Client API** — A native Java library (built on the [Rumi](https://docs.neeveresearch.com/) framework) that communicates directly with Data Cloud backend services over the messaging backbone. This bypasses the HTTP layer entirely, giving you lower latency and — critically — access to **streaming**, which the REST API doesn't support.
+2. **Java Client API** — A native Java library (built on the [Rumi](https://developer.rumi.systems) framework) that communicates directly with Data Cloud backend services over the cloud's messaging backbone. This bypasses the HTTP layer entirely, giving you lower latency.
 
 Each sample is self-contained and shows a common data access pattern — fetching historical candles, querying live quotes, streaming trades — so you can use them as starting points for your own integrations.
 
@@ -71,7 +71,7 @@ These use HTTP/JSON to query the Datafye REST API. They work from any language �
 
 ### Java Client Samples (`com.datafye.samples.java`)
 
-These use the Datafye Java Client API, which communicates directly with backend services over the messaging backbone. This gives you lower latency and access to streaming — something the REST API doesn't support.
+These use the Datafye Java Client API, which communicates directly with backend services over the cloud's messaging backbone. This gives you lower latency and access to streaming — something the REST API doesn't support.
 
 | Name | Main Class | Description |
 |------|------------|-------------|

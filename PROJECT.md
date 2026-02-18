@@ -30,7 +30,7 @@ There are two ways in:
 
 The **REST samples** go through the API Gateway. It's an HTTP facade that translates JSON requests into internal Solace messages, forwards them to the right backend service, and translates the response back to JSON. Simple, universal, but every request pays the cost of HTTP serialization and one extra network hop.
 
-The **Java Client samples** skip the gateway entirely. They use code-generated client classes (built with the [Rumi](https://docs.neeveresearch.com/) framework) that speak the same Solace protocol the backend services use internally. No HTTP overhead. No JSON parsing. And critically, this is the only way to access **streaming** — the REST API is request-response only.
+The **Java Client samples** skip the gateway entirely. They use code-generated client classes (built with the [Rumi](https://developer.rumi.systems) framework) that speak the same Solace protocol the backend services use internally. No HTTP overhead. No JSON parsing. And critically, this is the only way to access **streaming** — the REST API is request-response only.
 
 ### Codebase Structure
 
