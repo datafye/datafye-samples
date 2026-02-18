@@ -1,22 +1,22 @@
 # Datafye Client Samples
 
-Sample code demonstrating how to interact with a [Datafye](https://www.datafye.io) deployment using both the REST API and the native Java Client API.
+Sample code demonstrating how to interact with a [Datafye](https://developer.datafye.io) deployment using both the REST API and the native Java Client API.
 
 ## What is Datafye?
 
-[Datafye](https://www.datafye.io) provides infrastructure for building and running algorithmic trading systems. At its core is the **Data Cloud** — a service that provides normalized, low-latency access to historical and live market data across multiple asset classes (equities, options, crypto, etc.) and data providers (Polygon, Alpaca, and others).
+[Datafye](https://developer.datafye.io) provides infrastructure for building and running algorithmic trading systems. At its core is the **Data Cloud** — a service that provides normalized, low-latency access to historical and live market data across multiple asset classes (equities, options, crypto, etc.) and data providers (Polygon, Alpaca, and others).
 
 A Datafye deployment is a private, isolated environment — your own dedicated instance with its own compute, storage, and network resources. Deployments come in two types:
 
 - **Foundry** — For algo development, backtesting, and research. No broker connectivity.
 - **Trading Environment** — Everything in a foundry, plus a broker connector for paper and live trading.
 
-Each type has two flavors:
+Each type has two flavors depending on whether you bring your own algo container or use Datafye's:
 
-- **Data Cloud Only** — Datafye provisions the Data Cloud; you bring your own algo containers and connect them to the Data Cloud APIs.
-- **Full Stack** — Datafye provisions the Data Cloud plus the algo container runtime, backtesting engine, and MCP server. You write your algo logic using the Datafye SDK; Datafye handles everything else.
+- **Your own algo container** — Datafye provisions the Data Cloud (and broker connector for Trading Environments); you bring your own algo containers and connect them to the Data Cloud APIs. This is called *Data Cloud Only* for foundries and *Data Cloud + Broker* for trading environments.
+- **Datafye algo container** — Datafye provisions everything: the Data Cloud, algo container runtime, backtesting engine, and MCP server (plus broker connector for Trading Environments). You write your algo logic using the Datafye SDK; Datafye handles the rest. This is the *Full Stack* flavor.
 
-These samples are designed for the **Foundry: Data Cloud Only** scenario — they connect directly to a Data Cloud's REST and Solace endpoints to fetch and stream market data. Deployments can be provisioned locally on your machine (for development and testing) or in the cloud (for production) using the [Datafye CLI](https://docs.datafye.io/concepts-and-architecture/cli). You describe what data you need in a [data descriptor](https://docs.datafye.io/concepts-and-architecture/the-data-cloud/data-descriptors), and the CLI provisions the environment for you.
+These samples are designed for the **Foundry: Data Cloud Only** scenario — they connect directly to a Data Cloud's REST and messaging endpoints to fetch and stream market data. Deployments can be provisioned locally on your machine (for development and testing) or in the cloud (for production) using the [Datafye CLI](https://docs.datafye.io/concepts-and-architecture/cli). You describe what data you need in a [data descriptor](https://docs.datafye.io/concepts-and-architecture/the-data-cloud/data-descriptors), and the CLI provisions the environment for you.
 
 ## What These Samples Show
 
@@ -24,7 +24,7 @@ These samples demonstrate the two ways to access market data from a Datafye depl
 
 1. **REST API** — Standard HTTP/JSON requests. The samples use [OkHttp](https://square.github.io/okhttp/) but any HTTP client in any language works. Good for straightforward request-response queries (historical candles, live quotes).
 
-2. **Java Client API** — A native Java library (built on the [Rumi](https://docs.neeveresearch.com/) framework) that communicates directly with Data Cloud backend services over [Solace](https://solace.com/) messaging. This bypasses the HTTP layer entirely, giving you lower latency and — critically — access to **streaming**, which the REST API doesn't support.
+2. **Java Client API** — A native Java library (built on the [Rumi](https://docs.neeveresearch.com/) framework) that communicates directly with Data Cloud backend services over the messaging backbone. This bypasses the HTTP layer entirely, giving you lower latency and — critically — access to **streaming**, which the REST API doesn't support.
 
 Each sample is self-contained and shows a common data access pattern — fetching historical candles, querying live quotes, streaming trades — so you can use them as starting points for your own integrations.
 
@@ -71,7 +71,7 @@ These use HTTP/JSON to query the Datafye REST API. They work from any language �
 
 ### Java Client Samples (`com.datafye.samples.java`)
 
-These use the Datafye Java Client API, which communicates directly with backend services over Solace messaging. This gives you lower latency and access to streaming — something the REST API doesn't support.
+These use the Datafye Java Client API, which communicates directly with backend services over the messaging backbone. This gives you lower latency and access to streaming — something the REST API doesn't support.
 
 | Name | Main Class | Description |
 |------|------------|-------------|
@@ -237,7 +237,7 @@ Subscribes to live trades, prints 1000 incoming trades, then unsubscribes and ex
 
 ### Configuration
 
-Each sample embeds its connection config directly in a `static {}` block at the top of the class. By default they point to `solace.rumi.local:55555` (Solace broker) and `api.rest.rumi.local:7776` (REST API) — which is what the quickstart descriptor provisions. If your environment uses different hosts or ports, update the `System.setProperty()` calls in the sample you're running.
+Each sample embeds its connection config directly in a `static {}` block at the top of the class. By default they point to `solace.rumi.local:55555` (messaging backbone) and `api.rest.rumi.local:7776` (REST API) — which is what the quickstart descriptor provisions. If your environment uses different hosts or ports, update the `System.setProperty()` calls in the sample you're running.
 
 The `conf/rumi.conf` file is included in the distribution for optional Rumi runtime tuning (trace levels, etc.) but is not required for connection configuration.
 
