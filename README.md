@@ -4,19 +4,12 @@ Sample code demonstrating how to interact with a [Datafye](https://developer.dat
 
 ## What is Datafye?
 
-[Datafye](https://developer.datafye.io) provides infrastructure for building and running algorithmic trading systems. At its core is the **Data Cloud** — a service that provides normalized, low-latency access to historical and live market data across multiple asset classes (equities, options, crypto, etc.) and data providers (Polygon, Alpaca, and others).
+Datafye is a cloud platform that democratizes institutional-grade algorithmic trading. Built on [Rumi](https://developer.rumi.systems) -- the same distributed systems foundation used in sophisticated institutional trading stacks -- Datafye is a single platform offering institutional-quality algorithm development and trading infrastructure, designed to be built and operated with an AI co-developer. AI is natively integrated into the tooling and drives the entire strategy lifecycle -- from ideation and backtesting to optimization and live trading -- using the data providers and brokers you choose. You focus on the idea and logic; Datafye handles the heavy lifting.
 
-A Datafye deployment is a private, isolated environment — your own dedicated instance with its own compute, storage, and network resources. Deployments come in two types:
+- [developer.datafye.io](https://developer.datafye.io) — Get introduced to Datafye through guided questions and chat
+- [docs.datafye.io](https://docs.datafye.io) — Developer documentation
 
-- **Foundry** — For algo development, backtesting, and research. No broker connectivity.
-- **Trading Environment** — Everything in a foundry, plus a broker connector for paper and live trading.
-
-Each type has two flavors depending on whether you bring your own algo container or use Datafye's:
-
-- **Your own algo container** — Datafye provisions the Data Cloud (and broker connector for Trading Environments); you bring your own algo containers and connect them to the Data Cloud APIs. This is called *Data Cloud Only* for foundries and *Data Cloud + Broker* for trading environments.
-- **Datafye algo container** — Datafye provisions everything: the Data Cloud, algo container runtime, backtesting engine, and MCP server (plus broker connector for Trading Environments). You write your algo logic using the Datafye SDK; Datafye handles the rest. This is the *Full Stack* flavor.
-
-These samples are designed for the **Foundry: Data Cloud Only** scenario — they connect directly to a Data Cloud's REST and messaging endpoints to fetch and stream market data. Deployments can be provisioned locally on your machine (for development and testing) or in the cloud (for production) using the [Datafye CLI](https://docs.datafye.io/concepts-and-architecture/cli). You describe what data you need in a [data descriptor](https://docs.datafye.io/concepts-and-architecture/the-data-cloud/data-descriptors), and the CLI provisions the environment for you.
+These samples are designed for the [Foundry: Data Cloud Only](https://docs.datafye.io/quickstart/foundry-data-cloud-only) scenario — they connect directly to a Data Cloud's REST and messaging endpoints to fetch and stream market data. Deployments can be provisioned locally on your machine (for development and testing) or in the cloud (for production) using the [Datafye CLI](https://docs.datafye.io/concepts-and-architecture/cli). You describe what data you need in a [data descriptor](https://docs.datafye.io/concepts-and-architecture/the-data-cloud/data-descriptors), and the CLI provisions the environment for you.
 
 ## What These Samples Show
 
