@@ -1,0 +1,25 @@
+apiVersion: datafye.io/v1
+kind: DataSpec
+metadata:
+  name: samples-sip
+  description: "SIP data for running the Datafye samples (requires Polygon API key)"
+mode: live
+datasets:
+  - dataset: SIP
+    provider: Polygon
+    symbols:
+      tickers: ["AAPL", "MSFT", "GOOGL"]
+    reference: true
+    live:
+      ticks: "trades,quotes"
+      aggregates: "ohlc-1s,ohlc-1m,ohlc-1d"
+    history:
+      ticks:
+        - { schema: trades, duration: 30d }
+        - { schema: quotes, duration: 7d }
+      aggregates:
+        - { schema: ohlc-1s, duration: 30d }
+        - { schema: ohlc-1m, duration: 90d }
+        - { schema: ohlc-1d, duration: 365d }
+      reference:
+        duration: 365d
