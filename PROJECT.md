@@ -1,202 +1,338 @@
-# Datafye Client Samples
+# PROJECT.md — Datafye Client Samples
 
-## What Is This?
+## What This Project Is
 
-This is the cookbook for the Datafye platform. If the main `datafye` repository is the engine room of the trading ship, this repo is the manual that shows you how to talk to the engine room from the bridge.
+This repository is a cookbook. It shows you how to talk to the Datafye Data Cloud — a platform that stores and streams financial market data (stock quotes, trades, OHLC candles) — using two fundamentally different approaches:
 
-It's a collection of runnable Java samples demonstrating two fundamentally different ways to interact with Datafye: through HTTP REST calls (the way any web developer would expect) and through native Java clients that speak directly to the backend services over Solace messaging (the way a high-frequency trading system would want to). Same data, same operations, two very different performance profiles.
+1. **REST API** — HTTP/JSON requests, the universal language of web services. Any programming language can do this.
+2. **Java Client API** — A native Java library that bypasses HTTP entirely and talks directly to Datafye's backend services over Solace messaging. Faster, and the only way to get streaming.
 
-## Why Two Client Types?
+The samples are intentionally parallel: the same operation (say, "get historical candles for AAPL") is implemented in both REST and Java so you can compare them side by side and understand the trade-offs.
 
-This is a design question worth understanding, because it maps to a real tradeoff in distributed systems: **convenience vs. performance**.
+## Technical Architecture
 
-### REST Samples: The Universal Remote
+### The Big Picture
 
-The REST samples use OkHttp to hit Datafye's unified API at `localhost:7776`. This is HTTP — the lingua franca of the internet. Any language, any framework, any platform can make HTTP calls. You could rewrite these samples in Python, Go, or JavaScript in an afternoon.
+Datafye's Data Cloud is a cluster of specialized backend services — a history service that stores OHLC bars, a feed service that distributes live quotes and trades, an aggregation service that computes live candles, and a reference service that maintains the security master. These services communicate internally over [Solace](https://solace.com/) message brokers.
 
-The tradeoff? Every request travels through the API gateway, gets deserialized into Java objects, forwarded to the appropriate backend service, and the response makes the reverse trip. For fetching historical candles or querying reference data, this is perfectly fine. For streaming thousands of ticks per second, you'd drown in HTTP overhead.
+There are two ways in:
 
-### Java Client Samples: The Direct Line
+```
+                        ┌─────────────────────────────────┐
+                        │        Datafye Data Cloud        │
+                        │                                  │
+ REST Samples ──HTTP──> │  API Gateway ──> Backend Services │
+                        │     :8080            :55555       │
+                        │                                  │
+ Java Samples ─Solace─> │        Backend Services directly  │
+                        └─────────────────────────────────┘
+```
 
-The Java client samples bypass the API gateway entirely. They use Rumi-generated client classes that talk directly to the backend services over Solace messaging. No HTTP serialization, no REST layer in between — just binary messages on a message bus.
+The **REST samples** go through the API Gateway. It's an HTTP facade that translates JSON requests into internal Solace messages, forwards them to the right backend service, and translates the response back to JSON. Simple, universal, but every request pays the cost of HTTP serialization and one extra network hop.
 
-Think of it like the difference between calling a restaurant to place an order (REST) versus walking into the kitchen and telling the chef directly what you want (Java client). Both get you food, but one has less overhead.
+The **Java Client samples** skip the gateway entirely. They use code-generated client classes (built with the [Rumi](https://docs.neeveresearch.com/) framework) that speak the same Solace protocol the backend services use internally. No HTTP overhead. No JSON parsing. And critically, this is the only way to access **streaming** — the REST API is request-response only.
 
-The streaming samples (`StreamLiveTopOfBook`, `StreamLiveTrades`, `StreamHistoricalCandles`) are the clearest illustration of why the direct line matters. You can't efficiently stream real-time market data over request-response HTTP. You need a persistent channel with push semantics, and that's exactly what the Rumi client provides.
-
-## The Codebase
-
-### Package Structure
+### Codebase Structure
 
 ```
 src/main/java/com/datafye/samples/
-├── rest/                                        # REST API samples (HTTP/JSON)
-│   ├── GetHistoricalCandles.java                # Fetch historical OHLC candles
-│   ├── GetLiveCandles.java                      # Fetch current trading day candles
-│   ├── GetLiveTopOfBook.java                    # Fetch live top-of-book quotes
-│   ├── GetLiveCandlesConcurrently.java          # Concurrent candle fetches for all symbols
-│   └── domain/                                  # Jackson POJOs for REST responses
+├── rest/                          # HTTP/JSON approach
+│   ├── GetHistoricalCandles.java
+│   ├── GetLiveCandles.java
+│   ├── GetLiveTopOfBook.java
+│   ├── GetLiveCandlesConcurrently.java
+│   └── domain/                    # Jackson POJOs for JSON deserialization
 │       ├── Candle.java
 │       ├── Quote.java
 │       ├── GetHistoricalCandlesResponse.java
 │       ├── GetLiveCandlesResponse.java
 │       └── GetLiveTopOfBookQuotesResponse.java
-├── java/                                        # Native Java client samples (Solace/Rumi)
-│   ├── GetHistoricalCandles.java                # Fetch historical candles (HistoryClient)
-│   ├── GetLiveCandles.java                      # Fetch live candles (AggClient)
-│   ├── GetLiveTopOfBook.java                    # Fetch top-of-book quotes (FeedClient)
-│   ├── StreamHistoricalCandles.java             # Stream historical candles (SIP HistoryClient)
-│   ├── StreamHistoricalCandlesConcurrently.java # Concurrent historical streams
-│   ├── StreamLiveTopOfBook.java                 # Stream live quotes (FeedClient)
-│   └── StreamLiveTrades.java                    # Stream live trades (FeedClient)
+│
+├── java/                          # Native Solace approach
+│   ├── GetHistoricalCandles.java
+│   ├── GetLiveCandles.java
+│   ├── GetLiveTopOfBook.java
+│   ├── StreamHistoricalCandles.java
+│   ├── StreamHistoricalCandlesConcurrently.java
+│   ├── StreamLiveTopOfBook.java
+│   └── StreamLiveTrades.java
+│
 conf/
-└── rumi.conf                                    # Connection config for all clients
+│   └── rumi.conf                  # Connection configuration for all clients
+│
+pom.xml                            # Maven build with assembly plugin
+distribution.xml                   # Packages everything into a deployable tar.gz
 ```
 
-### REST Samples: How They Work
+Notice how `rest/` has 4 samples and `java/` has 7. The extra 3 are the streaming samples — `StreamHistoricalCandles`, `StreamLiveTopOfBook`, and `StreamLiveTrades` — which simply can't be done over REST. That's the headline trade-off right there.
 
-Every REST sample follows the same pattern:
+### How the Parts Connect
 
-1. Parse command-line arguments with `jargs`
-2. Build an HTTP URL using `OkHttpClient` + `HttpUrl.Builder`
-3. Set `dataset=Synthetic` as a query parameter (the dataset selector)
-4. Execute the request and deserialize the JSON response with Jackson
+**Configuration flows through `rumi.conf`**. Every client — REST and Java — reads its connection parameters from this file. The Rumi framework's `Config` class loads it automatically. A single file controls where every client connects:
 
-The `domain/` package contains simple Lombok `@Data` classes that map to the JSON response structure. Nothing clever here — just `Candle` with `symbol`, `datetime`, `open`, `high`, `low`, `close`, `volume` fields, and `Quote` with bid/ask prices and sizes.
+```properties
+# REST endpoint
+datafye-samples.api.endpoint=localhost:7776
 
-**The Concurrent Sample** (`GetLiveCandlesConcurrently`) is the most interesting REST example. It first discovers all available symbols by hitting the reference API (`/stocks/reference/securities`), then uses an `ExecutorService` to fetch candles for all symbols in parallel. It demonstrates that the REST API handles concurrent requests well — useful for batch data ingestion scenarios.
+# Java client connections (each service gets its own Solace session)
+datafye-synthetic-feed.client.samples.connectionDescriptor=solace://localhost:55555&client_name=samples-synthetic-feed
+datafye-synthetic-history.client.samples.connectionDescriptor=solace://localhost:55555&client_name=samples-synthetic-history
+...
+```
 
-### Java Client Samples: Three Communication Patterns
+The naming convention is important: `{service}.{client|stream}.{instance}.{property}`. The `client` suffix means request-reply connections. The `stream` suffix means long-lived pub/sub connections used for streaming data. This distinction matters because streaming samples need a separate Solace session from the one used for request-reply control messages (you can't multiplex both on the same session without blocking).
 
-The Java samples demonstrate three distinct patterns for interacting with Datafye services:
+**The build produces a self-contained distribution**. `mvn clean install` compiles the code, pulls all dependencies into `target/dependency/`, then the Maven Assembly Plugin packages everything into a `tar.gz` using the layout defined in `distribution.xml`. Extract it and you get a flat `libs/` directory with every JAR you need — no classpath headaches.
 
-#### Pattern 1: Request-Reply (Get*)
+## The Three Communication Patterns
+
+This is the architectural heart of the project. Every sample falls into one of three patterns, and understanding these three patterns is understanding how Datafye data access works.
+
+### Pattern 1: REST Request-Response
+
+The simplest pattern. Build an HTTP URL, send a GET request, deserialize the JSON response.
 
 ```java
+// From rest/GetHistoricalCandles.java
+HttpUrl.Builder urlBuilder = HttpUrl.parse("http://" + Config.getValue("datafye-samples.api.endpoint")
+    + "/datafye-api/v1/stocks/history/ohlc").newBuilder();
+urlBuilder.addQueryParameter("dataset", "Synthetic");
+urlBuilder.addQueryParameter("frequency", frequency);
+urlBuilder.addQueryParameter("symbols", symbol);
+urlBuilder.addQueryParameter("from", dateFormat().format(from));
+urlBuilder.addQueryParameter("to", dateFormat().format(to));
+Request request = new Request.Builder().url(urlBuilder.build().toString()).build();
+Response response = webClient.newCall(request).execute();
+GetHistoricalCandlesResponse candlesResponse = objectMapper.readValue(response.body().string(), ...);
+```
+
+Every REST sample follows this exact shape. The only things that change are the URL path and the response POJO. It's the kind of code any backend developer has written a hundred times.
+
+The domain POJOs in `rest/domain/` are pure data holders — Lombok's `@Data` and `@Builder` annotations generate all the getters, setters, `equals`, `hashCode`, and `toString` so the files are just field declarations. Jackson's `ObjectMapper` handles the JSON-to-Java mapping, with `FAIL_ON_UNKNOWN_PROPERTIES` disabled so the code doesn't break when the API adds new fields.
+
+### Pattern 2: Java Client Request-Reply
+
+Same logical operation as the REST version, but the protocol is different. Instead of HTTP/JSON, you're creating typed Rumi messages and calling methods on a code-generated client class.
+
+```java
+// From java/GetHistoricalCandles.java
 HistoryClient client = new HistoryClient("samples", "0");
+
 GetHistoricalStocksOHLCsRequestMessage request = GetHistoricalStocksOHLCsRequestMessage.create();
-request.setSymbol("AAPL");
-request.setFrequency(OHLCFrequency.Minute);
+request.setFrequency(OHLCFrequency.valueOf(frequency));
+request.setSymbol(symbol);
 request.setFromAsTimestamp(from.getTime());
 request.setToAsTimestamp(to.getTime());
 GetHistoricalStocksOHLCsResponseMessage response = client.getHistoricalOHLCs(request);
-// use response
-response.dispose();
+final int candlesCount = response.getCandlesCount();
+
+response.dispose();  // <-- This is critical. Don't skip this.
 client.close();
 ```
 
-Simple synchronous call. Create a client, build a request message, call the method, get the response. The message types are code-generated from ADM XML definitions — `GetHistoricalStocksOHLCsRequestMessage` looks verbose, but it's completely type-safe. No stringly-typed APIs, no runtime serialization surprises.
+A few things to notice:
 
-**Important:** Always call `response.dispose()` when done. These are pooled Rumi messages, not garbage-collected POJOs. Missing a dispose is a memory leak that won't show up in a heap dump.
+- **The client class determines the dataset**. `com.datafye.client.synthetic.HistoryClient` routes to Synthetic data. `com.datafye.client.sip.HistoryClient` routes to SIP data. In Datafye 1.5 you had to call `setMarket()` on each message and hope you got it right. In 2.0, the compiler enforces it — wrong import, wrong dataset, and you'll see it immediately. This is a great example of making illegal states unrepresentable.
 
-#### Pattern 2: Historical Streaming (StreamHistoricalCandles)
+- **Messages must be disposed**. Rumi messages come from an object pool, not the garbage collector. When you're done with a response, you call `dispose()` to return it to the pool. If you forget, you leak pooled buffers — and it won't show up in a heap dump because the objects technically still exist, they're just never returned. Think of it like closing a database connection: the runtime won't save you if you forget.
 
-This is the most complex pattern — a three-step handshake:
+- **The constructor takes an instance name and ID** (`"samples"`, `"0"`). These map to the configuration keys in `rumi.conf` — the client looks up `datafye-synthetic-history.client.samples.connectionDescriptor` to find its Solace connection. Multiple instances of the same client type can coexist by using different IDs.
 
-1. **Open the stream on the server** — Send an `OpenHistoricalStocksOHLCStreamRequestMessage`. The server responds with a `streamId` and a `connectionDescriptor` (a Solace topic to listen on).
-2. **Open the stream on the client** — Use the `streamId` and `connectionDescriptor` to create a `Stream` object. This sets up the client-side listener.
-3. **Start the stream** — Call `stream.start(rate)` to tell the server to begin sending data.
+### Pattern 3: Streaming
 
-Why the three steps? Because streaming large datasets requires coordination. The server needs to know the client is ready before it starts blasting data, and the client needs to know which channel to listen on. The rate parameter provides backpressure — you can throttle the server to `1000` messages per second instead of getting firehosed.
+This is where things get interesting, and it's where the Java client earns its keep.
+
+#### Historical Streaming (three-step handshake)
+
+Imagine you want to replay a full day of minute-by-minute OHLC data for all symbols. That could be thousands of candles. A REST request would have to materialize the entire result set in memory, serialize it to JSON, send it over HTTP, and deserialize it on the other side. Streaming avoids all of that — the server pushes candles to you one at a time over a dedicated Solace channel.
+
+The protocol is a three-step handshake:
+
+```java
+// From java/StreamHistoricalCandles.java
+
+// Step 1: Ask the server to prepare the stream
+OpenHistoricalStocksOHLCStreamRequestMessage request = OpenHistoricalStocksOHLCStreamRequestMessage.create();
+request.setFrequency(OHLCFrequency.Minute);
+request.setSymbol(symbol);
+request.setFromAsTimestamp(from.getTime());
+request.setToAsTimestamp(to.getTime());
+OpenHistoricalStocksOHLCStreamResponseMessage response = client.openHistoricalOHLCStream(request);
+
+// Step 2: Use the server's response to open the client-side stream
+long streamId = response.getStreamId();
+String connectionDescriptor = response.getStreamConnectionDescriptor();
+response.dispose();
+Stream stream = client.openStream(streamId, connectionDescriptor, this);
+
+// Step 3: Start the stream (with optional rate throttling)
+stream.start(rate);
+```
+
+Why three steps? Because the server needs to allocate resources (a dedicated Solace topic, a cursor into the historical data) before the client connects. The server returns a `streamId` and a `connectionDescriptor` — essentially a private address that the client dials into. If the client doesn't connect within the allotted timeout, the server cleans up its side. It's like a restaurant giving you a reservation number: they'll hold the table, but not forever.
 
 Data arrives via `@EventHandler` callbacks:
-- `HistoricalOHLCStreamStartMessage` — Stream is beginning
-- `StocksMinuteOHLCMessage` — Each candle
-- `HistoricalOHLCStreamEndMessage` — Stream is complete (with total count)
-- `HistoricalOHLCStreamErrorMessage` — Something went wrong
-
-The `CandlePopulator` inner class deserves attention. Instead of calling `message.getOpen()`, `message.getClose()`, etc. (which would deserialize the entire message), it uses Rumi's zero-copy `Deserializer` callback pattern. Each field is delivered via a callback (`handleOpen`, `handleClose`, ...), avoiding unnecessary object creation. For high-throughput scenarios, this matters.
-
-**Note:** Historical streaming currently requires the **SIP** History client (`com.datafye.client.sip.HistoryClient`), not the Synthetic one. Only the SIP client exposes the `Stream` class and `openStream()` method. This is a platform limitation, not a design choice.
-
-#### Pattern 3: Live Subscribe/Unsubscribe (StreamLiveTopOfBook, StreamLiveTrades)
 
 ```java
+@EventHandler
+public void onStreamStart(HistoricalOHLCStreamStartMessage message) { ... }
+
+@EventHandler
+public void onStreamData(StocksMinuteOHLCMessage message) { ... }
+
+@EventHandler
+public void onStreamEnd(HistoricalOHLCStreamEndMessage message) { ... }
+
+@EventHandler
+public void onStreamError(HistoricalOHLCStreamErrorMessage message) { ... }
+```
+
+The Rumi framework routes each message type to the correct handler based on its type signature — you never write a switch statement or check message types manually. You just declare "when this type of message arrives, do this" and the framework handles dispatch.
+
+The `StreamHistoricalCandles` sample also demonstrates **zero-copy deserialization** via the `CandlePopulator` inner class. Instead of deserializing an entire message into a Java object (which allocates memory), you implement a callback interface where each field is delivered individually:
+
+```java
+class CandlePopulator extends StocksMinuteOHLCMessage.Deserializer.AbstractCallbackImpl {
+    @Override public void handleOpen(double val) { _candle.setOpen(val); }
+    @Override public void handleHigh(double val) { _candle.setHigh(val); }
+    @Override public void handleClose(double val) { _candle.setClose(val); }
+    ...
+}
+```
+
+This is a performance optimization for high-throughput scenarios. When you're streaming millions of candles, avoiding object allocation per message makes a real difference. You reuse a single `Candle` instance and overwrite its fields on every message.
+
+#### Live Streaming (subscribe/unsubscribe)
+
+Live streaming follows a pub/sub model. You subscribe to symbols, and the server pushes data as it arrives in real time.
+
+```java
+// From java/StreamLiveTopOfBook.java
+
 FeedClient client = new FeedClient("samples", "0");
-client.openStream(this);            // open the messaging connection
-unsubscribe(client, new String[]{"*"});   // clear existing subscriptions
-subscribe(client, symbols);          // subscribe to desired symbols
-// ... data arrives via @EventHandler callbacks ...
-unsubscribe(client, symbols);        // unsubscribe when done
-client.closeStream();                // close the messaging connection
-client.close();                      // release the client
+client.openStream(this);              // Open the pub/sub channel
+
+unsubscribe(client, new String[]{"*"});  // Clear previous subscriptions
+subscribe(client, symbols);              // Subscribe to what we want
+
+while (_numQuotesReceived < 1000) {      // Wait for data
+    Thread.sleep(100);
+}
+
+unsubscribe(client, symbols);            // Clean up subscriptions
+client.closeStream();                    // Close the pub/sub channel
+client.close();                          // Close the client
 ```
 
-This pattern is the pub/sub model. You open a persistent stream connection, subscribe to specific symbols, and live data flows to your `@EventHandler` methods until you unsubscribe. The initial `unsubscribe(*, ...)` is a cleanup step — it clears any lingering subscriptions from a previous session.
+The initial `unsubscribe(client, new String[]{"*"})` is a defensive pattern — it clears any lingering subscriptions from a previous session so you only receive exactly what you've asked for. Think of it as wiping the whiteboard clean before writing on it.
 
-The `@EventHandler` annotation is Rumi's event dispatch mechanism. You don't register callbacks or implement interfaces — you just declare a method with the right message type as its parameter, and Rumi routes incoming messages to the correct handler based on the message type. Halt and resume messages arrive through the same channel, so you can handle market halts gracefully:
+Data and control messages arrive through the same channel but different handlers:
 
 ```java
 @EventHandler
-public void onLiveTradeHaltMessage(LiveStocksTradeHaltMessage message) { ... }
+public void onLiveTopOfBookQuoteDataMessage(LiveTopOfBookStocksQuoteDataMessage message) { ... }
 
 @EventHandler
-public void onLiveTradeResumeMessage(LiveStocksTradeResumeMessage message) { ... }
+public void onLiveTopOfBookQuoteHaltMessage(LiveTopOfBookStocksQuoteHaltMessage message) { ... }
+
+@EventHandler
+public void onLiveTopOfBookQuoteResumeMessage(LiveTopOfBookStocksQuoteResumeMessage message) { ... }
 ```
 
-### Configuration: rumi.conf
+Halt and resume messages are control signals — if the exchange halts trading on a symbol, the platform propagates that to all subscribers. Your code needs to handle both data and control messages. The samples show the minimum viable set of handlers.
 
-The `conf/rumi.conf` file is the wiring diagram. It tells each client how to connect to its backend service:
+## Technologies and Why They Were Chosen
 
-```properties
-datafye-synthetic-feed.client.samples.connectionDescriptor=solace://localhost:55555&client_name=samples-synthetic-feed
-datafye-synthetic-feed.client.samples.responseTimeout=5
+| Technology | Role | Why This One |
+|-----------|------|-------------|
+| **OkHttp 4** | HTTP client for REST samples | Connection pooling, built-in timeout configuration, widely used. The alternative was Java's built-in `HttpURLConnection`, which is lower-level and requires more boilerplate. |
+| **Jackson** | JSON deserialization | Industry standard for Java JSON processing. Combined with Lombok, a JSON response POJO is ~10 lines instead of ~60. |
+| **Lombok** | Boilerplate elimination | `@Data` + `@Builder` on a POJO generates getters, setters, `equals`, `hashCode`, `toString`, and a builder. The domain classes in `rest/domain/` are practically just field declarations. |
+| **Rumi** (via `datafye-client`) | Code-generated messaging clients | Rumi generates type-safe client classes and message types from a schema. You get compile-time correctness (wrong field type? compiler error), object pooling (no GC pressure), and zero-copy deserialization. It's the backbone of Datafye's high-performance architecture. |
+| **jargs** | CLI argument parsing | Lightweight, no annotations, no framework magic. For sample code that's meant to be read and understood, simplicity beats power. |
+| **Maven** | Build system | Standard in the Java ecosystem. The Assembly Plugin packages the distribution. |
+| **Java 17** | Runtime | Required by Rumi 4.x for module system access. The `--add-opens` JVM flags are needed because Rumi uses internal JDK APIs for its memory management. |
+
+## Lessons and Pitfalls
+
+### 1. Always dispose Rumi responses
+
+This is the single most important thing to remember when working with the Java Client API. Rumi messages are **pooled**, not garbage collected. If you don't call `response.dispose()`, those buffers are never returned to the pool. Your application will appear to leak memory, but heap dumps won't show it because the objects are technically alive — they're just orphaned in the pool.
+
+The samples are disciplined about this. Every request-reply sample calls `dispose()` after extracting data. The streaming samples use `try/finally` blocks to ensure cleanup even on error paths:
+
+```java
+SubscribeLiveTopOfBookStocksQuotesResponseMessage response = client.subscribeLiveTopOfBookQuotes(request);
+try {
+    if (response.getStatus() != null) {
+        throw new Exception(response.getStatus());
+    }
+} finally {
+    response.dispose();
+}
 ```
 
-The naming convention is `{service}.{client|stream}.{instance}.{property}`. The `client` vs `stream` distinction is important: `client` connections are for request-reply, `stream` connections are for long-lived pub/sub channels. Different connection pools, different lifecycle.
+### 2. Streaming is SIP-only (for history)
 
-The samples default to the **Synthetic** dataset, which generates deterministic fake market data. This means you can run every sample without API keys or a live market data subscription — the platform generates its own test data using a seeded random walk.
+The Synthetic History client doesn't support streaming — only the SIP History client does. If you try to call `openStream()` on a Synthetic History client, you'll get an error. This is why `StreamHistoricalCandles.java` imports `com.datafye.client.sip.HistoryClient` while `GetHistoricalCandles.java` imports `com.datafye.client.synthetic.HistoryClient`. A subtle but critical difference.
 
-### The Distribution
+Live streaming (quotes and trades) works with both Synthetic and SIP feed clients.
 
-Running `mvn clean package` produces `datafye-samples-2.0-SNAPSHOT-distribution.tar.gz`. Extract it and you get a self-contained directory with `libs/` (all JARs) and `conf/` (configuration). Every sample runs with a simple `java -cp "libs/*" com.datafye.samples...` command.
+### 3. The benchmarking loop reveals latency characteristics
 
-The `distribution.xml` assembly descriptor controls what goes into the archive. It copies the compiled JAR, all runtime dependencies, and the configuration files into a flat structure that's easy to unpack and run anywhere.
+Every REST and Java request-reply sample runs 100 iterations and averages the timing. This isn't arbitrary — it reveals the difference between cold and warm performance. The first request pays connection setup costs (TCP handshake for REST, Solace session establishment for Java). Subsequent requests reuse those connections. The average over 100 iterations gives you a realistic picture of steady-state performance.
 
-## Technologies
+### 4. Configuration naming conventions matter
 
-| Technology | Role | Why |
-|-----------|------|-----|
-| **OkHttp 4** | HTTP client for REST samples | Clean API, connection pooling, timeouts built in |
-| **Jackson** | JSON deserialization | Industry standard, works with Lombok |
-| **Lombok** | Boilerplate reduction for POJOs | `@Data` + `@Builder` eliminates 50 lines of getters/setters per class |
-| **Rumi (via datafye-client)** | Native messaging client | Direct Solace messaging, code-generated type-safe clients |
-| **jargs** | Command-line parsing | Lightweight, no annotation magic, gets out of the way |
-| **Java 17** | Runtime | Required by Rumi 4.x; `--add-opens` flags needed for internal access |
+In `rumi.conf`, the naming convention `{service}.{type}.{instance}.{property}` is load-bearing. Getting it wrong means the client connects to the wrong service or fails to connect at all. The `client` vs `stream` distinction is especially important — streaming samples need both a `client` connection (for control messages like open/close/subscribe/unsubscribe) and a `stream` connection (for the actual data flow).
 
-## Lessons from the Port (1.5 to 2.0)
+### 5. Concurrency patterns are deliberately simple
 
-This codebase was ported from the old `gb-poc` repository (Datafye 1.5) to Datafye 2.0. The migration surfaced several insights worth remembering.
+The concurrent samples (`GetLiveCandlesConcurrently`, `StreamHistoricalCandlesConcurrently`) use plain `Thread` and `join()` rather than `CompletableFuture` or reactive streams. This is intentional — sample code should teach one concept at a time. The concurrency here is straightforward fork-join parallelism, not something that requires understanding reactive programming.
 
-### Dataset-Determined Routing Beats Explicit Market Selection
+In the historical streaming concurrent sample, notice how each thread gets a different date (each offset by one day) but shares the same `HistoryClient`. The `openStream()` call is synchronized on the client because the initial request-reply handshake must be serialized, but once the streams are open, data flows independently on separate Solace sessions.
 
-In 1.5, every request message had a `setMarket(Market.SIP)` call — the client had to explicitly declare which dataset it wanted. In 2.0, the dataset is determined by **which client class you instantiate**. Use `com.datafye.client.synthetic.FeedClient` and you get Synthetic data. Use `com.datafye.client.sip.FeedClient` and you get SIP data. No field to set, no field to forget.
+### 6. The `dataset` parameter is your safety net
+
+All REST samples pass `dataset=Synthetic` as a query parameter. The Synthetic dataset generates deterministic test data — it doesn't need API keys, market data subscriptions, or a live exchange connection. This means you can run the samples with just a locally provisioned Datafye environment and get meaningful results immediately. When you're ready for real market data, switch to `SIP`.
+
+### 7. Zero-copy deserialization is a power tool
+
+The `CandlePopulator` pattern in the streaming samples (implementing `StocksMinuteOHLCMessage.Deserializer.AbstractCallbackImpl`) is not beginner-friendly, but it exists for a good reason. In a streaming scenario where millions of messages flow per second, allocating a new object per message creates GC pressure that causes latency spikes. The callback pattern lets you reuse a single object and overwrite its fields — zero allocation per message.
+
+You don't need this for request-reply. It's a streaming optimization for when throughput matters more than code clarity. The fact that it's shown in the samples is a nod to the kind of performance-sensitive use cases Datafye is built for.
+
+### 8. Clean shutdown order matters
+
+The streaming samples are careful about shutdown ordering:
+
+```
+1. Unsubscribe from symbols     (stop data flow)
+2. Close the stream             (tear down the pub/sub channel)
+3. Close the client             (release the Solace session)
+```
+
+Reversing step 1 and 2 — closing the stream before unsubscribing — can leave server-side subscriptions dangling. The server will eventually clean them up via timeout, but it's sloppy. The `try/finally` nesting in the samples enforces the correct order even when exceptions interrupt the flow.
+
+### 9. Dataset-determined routing beats explicit market selection
+
+In Datafye 1.5, every request message had a `setMarket(Market.SIP)` call — the client had to explicitly declare which dataset it wanted. In 2.0, the dataset is determined by which client class you instantiate. Use `com.datafye.client.synthetic.FeedClient` and you get Synthetic data. Use `com.datafye.client.sip.FeedClient` and you get SIP data. No field to set, no field to forget.
 
 This is a subtle but important design improvement. When the routing decision lives in the message, every caller must remember to set it correctly, and every handler must check it. When it's structural (baked into the client type), the compiler enforces it. You literally can't send a request to the wrong dataset.
 
-### Unified API Simplifies REST Clients
-
-The old REST API had separate endpoint prefixes per service (`/datafye-ohlc-api/`, `/datafye-quote-api/`). The new API unifies everything under `/datafye-api/v1/stocks/...` with a `dataset` query parameter. This means REST clients only need to know one base URL, and switching datasets is a one-parameter change rather than a URL restructure.
-
-### Streaming Client Availability Isn't Uniform
-
-Not every client supports every operation. The Synthetic History client doesn't expose the `Stream` class — only the SIP History client does. The Synthetic Feed client, however, fully supports live streaming via subscribe/unsubscribe. Don't assume symmetry across datasets; check the actual client class before building a sample around it.
-
-### Message Naming Conventions Tell You What Changed
+### 10. Message naming conventions tell you the asset class
 
 The old `GetHistoricalOHLCsRequestMessage` became `GetHistoricalStocksOHLCsRequestMessage`. The insertion of `Stocks` is deliberate — Datafye 2.0 supports multiple asset classes (Stocks, Crypto), and the message names now encode the asset class. If you see a message name without an asset class qualifier, it's probably from 1.5.
 
-### Don't Fight the License Plugin
+## How Good Engineers Think About This
 
-The parent POM includes a copyright header plugin that reformats license headers during the build. You might write `Copyright 2024 Datafye`, but the build will rewrite it to match the configured template (`Copyright 2022 N5 Technologies, Inc`). This is by design — the plugin ensures all files have consistent headers. Don't manually fix what the build will auto-correct.
+**Start simple, add complexity only when you need it.** The REST samples are ~60 lines each. They do one thing, clearly. When that's not enough — when you need streaming, zero-copy deserialization, or sub-millisecond latency — the Java Client samples show you the next step. The codebase doesn't try to be clever. It tries to be clear.
 
-## How to Think About This Codebase
+**Make the easy thing the right thing.** Datafye 2.0's dataset-as-client-class design (importing `synthetic.HistoryClient` vs `sip.HistoryClient`) means you can't accidentally query the wrong dataset. The compiler catches it. This is a small design choice that eliminates an entire class of runtime bugs.
 
-**The samples are the API documentation.** API docs tell you what endpoints exist. Samples show you how to use them in context — with error handling, connection management, and realistic parameters. If someone asks "how do I get historical candles from Datafye?", you point them at one of these files, not at a Swagger spec.
+**Sample code is documentation that compiles.** Every sample in this repository is a runnable program, not a code snippet in a wiki. If it compiles and runs, the documentation is correct. If the API changes and the sample breaks, the build fails. This is strictly better than prose documentation that can silently drift out of date.
 
-**Two packages, one mental model.** The REST and Java samples are intentionally parallel. `GetHistoricalCandles` exists in both packages, doing the same thing via different transports. This isn't redundancy — it's a comparison tool. Put them side by side and you immediately see what HTTP abstracts away (connection management, serialization) and what it costs (latency, streaming limitations).
-
-**Configuration is infrastructure.** The `rumi.conf` file is not application code — it's deployment topology. Changing a hostname or port should never require recompilation. This is why every connection parameter lives in config, not in Java source.
+**Configuration belongs in configuration files.** Not a single connection URL is hardcoded. Every endpoint, every timeout, every Solace connection descriptor lives in `rumi.conf`. Changing environments (local to cloud, Synthetic to SIP) means editing one file, not recompiling.
 
 ## Quick Reference
 
@@ -207,11 +343,4 @@ The parent POM includes a copyright header plugin that reformats license headers
 | REST response POJOs | `src/main/java/com/datafye/samples/rest/domain/` |
 | Connection config | `conf/rumi.conf` |
 | Distribution archive | `target/datafye-samples-2.0-SNAPSHOT-distribution.tar.gz` |
-| REST API base URL | `http://localhost:7776/datafye-api/v1` |
 | Solace broker | `solace://localhost:55555` |
-
-## Related Repositories
-
-- **datafye** — The platform itself (services, API, CLI)
-- **datafye-algos** — Trading algorithm implementations
-- **datafye-docs** — Documentation source (https://docs.datafye.io)
