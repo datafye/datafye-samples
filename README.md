@@ -23,14 +23,18 @@ These samples demonstrate two access modes:
 
 2. **Java Client API** — A native Java library (built on the [Rumi](https://developer.rumi.systems) framework) that communicates directly with the Data Cloud and Broker Connector over the cloud's messaging backbone. This bypasses the HTTP layer entirely, giving you lower latency.
 
-#### Reference
+#### Foundry
+
+A foundry deals exclusively with historical data. Live data is made available by replaying historical tick data, allowing you to fetch and subscribe to live data using the same APIs you would use in a trading environment.
+
+**Reference**
 
 | Data Type | Mode | API | Name | Main Class | Status |
 |-----------|------|-----|------|------------|--------|
 | Securities | Fetch | REST | — | — | *Work in progress* |
 | Securities | Fetch | Java | — | — | *Work in progress* |
 
-#### Historical
+**Historical**
 
 | Data Type | Mode | API | Name | Main Class | Status |
 |-----------|------|-----|------|------------|--------|
@@ -42,7 +46,31 @@ These samples demonstrate two access modes:
 | Ticks | Fetch | Java | — | — | *Work in progress* |
 | Ticks | Stream | Java | — | — | *Work in progress* |
 
-#### Live
+**Live** (via replay)
+
+| Data Type | Mode | API | Name | Main Class | Status |
+|-----------|------|-----|------|------------|--------|
+| Candles | Fetch | REST | GetLiveCandles | `com.datafye.samples.rest.GetLiveCandles` | Available |
+| Candles | Fetch | REST | GetLiveCandlesConcurrently | `com.datafye.samples.rest.GetLiveCandlesConcurrently` | Available |
+| Candles | Fetch | Java | GetLiveCandles | `com.datafye.samples.java.GetLiveCandles` | Available |
+| Candles | Subscribe | Java | — | — | *Work in progress* |
+| Ticks | Fetch | REST | GetLiveTopOfBook | `com.datafye.samples.rest.GetLiveTopOfBook` | Available |
+| Ticks | Fetch | Java | GetLiveTopOfBook | `com.datafye.samples.java.GetLiveTopOfBook` | Available |
+| Ticks | Subscribe | Java | StreamLiveTopOfBook | `com.datafye.samples.java.StreamLiveTopOfBook` | Available |
+| Ticks | Subscribe | Java | StreamLiveTrades | `com.datafye.samples.java.StreamLiveTrades` | Available |
+
+#### Trading Environment
+
+A trading environment works with live market data. The same fetch and subscribe APIs used with replayed data in a foundry apply identically here.
+
+**Reference**
+
+| Data Type | Mode | API | Name | Main Class | Status |
+|-----------|------|-----|------|------------|--------|
+| Securities | Fetch | REST | — | — | *Work in progress* |
+| Securities | Fetch | Java | — | — | *Work in progress* |
+
+**Live**
 
 | Data Type | Mode | API | Name | Main Class | Status |
 |-----------|------|-----|------|------------|--------|
