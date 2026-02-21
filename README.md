@@ -23,26 +23,37 @@ These samples demonstrate two access modes:
 
 2. **Java Client API** — A native Java library (built on the [Rumi](https://developer.rumi.systems) framework) that communicates directly with the Data Cloud and Broker Connector over the cloud's messaging backbone. This bypasses the HTTP layer entirely, giving you lower latency.
 
-#### REST API Samples (`com.datafye.samples.rest`)
+#### Reference
 
-| Name | Main Class | Description |
-|------|------------|-------------|
-| **GetHistoricalCandles** | `com.datafye.samples.rest.GetHistoricalCandles` | Fetch historical OHLC candles for a symbol and time range |
-| **GetLiveCandles** | `com.datafye.samples.rest.GetLiveCandles` | Fetch current trading day candles for a symbol |
-| **GetLiveTopOfBook** | `com.datafye.samples.rest.GetLiveTopOfBook` | Fetch live top-of-book bid/ask quotes for one or more symbols |
-| **GetLiveCandlesConcurrently** | `com.datafye.samples.rest.GetLiveCandlesConcurrently` | Fetch live candles for all symbols in parallel using a thread pool |
+| Data Type | Mode | API | Name | Main Class | Status |
+|-----------|------|-----|------|------------|--------|
+| Securities | Fetch | REST | — | — | *Work in progress* |
+| Securities | Fetch | Java | — | — | *Work in progress* |
 
-#### Java Client API Samples (`com.datafye.samples.java`)
+#### Historical
 
-| Name | Main Class | Description |
-|------|------------|-------------|
-| **GetHistoricalCandles** | `com.datafye.samples.java.GetHistoricalCandles` | Fetch historical OHLC candles (request-reply pattern) |
-| **GetLiveCandles** | `com.datafye.samples.java.GetLiveCandles` | Fetch current trading day candles (request-reply pattern) |
-| **GetLiveTopOfBook** | `com.datafye.samples.java.GetLiveTopOfBook` | Fetch live top-of-book quotes (request-reply pattern) |
-| **StreamHistoricalCandles** | `com.datafye.samples.java.StreamHistoricalCandles` | Stream historical candles with rate throttling (streaming pattern) |
-| **StreamHistoricalCandlesConcurrently** | `com.datafye.samples.java.StreamHistoricalCandlesConcurrently` | Stream historical candles across multiple concurrent streams |
-| **StreamLiveTopOfBook** | `com.datafye.samples.java.StreamLiveTopOfBook` | Subscribe to live top-of-book quotes in real time (subscribe/unsubscribe pattern) |
-| **StreamLiveTrades** | `com.datafye.samples.java.StreamLiveTrades` | Subscribe to live trades in real time (subscribe/unsubscribe pattern) |
+| Data Type | Mode | API | Name | Main Class | Status |
+|-----------|------|-----|------|------------|--------|
+| Candles | Fetch | REST | GetHistoricalCandles | `com.datafye.samples.rest.GetHistoricalCandles` | Available |
+| Candles | Fetch | Java | GetHistoricalCandles | `com.datafye.samples.java.GetHistoricalCandles` | Available |
+| Candles | Stream | Java | StreamHistoricalCandles | `com.datafye.samples.java.StreamHistoricalCandles` | Available |
+| Candles | Stream | Java | StreamHistoricalCandlesConcurrently | `com.datafye.samples.java.StreamHistoricalCandlesConcurrently` | Available |
+| Ticks | Fetch | REST | — | — | *Work in progress* |
+| Ticks | Fetch | Java | — | — | *Work in progress* |
+| Ticks | Stream | Java | — | — | *Work in progress* |
+
+#### Live
+
+| Data Type | Mode | API | Name | Main Class | Status |
+|-----------|------|-----|------|------------|--------|
+| Candles | Fetch | REST | GetLiveCandles | `com.datafye.samples.rest.GetLiveCandles` | Available |
+| Candles | Fetch | REST | GetLiveCandlesConcurrently | `com.datafye.samples.rest.GetLiveCandlesConcurrently` | Available |
+| Candles | Fetch | Java | GetLiveCandles | `com.datafye.samples.java.GetLiveCandles` | Available |
+| Candles | Subscribe | Java | — | — | *Work in progress* |
+| Ticks | Fetch | REST | GetLiveTopOfBook | `com.datafye.samples.rest.GetLiveTopOfBook` | Available |
+| Ticks | Fetch | Java | GetLiveTopOfBook | `com.datafye.samples.java.GetLiveTopOfBook` | Available |
+| Ticks | Subscribe | Java | StreamLiveTopOfBook | `com.datafye.samples.java.StreamLiveTopOfBook` | Available |
+| Ticks | Subscribe | Java | StreamLiveTrades | `com.datafye.samples.java.StreamLiveTrades` | Available |
 
 ### Algo Container Samples
 
