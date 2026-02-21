@@ -1,4 +1,4 @@
-# Datafye Client Samples
+# Datafye Samples
 
 Sample code and guides for working with [Datafye](https://developer.datafye.io) deployments.
 
@@ -15,7 +15,7 @@ This repo contains samples for two types of Datafye environments:
 
 ### Data Cloud API Samples
 
-For [Foundry: Data Cloud Only](https://docs.datafye.io/quickstart/foundry-data-cloud-only) and [Trading: Data Cloud + Broker](https://docs.datafye.io/quickstart/trading-data-cloud-broker) environments — where you bring your own algo container and use the Data Cloud's REST and client APIs to access market data.
+For [Foundry: Data Cloud Only](https://docs.datafye.io/quickstart/foundry-data-cloud-only) and [Trading: Data Cloud + Broker](https://docs.datafye.io/quickstart/trading-data-cloud-broker) environments — where you bring your own algo container and use the Data Cloud's REST and client APIs to access market data and broker connectivity.
 
 These samples demonstrate two access modes:
 
