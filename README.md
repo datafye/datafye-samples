@@ -21,7 +21,7 @@ These samples demonstrate two access modes:
 
 1. **REST API** — Standard HTTP/JSON requests. The samples use [OkHttp](https://square.github.io/okhttp/) but any HTTP client in any language works. Good for straightforward request-response queries (historical candles, live quotes). WebSocket support for streaming will be available shortly.
 
-2. **Java Client API** — A native Java library (built on the [Rumi](https://developer.rumi.systems) framework) that communicates directly with Data Cloud backend services over the cloud's messaging backbone. This bypasses the HTTP layer entirely, giving you lower latency.
+2. **Java Client API** — A native Java library (built on the [Rumi](https://developer.rumi.systems) framework) that communicates directly with the Data Cloud and Broker Connector over the cloud's messaging backbone. This bypasses the HTTP layer entirely, giving you lower latency.
 
 #### REST API Samples (`com.datafye.samples.rest`)
 
