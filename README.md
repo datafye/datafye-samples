@@ -1,6 +1,6 @@
 # Datafye Client Samples
 
-Sample code demonstrating how to interact with a [Datafye](https://developer.datafye.io) deployment using both the REST API and the native Java Client API.
+Sample code and guides for working with [Datafye](https://developer.datafye.io) deployments.
 
 ## What is Datafye?
 
@@ -9,17 +9,46 @@ Datafye is a cloud platform that democratizes institutional-grade algorithmic tr
 - [developer.datafye.io](https://developer.datafye.io) — Get introduced to Datafye through guided questions and chat
 - [docs.datafye.io](https://docs.datafye.io) — Developer documentation
 
-These samples are designed for the [Foundry: Data Cloud Only](https://docs.datafye.io/quickstart/foundry-data-cloud-only) scenario — they connect directly to a Data Cloud's REST and messaging endpoints to fetch and stream market data. Deployments can be provisioned locally on your machine (for development and testing) or in the cloud (for production) using the [Datafye CLI](https://docs.datafye.io/concepts-and-architecture/cli). You describe what data you need in a [data descriptor](https://docs.datafye.io/concepts-and-architecture/the-data-cloud/data-descriptors), and the CLI provisions the environment for you.
+## What's in This Repo
 
-## What These Samples Show
+This repo contains samples for two types of Datafye environments:
 
-These samples demonstrate the two ways to access market data from a Datafye deployment's Data Cloud:
+### Data Cloud API Samples
+
+For [Foundry: Data Cloud Only](https://docs.datafye.io/quickstart/foundry-data-cloud-only) and [Trading: Data Cloud + Broker](https://docs.datafye.io/quickstart/trading-data-cloud-broker) environments — where you bring your own algo container and use the Data Cloud's REST and client APIs to access market data.
+
+These samples demonstrate two access modes:
 
 1. **REST API** — Standard HTTP/JSON requests. The samples use [OkHttp](https://square.github.io/okhttp/) but any HTTP client in any language works. Good for straightforward request-response queries (historical candles, live quotes). WebSocket support for streaming will be available shortly.
 
 2. **Java Client API** — A native Java library (built on the [Rumi](https://developer.rumi.systems) framework) that communicates directly with Data Cloud backend services over the cloud's messaging backbone. This bypasses the HTTP layer entirely, giving you lower latency.
 
-Each sample is self-contained and shows a common data access pattern — fetching historical candles, querying live quotes, streaming trades — so you can use them as starting points for your own integrations.
+#### REST API Samples (`com.datafye.samples.rest`)
+
+| Name | Main Class | Description |
+|------|------------|-------------|
+| **GetHistoricalCandles** | `com.datafye.samples.rest.GetHistoricalCandles` | Fetch historical OHLC candles for a symbol and time range |
+| **GetLiveCandles** | `com.datafye.samples.rest.GetLiveCandles` | Fetch current trading day candles for a symbol |
+| **GetLiveTopOfBook** | `com.datafye.samples.rest.GetLiveTopOfBook` | Fetch live top-of-book bid/ask quotes for one or more symbols |
+| **GetLiveCandlesConcurrently** | `com.datafye.samples.rest.GetLiveCandlesConcurrently` | Fetch live candles for all symbols in parallel using a thread pool |
+
+#### Java Client API Samples (`com.datafye.samples.java`)
+
+| Name | Main Class | Description |
+|------|------------|-------------|
+| **GetHistoricalCandles** | `com.datafye.samples.java.GetHistoricalCandles` | Fetch historical OHLC candles (request-reply pattern) |
+| **GetLiveCandles** | `com.datafye.samples.java.GetLiveCandles` | Fetch current trading day candles (request-reply pattern) |
+| **GetLiveTopOfBook** | `com.datafye.samples.java.GetLiveTopOfBook` | Fetch live top-of-book quotes (request-reply pattern) |
+| **StreamHistoricalCandles** | `com.datafye.samples.java.StreamHistoricalCandles` | Stream historical candles with rate throttling (streaming pattern) |
+| **StreamHistoricalCandlesConcurrently** | `com.datafye.samples.java.StreamHistoricalCandlesConcurrently` | Stream historical candles across multiple concurrent streams |
+| **StreamLiveTopOfBook** | `com.datafye.samples.java.StreamLiveTopOfBook` | Subscribe to live top-of-book quotes in real time (subscribe/unsubscribe pattern) |
+| **StreamLiveTrades** | `com.datafye.samples.java.StreamLiveTrades` | Subscribe to live trades in real time (subscribe/unsubscribe pattern) |
+
+### Algo Container Samples
+
+For [Foundry: Full Stack](https://docs.datafye.io/quickstart/foundry-full-stack) and [Trading: Full Stack](https://docs.datafye.io/quickstart/trading-full-stack) environments — where you use the Datafye Algo Container and build your algo logic with the Datafye SDK.
+
+> **Work in progress.** Algo container samples and guides are coming soon.
 
 ## Build
 
@@ -46,35 +75,6 @@ The extracted distribution contains:
 - `bin/` — Run scripts (`run.sh` for Linux/macOS, `run.bat` for Windows)
 - `libs/` — All JARs (application + dependencies)
 - `conf/rumi.conf` — Optional Rumi runtime tuning (trace levels, etc.)
-
-## Samples
-
-The samples are organized into two packages that mirror the two data access modes described above:
-
-### REST API Samples (`com.datafye.samples.rest`)
-
-These use HTTP/JSON to query the Datafye REST API. They work from any language — Java is used here for illustration.
-
-| Name | Main Class | Description |
-|------|------------|-------------|
-| **GetHistoricalCandles** | `com.datafye.samples.rest.GetHistoricalCandles` | Fetch historical OHLC candles for a symbol and time range |
-| **GetLiveCandles** | `com.datafye.samples.rest.GetLiveCandles` | Fetch current trading day candles for a symbol |
-| **GetLiveTopOfBook** | `com.datafye.samples.rest.GetLiveTopOfBook` | Fetch live top-of-book bid/ask quotes for one or more symbols |
-| **GetLiveCandlesConcurrently** | `com.datafye.samples.rest.GetLiveCandlesConcurrently` | Fetch live candles for all symbols in parallel using a thread pool |
-
-### Java Client Samples (`com.datafye.samples.java`)
-
-These use the Datafye Java Client API, which communicates directly with backend services over the cloud's messaging backbone. This gives you lower latency and access to streaming — something the REST API doesn't support.
-
-| Name | Main Class | Description |
-|------|------------|-------------|
-| **GetHistoricalCandles** | `com.datafye.samples.java.GetHistoricalCandles` | Fetch historical OHLC candles (request-reply pattern) |
-| **GetLiveCandles** | `com.datafye.samples.java.GetLiveCandles` | Fetch current trading day candles (request-reply pattern) |
-| **GetLiveTopOfBook** | `com.datafye.samples.java.GetLiveTopOfBook` | Fetch live top-of-book quotes (request-reply pattern) |
-| **StreamHistoricalCandles** | `com.datafye.samples.java.StreamHistoricalCandles` | Stream historical candles with rate throttling (streaming pattern) |
-| **StreamHistoricalCandlesConcurrently** | `com.datafye.samples.java.StreamHistoricalCandlesConcurrently` | Stream historical candles across multiple concurrent streams |
-| **StreamLiveTopOfBook** | `com.datafye.samples.java.StreamLiveTopOfBook` | Subscribe to live top-of-book quotes in real time (subscribe/unsubscribe pattern) |
-| **StreamLiveTrades** | `com.datafye.samples.java.StreamLiveTrades` | Subscribe to live trades in real time (subscribe/unsubscribe pattern) |
 
 ## Quick Start
 
