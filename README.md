@@ -1,12 +1,12 @@
 # Datafye Samples
 
-Sample code and guides for working with [Datafye](https://developer.datafye.io) deployments.
+Sample code and guides that use these samples for working with [Datafye](https://developer.datafye.io) deployments.
 
 ## What is Datafye?
 
-Datafye is a cloud platform that democratizes institutional-grade algorithmic trading. Built on [Rumi](https://developer.rumi.systems) -- the same distributed systems foundation used in sophisticated institutional trading stacks -- Datafye is a single platform offering institutional-quality algorithm development and trading infrastructure, designed to be built and operated with an AI co-developer. AI is natively integrated into the tooling and drives the entire strategy lifecycle -- from ideation and backtesting to optimization and live trading -- using the data providers and brokers you choose. You focus on the idea and logic; Datafye handles the heavy lifting.
+Datafye is a cloud platform that democratizes institutional-grade algorithmic trading. Built on [Rumi](https://developer.rumi.systems) - the same distributed systems foundation used in sophisticated institutional trading stacks - Datafye is a single platform offering institutional-quality algorithm development and trading infrastructure, designed to be built and operated with an AI co-developer. AI is natively integrated into the tooling and drives the entire strategy lifecycle - from ideation and backtesting to optimization and live trading - using the data providers and brokers you choose. You focus on the idea and logic; Datafye handles the heavy lifting.
 
-- [developer.datafye.io](https://developer.datafye.io) — Get introduced to Datafye through guided questions and chat
+- [developer.datafye.io](https://developer.datafye.io) — An introduction to Datafye through guided questions and chat
 - [docs.datafye.io](https://docs.datafye.io) — Developer documentation
 
 ## What's in This Repo
