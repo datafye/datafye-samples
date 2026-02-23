@@ -1,36 +1,46 @@
-# PROJECT.md — Datafye Client Samples
+# PROJECT.md — Datafye Samples
 
 ## What This Project Is
 
-This repository is a cookbook. It shows you how to talk to the Datafye Data Cloud — a platform that stores and streams financial market data (stock quotes, trades, OHLC candles) — using two fundamentally different approaches:
+This repository is a cookbook for the Datafye platform. It covers two types of Datafye environments:
 
-1. **REST API** — HTTP/JSON requests, the universal language of web services. Any programming language can do this.
-2. **Java Client API** — A native Java library that bypasses HTTP entirely and talks directly to Datafye's backend services over Solace messaging. Faster, and the only way to get streaming.
+1. **Data Cloud API Samples** — For environments where you bring your own algo container and access market data and broker connectivity through the Data Cloud's APIs. These demonstrate three access modes:
+   - **REST API** — HTTP/JSON request-response. Any programming language can do this.
+   - **WebSocket API** — Streaming and subscription over WebSocket connections. The streaming counterpart to REST for those not using the Java Client.
+   - **Java Client API** — A native Java library that bypasses HTTP entirely and talks directly to Datafye's backend services over the cloud's messaging backbone. Supports request-reply, streaming, and subscription through a single client.
 
-The samples are intentionally parallel: the same operation (say, "get historical candles for AAPL") is implemented in both REST and Java so you can compare them side by side and understand the trade-offs.
+2. **Algo Container Samples** — For environments where you use the Datafye Algo Container and build algo logic with the Datafye SDK. (Work in progress.)
+
+The Data Cloud API samples are intentionally parallel: the same operation (say, "get historical candles for AAPL") is implemented across REST, WebSocket, and Java so you can compare them side by side and understand the trade-offs. The samples span reference data, historical data, live data, backtesting operations, and broker connectivity — organized by whether they apply to a Foundry (historical + replayed live data), a Trading Environment (real live data), or both.
 
 ## Technical Architecture
 
 ### The Big Picture
 
-Datafye's Data Cloud is a cluster of specialized backend services — a history service that stores OHLC bars, a feed service that distributes live quotes and trades, an aggregation service that computes live candles, and a reference service that maintains the security master. These services communicate internally over [Solace](https://solace.com/) message brokers.
+Datafye's Data Cloud is a cluster of specialized backend services — a history service that stores OHLC bars, a feed service that distributes live quotes and trades, an aggregation service that computes live candles, a reference service that maintains the security master, and (in Trading Environments) a broker connector for order management. These services communicate internally over the cloud's messaging backbone.
 
-There are two ways in:
+There are three ways in:
 
 ```
-                        ┌─────────────────────────────────┐
-                        │        Datafye Data Cloud        │
-                        │                                  │
- REST Samples ──HTTP──> │  API Gateway ──> Backend Services │
-                        │     :8080            :55555       │
-                        │                                  │
- Java Samples ─Solace─> │        Backend Services directly  │
-                        └─────────────────────────────────┘
+                            ┌──────────────────────────────────────┐
+                            │       Datafye Data Cloud &           │
+                            │       Broker Connector               │
+                            │                                      │
+ REST Samples ────HTTP────> │  API Gateway ──> Backend Services    │
+                            │     :7776                            │
+                            │                                      │
+ WebSocket Samples ──WS──> │  Stream Gateway ──> Backend Services  │
+                            │     :7775                            │
+                            │                                      │
+ Java Samples ──Messaging─> │         Backend Services directly    │
+                            └──────────────────────────────────────┘
 ```
 
-The **REST samples** go through the API Gateway. It's an HTTP facade that translates JSON requests into internal Solace messages, forwards them to the right backend service, and translates the response back to JSON. Simple, universal, but every request pays the cost of HTTP serialization and one extra network hop.
+The **REST samples** go through the API Gateway. It's an HTTP facade that translates JSON requests into internal messages, forwards them to the right backend service, and translates the response back to JSON. Simple, universal, but every request pays the cost of HTTP serialization and one extra network hop. REST is request-response only.
 
-The **Java Client samples** skip the gateway entirely. They use code-generated client classes (built with the [Rumi](https://developer.rumi.systems) framework) that speak the same Solace protocol the backend services use internally. No HTTP overhead. No JSON parsing. And critically, this is the only way to access **streaming** — the REST API is request-response only.
+The **WebSocket samples** go through the Stream Gateway. This is the streaming counterpart to the REST API — it provides subscribe and stream access over WebSocket connections for those who want streaming without using the Java Client.
+
+The **Java Client samples** skip both gateways entirely. They use code-generated client classes (built with the [Rumi](https://developer.rumi.systems) framework) that speak the same protocol the backend services use internally. No HTTP overhead. No JSON parsing. And they support all three patterns — request-reply, streaming, and subscription — through a single client.
 
 ### Codebase Structure
 
@@ -48,7 +58,7 @@ src/main/java/com/datafye/samples/
 │       ├── GetLiveCandlesResponse.java
 │       └── GetLiveTopOfBookQuotesResponse.java
 │
-├── java/                          # Native Solace approach
+├── java/                          # Native messaging backbone approach
 │   ├── GetHistoricalCandles.java
 │   ├── GetLiveCandles.java
 │   ├── GetLiveTopOfBook.java
@@ -68,7 +78,7 @@ pom.xml                            # Maven build with assembly plugin
 distribution.xml                   # Packages everything into a deployable tar.gz
 ```
 
-Notice how `rest/` has 4 samples and `java/` has 7. The extra 3 are the streaming samples — `StreamHistoricalCandles`, `StreamLiveTopOfBook`, and `StreamLiveTrades` — which simply can't be done over REST. That's the headline trade-off right there.
+Notice how `rest/` has 4 samples and `java/` has 7. The extra 3 are the streaming and subscription samples — `StreamHistoricalCandles`, `StreamLiveTopOfBook`, and `StreamLiveTrades`. REST is request-response only; streaming and subscription require either the WebSocket API or the Java Client. As the WebSocket samples are built out, a `ws/` package will appear alongside these two.
 
 ### How the Parts Connect
 
@@ -93,15 +103,15 @@ static {
 
 This makes each sample completely self-contained — you can read a single file and understand everything it needs to run, without cross-referencing a separate config file. The `conf/rumi.conf` file still exists in the distribution for Rumi runtime tuning (e.g. `nv.trace.defaultLevel=warn`) but connection config lives in the code.
 
-The naming convention in the property keys is important: `{service}.{type}.{instance}.{property}`. The `client` suffix means request-reply connections. The `stream` suffix means long-lived pub/sub connections used for streaming data. This distinction matters because streaming samples need a separate Solace session from the one used for request-reply control messages (you can't multiplex both on the same session without blocking).
+The naming convention in the property keys is important: `{service}.{type}.{instance}.{property}`. The `client` suffix means request-reply connections. The `stream` suffix means long-lived pub/sub connections used for streaming data. This distinction matters because streaming samples need a separate messaging session from the one used for request-reply control messages (you can't multiplex both on the same session without blocking).
 
 **The build produces a self-contained distribution**. `mvn clean install` compiles the code, pulls all dependencies into `target/dependency/`, then the Maven Assembly Plugin packages everything into a `tar.gz` using the layout defined in `distribution.xml`. Extract it and you get a `libs/` directory with every JAR you need, plus a `bin/` directory with run scripts — no classpath headaches, no memorizing JVM flags.
 
 The `bin/run.sh` (and `run.bat` for Windows) is a single master script that maps friendly sample names to fully-qualified Java class names. Instead of typing `java --add-opens=java.base/jdk.internal.ref=ALL-UNNAMED ... -cp "libs/*" com.datafye.samples.rest.GetHistoricalCandles`, you type `bin/run.sh get-historical-candles-rest`. JVM options, classpath, and class resolution are all handled in one place. This is a deliberate design choice: 22 per-sample scripts would be 95% identical boilerplate, and if the JVM options ever change, you'd have to update all of them. One script, one place to maintain.
 
-## The Three Communication Patterns
+## The Communication Patterns
 
-This is the architectural heart of the project. Every sample falls into one of three patterns, and understanding these three patterns is understanding how Datafye data access works.
+This is the architectural heart of the project. Every sample falls into one of three patterns, and understanding these three patterns is understanding how Datafye data access works. The REST API supports only Pattern 1. The WebSocket API supports Patterns 2 and 3. The Java Client supports all three.
 
 ### Pattern 1: REST Request-Response
 
@@ -151,15 +161,15 @@ A few things to notice:
 
 - **Messages must be disposed**. Rumi messages come from an object pool, not the garbage collector. When you're done with a response, you call `dispose()` to return it to the pool. If you forget, you leak pooled buffers — and it won't show up in a heap dump because the objects technically still exist, they're just never returned. Think of it like closing a database connection: the runtime won't save you if you forget.
 
-- **The constructor takes an instance name and ID** (`"samples"`, `"0"`). These map to the configuration keys in `rumi.conf` — the client looks up `datafye-synthetic-history.client.samples.connectionDescriptor` to find its Solace connection. Multiple instances of the same client type can coexist by using different IDs.
+- **The constructor takes an instance name and ID** (`"samples"`, `"0"`). These map to the configuration keys in `rumi.conf` — the client looks up `datafye-synthetic-history.client.samples.connectionDescriptor` to find its messaging connection. Multiple instances of the same client type can coexist by using different IDs.
 
-### Pattern 3: Streaming
+### Pattern 3: Streaming and Subscription
 
-This is where things get interesting, and it's where the Java client earns its keep.
+This is where things get interesting, and it's where the Java Client and WebSocket APIs earn their keep. REST is request-response only — if you need streaming or subscription, you use either WebSocket connections or the Java Client.
 
 #### Historical Streaming (three-step handshake)
 
-Imagine you want to replay a full day of minute-by-minute OHLC data for all symbols. That could be thousands of candles. A REST request would have to materialize the entire result set in memory, serialize it to JSON, send it over HTTP, and deserialize it on the other side. Streaming avoids all of that — the server pushes candles to you one at a time over a dedicated Solace channel.
+Imagine you want to replay a full day of minute-by-minute OHLC data for all symbols. That could be thousands of candles. A REST request would have to materialize the entire result set in memory, serialize it to JSON, send it over HTTP, and deserialize it on the other side. Streaming avoids all of that — the server pushes candles to you one at a time over a dedicated messaging channel.
 
 The protocol is a three-step handshake:
 
@@ -184,7 +194,7 @@ Stream stream = client.openStream(streamId, connectionDescriptor, this);
 stream.start(rate);
 ```
 
-Why three steps? Because the server needs to allocate resources (a dedicated Solace topic, a cursor into the historical data) before the client connects. The server returns a `streamId` and a `connectionDescriptor` — essentially a private address that the client dials into. If the client doesn't connect within the allotted timeout, the server cleans up its side. It's like a restaurant giving you a reservation number: they'll hold the table, but not forever.
+Why three steps? Because the server needs to allocate resources (a dedicated messaging topic, a cursor into the historical data) before the client connects. The server returns a `streamId` and a `connectionDescriptor` — essentially a private address that the client dials into. If the client doesn't connect within the allotted timeout, the server cleans up its side. It's like a restaurant giving you a reservation number: they'll hold the table, but not forever.
 
 Data arrives via `@EventHandler` callbacks:
 
@@ -295,7 +305,7 @@ Live streaming (quotes and trades) works with both Synthetic and SIP feed client
 
 ### 3. The benchmarking loop reveals latency characteristics
 
-Every REST and Java request-reply sample runs 100 iterations and averages the timing. This isn't arbitrary — it reveals the difference between cold and warm performance. The first request pays connection setup costs (TCP handshake for REST, Solace session establishment for Java). Subsequent requests reuse those connections. The average over 100 iterations gives you a realistic picture of steady-state performance.
+Every REST and Java request-reply sample runs 100 iterations and averages the timing. This isn't arbitrary — it reveals the difference between cold and warm performance. The first request pays connection setup costs (TCP handshake for REST, messaging session establishment for Java). Subsequent requests reuse those connections. The average over 100 iterations gives you a realistic picture of steady-state performance.
 
 ### 4. Configuration naming conventions matter
 
@@ -305,7 +315,7 @@ In the `System.setProperty()` calls, the naming convention `{service}.{type}.{in
 
 The concurrent samples (`GetLiveCandlesConcurrently`, `StreamHistoricalCandlesConcurrently`) use plain `Thread` and `join()` rather than `CompletableFuture` or reactive streams. This is intentional — sample code should teach one concept at a time. The concurrency here is straightforward fork-join parallelism, not something that requires understanding reactive programming.
 
-In the historical streaming concurrent sample, notice how each thread gets a different date (each offset by one day) but shares the same `HistoryClient`. The `openStream()` call is synchronized on the client because the initial request-reply handshake must be serialized, but once the streams are open, data flows independently on separate Solace sessions.
+In the historical streaming concurrent sample, notice how each thread gets a different date (each offset by one day) but shares the same `HistoryClient`. The `openStream()` call is synchronized on the client because the initial request-reply handshake must be serialized, but once the streams are open, data flows independently on separate messaging sessions.
 
 ### 6. The `dataset` parameter is your safety net
 
@@ -324,7 +334,7 @@ The streaming samples are careful about shutdown ordering:
 ```
 1. Unsubscribe from symbols     (stop data flow)
 2. Close the stream             (tear down the pub/sub channel)
-3. Close the client             (release the Solace session)
+3. Close the client             (release the messaging session)
 ```
 
 Reversing step 1 and 2 — closing the stream before unsubscribing — can leave server-side subscriptions dangling. The server will eventually clean them up via timeout, but it's sloppy. The `try/finally` nesting in the samples enforces the correct order even when exceptions interrupt the flow.
@@ -355,10 +365,13 @@ The old `GetHistoricalOHLCsRequestMessage` became `GetHistoricalStocksOHLCsReque
 |------|-------|
 | Run scripts | `bin/run.sh` (Linux/macOS), `bin/run.bat` (Windows) |
 | REST samples | `src/main/java/com/datafye/samples/rest/` |
-| Java client samples | `src/main/java/com/datafye/samples/java/` |
+| WebSocket samples | `src/main/java/com/datafye/samples/ws/` (planned) |
+| Java Client samples | `src/main/java/com/datafye/samples/java/` |
 | REST response POJOs | `src/main/java/com/datafye/samples/rest/domain/` |
 | Connection config | Embedded in each sample's `static {}` block |
 | Runtime tuning | `conf/rumi.conf` (optional) |
 | Distribution archive | `target/datafye-samples-2.0-SNAPSHOT-distribution.tar.gz` |
-| Solace broker | `solace://solace.rumi.local:55555` |
+| Messaging backbone | `solace://solace.rumi.local:55555` |
 | REST API | `api.rest.rumi.local:7776` |
+| WebSocket API | `api.stream.rumi.local:7775` |
+| Wiki (run guides) | [wiki](../../wiki) |
