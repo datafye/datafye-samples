@@ -38,14 +38,14 @@ import com.neeve.config.Config;
 
 import com.datafye.samples.rest.domain.*;
 
-public class DownloadQuoteHistory {
+public class StartTradeDownload {
     static {
         System.setProperty("datafye-samples.api.endpoint", "api.rest.rumi.local:7776");
     }
 
     final private static void printUsage() {
-        System.err.println("    [{-d, --date the date to download quote history for (format=YYYY-MM-DD) (required)]");
-        System.err.println("    [{-s, --symbols the symbols (comma separated) to download quote history for (optional)]");
+        System.err.println("    [{-d, --date the date to download trade history for (format=YYYY-MM-DD) (required)]");
+        System.err.println("    [{-s, --symbols the symbols (comma separated) to download trade history for (optional)]");
         System.err.println("    [{-w, --wait wait for download to complete]");
         System.err.println("    [{-h, --help} print this help string]");
         System.exit(-1);
@@ -58,7 +58,7 @@ public class DownloadQuoteHistory {
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
         // start the download
-        HttpUrl.Builder urlBuilder = HttpUrl.parse("http://" + Config.getValue("datafye-samples.api.endpoint") + "/datafye-api/v1/backtest/history/quotes/fetch/start").newBuilder();
+        HttpUrl.Builder urlBuilder = HttpUrl.parse("http://" + Config.getValue("datafye-samples.api.endpoint") + "/datafye-api/v1/backtest/history/trades/fetch/start").newBuilder();
         urlBuilder.addQueryParameter("dataset", "Synthetic");
         urlBuilder.addQueryParameter("date", date);
         if (symbols != null) urlBuilder.addQueryParameter("symbols", symbols);
@@ -71,7 +71,7 @@ public class DownloadQuoteHistory {
             return;
         }
 
-        System.out.println("Quote history download started successfully.");
+        System.out.println("Trade history download started successfully.");
 
         // wait for completion if requested
         if (wait) {
@@ -79,16 +79,16 @@ public class DownloadQuoteHistory {
             while (true) {
                 Thread.sleep(5000);
                 long elapsed = (System.currentTimeMillis() - startTime) / 1000;
-                System.out.println("Downloading quote history... (" + elapsed + "s elapsed)");
+                System.out.println("Downloading trade history... (" + elapsed + "s elapsed)");
 
-                HttpUrl.Builder statusUrlBuilder = HttpUrl.parse("http://" + Config.getValue("datafye-samples.api.endpoint") + "/datafye-api/v1/backtest/history/quotes/fetch/status").newBuilder();
+                HttpUrl.Builder statusUrlBuilder = HttpUrl.parse("http://" + Config.getValue("datafye-samples.api.endpoint") + "/datafye-api/v1/backtest/history/trades/fetch/status").newBuilder();
                 statusUrlBuilder.addQueryParameter("dataset", "Synthetic");
                 Request statusRequest = new Request.Builder().url(statusUrlBuilder.build().toString()).addHeader("Accept", "application/json").build();
                 Response statusResp = webClient.newCall(statusRequest).execute();
                 IsRunningResponse isRunningResponse = objectMapper.readValue(statusResp.body().string(), IsRunningResponse.class);
 
                 if (!Boolean.TRUE.equals(isRunningResponse.getIsRunning())) {
-                    System.out.println("Quote history download completed. (" + elapsed + "s)");
+                    System.out.println("Trade history download completed. (" + elapsed + "s)");
                     break;
                 }
             }

@@ -21,35 +21,54 @@
  */
 package com.datafye.samples.java.backtest;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.TimeZone;
+
 import jargs.gnu.CmdLineParser;
 
 import com.datafye.roe.*;
-import com.datafye.client.sip.FeedClient;
+import com.datafye.client.sip.HistoryClient;
 
-public class ReplayTicks {
+public class StartTickDownload {
     static {
-        System.setProperty("datafye-sip-feed.client.samples.connectionDescriptor",
-            "solace://solace.rumi.local:55555&client_name=samples-sip-feed");
+        System.setProperty("datafye-sip-history.client.samples.connectionDescriptor",
+            "solace://solace.rumi.local:55555&client_name=samples-sip-history");
     }
 
     final private static void printUsage() {
-        System.err.println("    [{-d, --date the date to replay ticks for (format=YYYY-MM-DD) (required)]");
-        System.err.println("    [{-w, --wait wait for replay to complete]");
+        System.err.println("    [{-d, --date the date to download tick history for (format=YYYY-MM-DD) (required)]");
+        System.err.println("    [{-s, --symbols the symbols (comma separated) to download tick history for (optional)]");
+        System.err.println("    [{-w, --wait wait for download to complete]");
         System.err.println("    [{-h, --help} print this help string]");
         System.exit(-1);
     }
 
-    final private static void run(final String date, final boolean wait) throws Exception {
-        // create the client
-        FeedClient client = new FeedClient("samples", "0");
+    final private static SimpleDateFormat dateFormat() {
+        final SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+        df.setTimeZone(TimeZone.getTimeZone("America/New_York"));
+        return df;
+    }
 
-        // start the replay
-        StartHistoricalStocksTickReplayRequestMessage request = StartHistoricalStocksTickReplayRequestMessage.create();
-        request.serializer().date(date).rateType(HistoricalFeedRateType.Exact).done();
-        StartHistoricalStocksTickReplayResponseMessage response = client.startHistoricalTickReplay(request);
+    final private static void run(final Date date, final String[] symbols, final boolean wait) throws Exception {
+        // create the client
+        HistoryClient client = new HistoryClient("samples", "0");
+
+        // start the download
+        StartStocksTickHistoryFetchRequestMessage request = StartStocksTickHistoryFetchRequestMessage.create();
+        request.serializer().startDate(date.getTime()).numDays(1).symbols(symbols).format(FileFormat.Binary).done();
+        StartStocksTickHistoryFetchResponseMessage response = client.startTickHistoryFetch(request);
+
+        String status = response.getStatus();
         response.dispose();
 
-        System.out.println("Tick replay started successfully.");
+        if (status != null) {
+            System.out.println("Error: " + status);
+            client.close();
+            return;
+        }
+
+        System.out.println("Tick history download started successfully.");
 
         // wait for completion if requested
         if (wait) {
@@ -57,15 +76,15 @@ public class ReplayTicks {
             while (true) {
                 Thread.sleep(5000);
                 long elapsed = (System.currentTimeMillis() - startTime) / 1000;
-                System.out.println("Replaying ticks... (" + elapsed + "s elapsed)");
+                System.out.println("Downloading tick history... (" + elapsed + "s elapsed)");
 
-                IsHistoricalStocksTickReplayRunningRequestMessage statusRequest = IsHistoricalStocksTickReplayRunningRequestMessage.create();
-                IsHistoricalStocksTickReplayRunningResponsetMessage statusResponse = client.isHistoricalTickReplayRunning(statusRequest);
+                IsStocksTickHistoryFetchRunningRequestMessage statusRequest = IsStocksTickHistoryFetchRunningRequestMessage.create();
+                IsStocksTickHistoryFetchRunningResponseMessage statusResponse = client.isTickHistoryFetchRunning(statusRequest);
                 boolean isRunning = statusResponse.getIsRunning();
                 statusResponse.dispose();
 
                 if (!isRunning) {
-                    System.out.println("Tick replay completed. (" + elapsed + "s)");
+                    System.out.println("Tick history download completed. (" + elapsed + "s)");
                     break;
                 }
             }
@@ -79,25 +98,30 @@ public class ReplayTicks {
         // parse command line
         final CmdLineParser parser = new CmdLineParser();
         final CmdLineParser.Option dateOption = parser.addStringOption('d', "date");
+        final CmdLineParser.Option symbolsOption = parser.addStringOption('s', "symbols");
         final CmdLineParser.Option waitOption = parser.addBooleanOption('w', "wait");
         final CmdLineParser.Option helpOption = parser.addBooleanOption('h', "help");
 
         parser.parse(args);
         if (!((Boolean)parser.getOptionValue(helpOption, false))) {
             // parse and validate parameters
-            final String date = (String)parser.getOptionValue(dateOption, null);
-            if (date == null) printUsage();
+            final String dateStr = (String)parser.getOptionValue(dateOption, null);
+            if (dateStr == null) printUsage();
+            final Date date = dateFormat().parse(dateStr);
+            final String symbolsStr = (String)parser.getOptionValue(symbolsOption, null);
+            final String[] symbols = symbolsStr != null ? symbolsStr.split(",") : null;
             final boolean wait = (Boolean)parser.getOptionValue(waitOption, false);
 
             // dump parameters
             System.out.println("Parameters {");
             System.out.println("...Dataset: Synthetic");
-            System.out.println("...Date: " + date);
+            System.out.println("...Date: " + dateStr);
+            System.out.println("...Symbols: " + (symbolsStr != null ? symbolsStr : "(all)"));
             System.out.println("...Wait: " + wait);
             System.out.println("}");
 
             // execute
-            run(date, wait);
+            run(date, symbols, wait);
         }
         else {
             printUsage();

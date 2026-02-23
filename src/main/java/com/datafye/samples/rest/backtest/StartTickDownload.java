@@ -38,7 +38,7 @@ import com.neeve.config.Config;
 
 import com.datafye.samples.rest.domain.*;
 
-public class DownloadTickHistory {
+public class StartTickDownload {
     static {
         System.setProperty("datafye-samples.api.endpoint", "api.rest.rumi.local:7776");
     }

@@ -37,29 +37,29 @@ resolve_class() {
         get-historical-top-gainers-java)            echo "com.datafye.samples.java.history.GetHistoricalTopGainers" ;;
         stream-historical-ohlc-java)                echo "com.datafye.samples.java.history.StreamHistoricalOHLC" ;;
         stream-historical-ohlc-concurrently-java)   echo "com.datafye.samples.java.history.StreamHistoricalOHLCConcurrently" ;;
-        download-tick-history-rest)                 echo "com.datafye.samples.rest.backtest.DownloadTickHistory" ;;
-        download-tick-history-java)                 echo "com.datafye.samples.java.backtest.DownloadTickHistory" ;;
+        start-tick-download-rest)                  echo "com.datafye.samples.rest.backtest.StartTickDownload" ;;
+        start-tick-download-java)                  echo "com.datafye.samples.java.backtest.StartTickDownload" ;;
         is-tick-download-running-rest)              echo "com.datafye.samples.rest.backtest.IsTickDownloadRunning" ;;
         is-tick-download-running-java)              echo "com.datafye.samples.java.backtest.IsTickDownloadRunning" ;;
         cancel-tick-download-rest)                  echo "com.datafye.samples.rest.backtest.CancelTickDownload" ;;
         cancel-tick-download-java)                  echo "com.datafye.samples.java.backtest.CancelTickDownload" ;;
-        download-trade-history-rest)                echo "com.datafye.samples.rest.backtest.DownloadTradeHistory" ;;
-        download-trade-history-java)                echo "com.datafye.samples.java.backtest.DownloadTradeHistory" ;;
+        start-trade-download-rest)                  echo "com.datafye.samples.rest.backtest.StartTradeDownload" ;;
+        start-trade-download-java)                  echo "com.datafye.samples.java.backtest.StartTradeDownload" ;;
         is-trade-download-running-rest)             echo "com.datafye.samples.rest.backtest.IsTradeDownloadRunning" ;;
         is-trade-download-running-java)             echo "com.datafye.samples.java.backtest.IsTradeDownloadRunning" ;;
         cancel-trade-download-rest)                 echo "com.datafye.samples.rest.backtest.CancelTradeDownload" ;;
         cancel-trade-download-java)                 echo "com.datafye.samples.java.backtest.CancelTradeDownload" ;;
-        download-quote-history-rest)                echo "com.datafye.samples.rest.backtest.DownloadQuoteHistory" ;;
-        download-quote-history-java)                echo "com.datafye.samples.java.backtest.DownloadQuoteHistory" ;;
+        start-quote-download-rest)                  echo "com.datafye.samples.rest.backtest.StartQuoteDownload" ;;
+        start-quote-download-java)                  echo "com.datafye.samples.java.backtest.StartQuoteDownload" ;;
         is-quote-download-running-rest)             echo "com.datafye.samples.rest.backtest.IsQuoteDownloadRunning" ;;
         is-quote-download-running-java)             echo "com.datafye.samples.java.backtest.IsQuoteDownloadRunning" ;;
         cancel-quote-download-rest)                 echo "com.datafye.samples.rest.backtest.CancelQuoteDownload" ;;
         cancel-quote-download-java)                 echo "com.datafye.samples.java.backtest.CancelQuoteDownload" ;;
-        download-ohlc-history-java)                 echo "com.datafye.samples.java.backtest.DownloadOHLCHistory" ;;
+        start-ohlc-download-java)                   echo "com.datafye.samples.java.backtest.StartOHLCDownload" ;;
         is-ohlc-download-running-java)              echo "com.datafye.samples.java.backtest.IsOHLCDownloadRunning" ;;
         cancel-ohlc-download-java)                  echo "com.datafye.samples.java.backtest.CancelOHLCDownload" ;;
-        replay-ticks-rest)                          echo "com.datafye.samples.rest.backtest.ReplayTicks" ;;
-        replay-ticks-java)                          echo "com.datafye.samples.java.backtest.ReplayTicks" ;;
+        start-tick-replay-rest)                     echo "com.datafye.samples.rest.backtest.StartTickReplay" ;;
+        start-tick-replay-java)                     echo "com.datafye.samples.java.backtest.StartTickReplay" ;;
         is-tick-replay-running-rest)                echo "com.datafye.samples.rest.backtest.IsTickReplayRunning" ;;
         is-tick-replay-running-java)                echo "com.datafye.samples.java.backtest.IsTickReplayRunning" ;;
         stop-tick-replay-rest)                      echo "com.datafye.samples.rest.backtest.StopTickReplay" ;;
@@ -109,33 +109,33 @@ usage() {
     echo "                                           Stream historical OHLC bars concurrently"
     echo ""
     echo "  Backtesting (REST):"
-    echo "    download-tick-history-rest              Download tick history"
+    echo "    start-tick-download-rest                Start tick history download"
     echo "    is-tick-download-running-rest           Check if tick download is running"
     echo "    cancel-tick-download-rest               Cancel tick history download"
-    echo "    download-trade-history-rest             Download trade history"
+    echo "    start-trade-download-rest               Start trade history download"
     echo "    is-trade-download-running-rest          Check if trade download is running"
     echo "    cancel-trade-download-rest              Cancel trade history download"
-    echo "    download-quote-history-rest             Download quote history"
+    echo "    start-quote-download-rest               Start quote history download"
     echo "    is-quote-download-running-rest          Check if quote download is running"
     echo "    cancel-quote-download-rest              Cancel quote history download"
-    echo "    replay-ticks-rest                       Replay historical ticks"
+    echo "    start-tick-replay-rest                  Start tick replay"
     echo "    is-tick-replay-running-rest             Check if tick replay is running"
     echo "    stop-tick-replay-rest                   Stop tick replay"
     echo ""
     echo "  Backtesting (Java Client):"
-    echo "    download-tick-history-java              Download tick history"
+    echo "    start-tick-download-java                Start tick history download"
     echo "    is-tick-download-running-java           Check if tick download is running"
     echo "    cancel-tick-download-java               Cancel tick history download"
-    echo "    download-trade-history-java             Download trade history"
+    echo "    start-trade-download-java               Start trade history download"
     echo "    is-trade-download-running-java          Check if trade download is running"
     echo "    cancel-trade-download-java              Cancel trade history download"
-    echo "    download-quote-history-java             Download quote history"
+    echo "    start-quote-download-java               Start quote history download"
     echo "    is-quote-download-running-java          Check if quote download is running"
     echo "    cancel-quote-download-java              Cancel quote history download"
-    echo "    download-ohlc-history-java              Download OHLC history"
+    echo "    start-ohlc-download-java                Start OHLC history download"
     echo "    is-ohlc-download-running-java           Check if OHLC download is running"
     echo "    cancel-ohlc-download-java               Cancel OHLC history download"
-    echo "    replay-ticks-java                       Replay historical ticks"
+    echo "    start-tick-replay-java                  Start tick replay"
     echo "    is-tick-replay-running-java             Check if tick replay is running"
     echo "    stop-tick-replay-java                   Stop tick replay"
     echo ""
@@ -156,13 +156,6 @@ if [ "$1" = "--list" ]; then
     echo "cancel-tick-download-rest"
     echo "cancel-trade-download-java"
     echo "cancel-trade-download-rest"
-    echo "download-ohlc-history-java"
-    echo "download-quote-history-java"
-    echo "download-quote-history-rest"
-    echo "download-tick-history-java"
-    echo "download-tick-history-rest"
-    echo "download-trade-history-java"
-    echo "download-trade-history-rest"
     echo "get-historical-ohlc-java"
     echo "get-historical-ohlc-rest"
     echo "get-historical-top-gainers-java"
@@ -192,8 +185,15 @@ if [ "$1" = "--list" ]; then
     echo "ping-live-aggregates-rest"
     echo "ping-live-feed-rest"
     echo "ping-reference-rest"
-    echo "replay-ticks-java"
-    echo "replay-ticks-rest"
+    echo "start-ohlc-download-java"
+    echo "start-quote-download-java"
+    echo "start-quote-download-rest"
+    echo "start-tick-download-java"
+    echo "start-tick-download-rest"
+    echo "start-tick-replay-java"
+    echo "start-tick-replay-rest"
+    echo "start-trade-download-java"
+    echo "start-trade-download-rest"
     echo "stop-tick-replay-java"
     echo "stop-tick-replay-rest"
     echo "stream-historical-ohlc-concurrently-java"

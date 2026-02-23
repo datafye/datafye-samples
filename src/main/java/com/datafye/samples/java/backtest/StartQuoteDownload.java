@@ -30,15 +30,15 @@ import jargs.gnu.CmdLineParser;
 import com.datafye.roe.*;
 import com.datafye.client.sip.HistoryClient;
 
-public class DownloadTickHistory {
+public class StartQuoteDownload {
     static {
         System.setProperty("datafye-sip-history.client.samples.connectionDescriptor",
             "solace://solace.rumi.local:55555&client_name=samples-sip-history");
     }
 
     final private static void printUsage() {
-        System.err.println("    [{-d, --date the date to download tick history for (format=YYYY-MM-DD) (required)]");
-        System.err.println("    [{-s, --symbols the symbols (comma separated) to download tick history for (optional)]");
+        System.err.println("    [{-d, --date the date to download quote history for (format=YYYY-MM-DD) (required)]");
+        System.err.println("    [{-s, --symbols the symbols (comma separated) to download quote history for (optional)]");
         System.err.println("    [{-w, --wait wait for download to complete]");
         System.err.println("    [{-h, --help} print this help string]");
         System.exit(-1);
@@ -55,9 +55,9 @@ public class DownloadTickHistory {
         HistoryClient client = new HistoryClient("samples", "0");
 
         // start the download
-        StartStocksTickHistoryFetchRequestMessage request = StartStocksTickHistoryFetchRequestMessage.create();
+        StartStocksQuoteHistoryFetchRequestMessage request = StartStocksQuoteHistoryFetchRequestMessage.create();
         request.serializer().startDate(date.getTime()).numDays(1).symbols(symbols).format(FileFormat.Binary).done();
-        StartStocksTickHistoryFetchResponseMessage response = client.startTickHistoryFetch(request);
+        StartStocksQuoteHistoryFetchResponseMessage response = client.startQuoteHistoryFetch(request);
 
         String status = response.getStatus();
         response.dispose();
@@ -68,7 +68,7 @@ public class DownloadTickHistory {
             return;
         }
 
-        System.out.println("Tick history download started successfully.");
+        System.out.println("Quote history download started successfully.");
 
         // wait for completion if requested
         if (wait) {
@@ -76,15 +76,15 @@ public class DownloadTickHistory {
             while (true) {
                 Thread.sleep(5000);
                 long elapsed = (System.currentTimeMillis() - startTime) / 1000;
-                System.out.println("Downloading tick history... (" + elapsed + "s elapsed)");
+                System.out.println("Downloading quote history... (" + elapsed + "s elapsed)");
 
-                IsStocksTickHistoryFetchRunningRequestMessage statusRequest = IsStocksTickHistoryFetchRunningRequestMessage.create();
-                IsStocksTickHistoryFetchRunningResponseMessage statusResponse = client.isTickHistoryFetchRunning(statusRequest);
+                IsStocksQuoteHistoryFetchRunningRequestMessage statusRequest = IsStocksQuoteHistoryFetchRunningRequestMessage.create();
+                IsStocksQuoteHistoryFetchRunningResponseMessage statusResponse = client.isQuoteHistoryFetchRunning(statusRequest);
                 boolean isRunning = statusResponse.getIsRunning();
                 statusResponse.dispose();
 
                 if (!isRunning) {
-                    System.out.println("Tick history download completed. (" + elapsed + "s)");
+                    System.out.println("Quote history download completed. (" + elapsed + "s)");
                     break;
                 }
             }

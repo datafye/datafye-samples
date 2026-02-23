@@ -30,7 +30,7 @@ import jargs.gnu.CmdLineParser;
 import com.datafye.roe.*;
 import com.datafye.client.sip.HistoryClient;
 
-public class DownloadTradeHistory {
+public class StartTradeDownload {
     static {
         System.setProperty("datafye-sip-history.client.samples.connectionDescriptor",
             "solace://solace.rumi.local:55555&client_name=samples-sip-history");
