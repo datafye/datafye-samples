@@ -34,7 +34,7 @@ The tables below cover stocks. Equivalent crypto samples are planned.
 | Data Type | Mode | API | Sample | Foundry | Trading | Status |
 |-----------|------|-----|--------|:-------:|:-------:|--------|
 | Securities | Fetch | REST | GetSecurities | ✓ | ✓ | *WIP* |
-| Securities | Fetch | Java | GetSecurities | ✓ | ✓ | *WIP* |
+| | | Java | GetSecurities | ✓ | ✓ | *WIP* |
 
 #### Historical
 
@@ -43,16 +43,16 @@ Historical data is available in a Foundry only.
 | Data Type | Mode | API | Sample | Foundry | Trading | Status |
 |-----------|------|-----|--------|:-------:|:-------:|--------|
 | Candles | Fetch | REST | GetHistoricalCandles | ✓ | — | Available |
-| Candles | Fetch | Java | GetHistoricalCandles | ✓ | — | Available |
-| Candles | Stream | WS | StreamHistoricalCandles | ✓ | — | *WIP* |
-| Candles | Stream | Java | StreamHistoricalCandles | ✓ | — | Available |
-| Candles | Stream | Java | StreamHistoricalCandlesConcurrently | ✓ | — | Available |
+| | | Java | GetHistoricalCandles | ✓ | — | Available |
+| | Stream | WS | StreamHistoricalCandles | ✓ | — | *WIP* |
+| | | Java | StreamHistoricalCandles | ✓ | — | Available |
+| | | Java | StreamHistoricalCandlesConcurrently | ✓ | — | Available |
 | Ticks | Fetch | REST | GetHistoricalTicks | ✓ | — | *WIP* |
-| Ticks | Fetch | Java | GetHistoricalTicks | ✓ | — | *WIP* |
-| Ticks | Stream | WS | StreamHistoricalTicks | ✓ | — | *WIP* |
-| Ticks | Stream | Java | StreamHistoricalTicks | ✓ | — | *WIP* |
+| | | Java | GetHistoricalTicks | ✓ | — | *WIP* |
+| | Stream | WS | StreamHistoricalTicks | ✓ | — | *WIP* |
+| | | Java | StreamHistoricalTicks | ✓ | — | *WIP* |
 | Top Gainers | Fetch | REST | GetHistoricalTopGainers | ✓ | — | *WIP* |
-| Top Gainers | Fetch | Java | GetHistoricalTopGainers | ✓ | — | *WIP* |
+| | | Java | GetHistoricalTopGainers | ✓ | — | *WIP* |
 
 #### Live
 
@@ -61,37 +61,38 @@ In a Foundry, live data is produced by replaying historical tick data — see [B
 | Data Type | Mode | API | Sample | Foundry | Trading | Status |
 |-----------|------|-----|--------|:-------:|:-------:|--------|
 | Candles | Fetch | REST | GetLiveCandles | ✓ | ✓ | Available |
-| Candles | Fetch | REST | GetLiveCandlesConcurrently | ✓ | ✓ | Available |
-| Candles | Fetch | Java | GetLiveCandles | ✓ | ✓ | Available |
-| Candles | Subscribe | WS | SubscribeLiveCandles | ✓ | ✓ | *WIP* |
-| Candles | Subscribe | Java | SubscribeLiveCandles | ✓ | ✓ | *WIP* |
+| | | REST | GetLiveCandlesConcurrently | ✓ | ✓ | Available |
+| | | Java | GetLiveCandles | ✓ | ✓ | Available |
+| | Subscribe | WS | SubscribeLiveCandles | ✓ | ✓ | *WIP* |
+| | | Java | SubscribeLiveCandles | ✓ | ✓ | *WIP* |
 | Top-of-Book | Fetch | REST | GetLiveTopOfBook | ✓ | ✓ | Available |
-| Top-of-Book | Fetch | Java | GetLiveTopOfBook | ✓ | ✓ | Available |
-| Top-of-Book | Subscribe | WS | SubscribeLiveTopOfBook | ✓ | ✓ | *WIP* |
-| Top-of-Book | Subscribe | Java | StreamLiveTopOfBook | ✓ | ✓ | Available |
+| | | Java | GetLiveTopOfBook | ✓ | ✓ | Available |
+| | Subscribe | WS | SubscribeLiveTopOfBook | ✓ | ✓ | *WIP* |
+| | | Java | StreamLiveTopOfBook | ✓ | ✓ | Available |
 | Trades | Fetch | REST | GetLastTrade | ✓ | ✓ | *WIP* |
-| Trades | Subscribe | WS | SubscribeLiveTrades | ✓ | ✓ | *WIP* |
-| Trades | Subscribe | Java | StreamLiveTrades | ✓ | ✓ | Available |
+| | Subscribe | WS | SubscribeLiveTrades | ✓ | ✓ | *WIP* |
+| | | Java | StreamLiveTrades | ✓ | ✓ | Available |
 | SMA | Fetch | REST | GetLiveSMA | ✓ | ✓ | *WIP* |
-| SMA | Fetch | Java | GetLiveSMA | ✓ | ✓ | *WIP* |
+| | | Java | GetLiveSMA | ✓ | ✓ | *WIP* |
 | EMA | Fetch | REST | GetLiveEMA | ✓ | ✓ | *WIP* |
-| EMA | Fetch | Java | GetLiveEMA | ✓ | ✓ | *WIP* |
+| | | Java | GetLiveEMA | ✓ | ✓ | *WIP* |
 
 #### Backtesting
 
 Backtesting samples are Foundry-only. They demonstrate downloading historical data from the data provider and replaying ticks to produce live data for fetch and subscribe operations.
 
-| Operation | API | Sample | Foundry | Trading | Status |
-|-----------|-----|--------|:-------:|:-------:|--------|
-| Download ticks | REST | DownloadTickHistory | ✓ | — | *WIP* |
-| Download ticks | Java | DownloadTickHistory | ✓ | — | *WIP* |
-| Download trades | REST | DownloadTradeHistory | ✓ | — | *WIP* |
-| Download trades | Java | DownloadTradeHistory | ✓ | — | *WIP* |
-| Download quotes | REST | DownloadQuoteHistory | ✓ | — | *WIP* |
-| Download quotes | Java | DownloadQuoteHistory | ✓ | — | *WIP* |
-| Replay ticks | REST | ReplayTicks | ✓ | — | *WIP* |
-| Replay ticks | Java | ReplayTicks | ✓ | — | *WIP* |
-| Clear state | REST | ClearBacktestState | ✓ | — | *WIP* |
+| Data Type | Operation | API | Sample | Foundry | Trading | Status |
+|-----------|-----------|-----|--------|:-------:|:-------:|--------|
+| Ticks | Download | REST | DownloadTickHistory | ✓ | — | *WIP* |
+| | | Java | DownloadTickHistory | ✓ | — | *WIP* |
+| | Replay | REST | ReplayTicks | ✓ | — | *WIP* |
+| | | Java | ReplayTicks | ✓ | — | *WIP* |
+| Trades | Download | REST | DownloadTradeHistory | ✓ | — | *WIP* |
+| | | Java | DownloadTradeHistory | ✓ | — | *WIP* |
+| Quotes | Download | REST | DownloadQuoteHistory | ✓ | — | *WIP* |
+| | | Java | DownloadQuoteHistory | ✓ | — | *WIP* |
+| Candles | Download | Java | DownloadCandleHistory | ✓ | — | *WIP* |
+| State | Clear | REST | ClearBacktestState | ✓ | — | *WIP* |
 
 #### Broker
 
@@ -100,11 +101,13 @@ Broker samples are available in Trading Environments only.
 | Operation | API | Sample | Foundry | Trading | Status |
 |-----------|-----|--------|:-------:|:-------:|--------|
 | Place order | REST | PlaceOrder | — | ✓ | *WIP* |
-| Place order | Java | PlaceOrder | — | ✓ | *WIP* |
+| | Java | PlaceOrder | — | ✓ | *WIP* |
 | Get orders | REST | GetOrders | — | ✓ | *WIP* |
-| Get orders | Java | GetOrders | — | ✓ | *WIP* |
+| | Java | GetOrders | — | ✓ | *WIP* |
+| Get order | REST | GetOrder | — | ✓ | *WIP* |
+| | Java | GetOrder | — | ✓ | *WIP* |
 | Cancel order | REST | CancelOrder | — | ✓ | *WIP* |
-| Cancel order | Java | CancelOrder | — | ✓ | *WIP* |
+| | Java | CancelOrder | — | ✓ | *WIP* |
 
 ### Algo Container Samples
 
