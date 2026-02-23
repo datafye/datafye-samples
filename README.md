@@ -191,22 +191,52 @@ The extracted distribution contains:
 - `libs/` — All JARs (application + dependencies)
 - `conf/rumi.conf` — Optional Rumi runtime tuning (trace levels, etc.)
 
-## Quick Start
+## Running the Samples
 
-Once you've built the project and extracted the distribution, provision a local environment and run a sample:
+### 1. Provision a Local Datafye Environment
+
+The samples need a running Datafye Data Cloud to connect to. The easiest way to get one is to provision a local environment using the Datafye CLI.
+
+**Install the Datafye CLI:**
 
 ```bash
-# Install the Datafye CLI
 curl -fsSL https://downloads.n5corp.com/datafye/cli/latest/install.sh | sudo bash
+```
 
-# Provision a local Data Cloud with synthetic data
+> No sudo access? See [CLI Installation](https://docs.datafye.io/cli-reference/installation) for alternative methods.
+
+**Download the quickstart descriptor and provision:**
+
+```bash
 curl -o quickstart.yaml https://downloads.n5corp.com/datafye/quickstarts/latest/foundry-data-cloud-only.yaml
 datafye foundry local provision --descriptor quickstart.yaml
+```
 
-# Run a sample (from the extracted distribution directory)
+This provisions a Data Cloud with a Synthetic dataset containing 10 symbols (AAPL, MSFT, GOOGL, AMZN, NVDA, TSLA, META, NFLX, AMD, INTC), 90 days of historical data, and live tick and OHLC data. No API keys required.
+
+For full details see the [Foundry: Data Cloud Only](https://docs.datafye.io/quickstart/foundry-data-cloud-only) quickstart, or explore other quickstart scenarios in the [Datafye docs](https://docs.datafye.io).
+
+### 2. Run a Sample
+
+Use `bin/run.sh` (Linux/macOS) or `bin\run.bat` (Windows) from the extracted distribution directory. The scripts handle JVM options and classpath automatically.
+
+```bash
+bin/run.sh <sample-name> [options]
+```
+
+Use `--help` to see all available samples, or `--help` after a sample name to see its options:
+
+```bash
+bin/run.sh --help
+bin/run.sh get-historical-ohlc-rest --help
+```
+
+**Example:**
+
+```bash
 bin/run.sh get-historical-ohlc-rest -s AAPL -c Minute -f 2024-01-15T09:00:00 -t 2024-01-15T18:00:00
 ```
 
-Use `bin/run.sh --help` to see all available samples.
+### Configuration
 
-For detailed per-sample instructions, configuration, and scenario guides, see the [wiki](../../wiki).
+Each sample embeds its connection config directly in a `static {}` block at the top of the class. By default they point to `solace.rumi.local:55555` (messaging backbone) and `api.rest.rumi.local:7776` (REST API) — which is what the quickstart descriptor provisions. If your environment uses different hosts or ports, update the `System.setProperty()` calls in the sample you're running.
