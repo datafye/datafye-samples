@@ -43,10 +43,6 @@ Historical data is available in a Foundry only.
 
 <table>
 <tr><th>Data Type</th><th>Mode</th><th>API</th><th>Sample</th><th>Foundry</th><th>Trading</th><th>Status</th></tr>
-<tr><td rowspan="4" style="vertical-align:middle">Ticks</td><td rowspan="2" style="vertical-align:middle">Fetch</td><td>REST</td><td>GetHistoricalTicks</td><td align="center">✓</td><td align="center">—</td><td><em>WIP</em></td></tr>
-<tr><td>Java</td><td>GetHistoricalTicks</td><td align="center">✓</td><td align="center">—</td><td><em>WIP</em></td></tr>
-<tr><td rowspan="2" style="vertical-align:middle">Stream</td><td>WS</td><td>StreamHistoricalTicks</td><td align="center">✓</td><td align="center">—</td><td><em>WIP</em></td></tr>
-<tr><td>Java</td><td>StreamHistoricalTicks</td><td align="center">✓</td><td align="center">—</td><td><em>WIP</em></td></tr>
 <tr><td rowspan="5" style="vertical-align:middle">OHLC</td><td rowspan="2" style="vertical-align:middle">Fetch</td><td>REST</td><td>GetHistoricalOHLC</td><td align="center">✓</td><td align="center">—</td><td>Available</td></tr>
 <tr><td>Java</td><td>GetHistoricalOHLC</td><td align="center">✓</td><td align="center">—</td><td>Available</td></tr>
 <tr><td rowspan="3" style="vertical-align:middle">Stream</td><td>WS</td><td>StreamHistoricalOHLC</td><td align="center">✓</td><td align="center">—</td><td><em>WIP</em></td></tr>
