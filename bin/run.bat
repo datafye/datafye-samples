@@ -37,6 +37,8 @@ if "%SAMPLE_NAME%"=="get-live-sma-rest" set CLASS=com.datafye.samples.rest.GetLi
 if "%SAMPLE_NAME%"=="get-live-sma-java" set CLASS=com.datafye.samples.java.GetLiveSMA
 if "%SAMPLE_NAME%"=="get-live-ema-rest" set CLASS=com.datafye.samples.rest.GetLiveEMA
 if "%SAMPLE_NAME%"=="get-live-ema-java" set CLASS=com.datafye.samples.java.GetLiveEMA
+if "%SAMPLE_NAME%"=="get-securities-rest" set CLASS=com.datafye.samples.rest.GetSecurities
+if "%SAMPLE_NAME%"=="get-securities-java" set CLASS=com.datafye.samples.java.GetSecurities
 
 if not defined CLASS (
     echo Error: Unknown sample '%SAMPLE_NAME%' >&2
@@ -63,6 +65,7 @@ echo     get-live-top-of-book-rest             Fetch live top-of-book quotes
 echo     get-live-last-trade-rest                   Fetch last trade for symbols
 echo     get-live-sma-rest                     Fetch live SMA values
 echo     get-live-ema-rest                     Fetch live EMA values
+echo     get-securities-rest                   Fetch securities reference data
 echo.
 echo   Java Client:
 echo     get-historical-ohlc-java             Fetch historical OHLC bars
@@ -72,6 +75,7 @@ echo     get-live-top-of-book-java             Fetch live top-of-book quotes
 echo     get-live-last-trade-java                   Fetch last trade for symbols
 echo     get-live-sma-java                     Fetch live SMA values
 echo     get-live-ema-java                     Fetch live EMA values
+echo     get-securities-java                   Fetch securities reference data
 echo     stream-historical-ohlc-java              Stream historical OHLC bars
 echo     stream-historical-ohlc-concurrently-java
 echo                                                Stream historical OHLC bars concurrently
@@ -98,6 +102,8 @@ echo get-live-sma-java
 echo get-live-sma-rest
 echo get-live-top-of-book-java
 echo get-live-top-of-book-rest
+echo get-securities-java
+echo get-securities-rest
 echo stream-historical-ohlc-concurrently-java
 echo stream-historical-ohlc-java
 echo subscribe-live-top-of-book-java

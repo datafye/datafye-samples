@@ -32,6 +32,8 @@ resolve_class() {
         get-live-sma-java)                           echo "com.datafye.samples.java.GetLiveSMA" ;;
         get-live-ema-rest)                           echo "com.datafye.samples.rest.GetLiveEMA" ;;
         get-live-ema-java)                           echo "com.datafye.samples.java.GetLiveEMA" ;;
+        get-securities-rest)                         echo "com.datafye.samples.rest.GetSecurities" ;;
+        get-securities-java)                         echo "com.datafye.samples.java.GetSecurities" ;;
         *) return 1 ;;
     esac
 }
@@ -50,6 +52,7 @@ usage() {
     echo "    get-live-last-trade-rest                   Fetch last trade for symbols"
     echo "    get-live-sma-rest                     Fetch live SMA values"
     echo "    get-live-ema-rest                     Fetch live EMA values"
+    echo "    get-securities-rest                   Fetch securities reference data"
     echo ""
     echo "  Java Client:"
     echo "    get-historical-ohlc-java             Fetch historical OHLC bars"
@@ -59,6 +62,7 @@ usage() {
     echo "    get-live-last-trade-java                   Fetch last trade for symbols"
     echo "    get-live-sma-java                     Fetch live SMA values"
     echo "    get-live-ema-java                     Fetch live EMA values"
+    echo "    get-securities-java                   Fetch securities reference data"
     echo "    stream-historical-ohlc-java              Stream historical OHLC bars"
     echo "    stream-historical-ohlc-concurrently-java"
     echo "                                              Stream historical OHLC bars concurrently"
@@ -90,6 +94,8 @@ if [ "$1" = "--list" ]; then
     echo "get-live-sma-rest"
     echo "get-live-top-of-book-java"
     echo "get-live-top-of-book-rest"
+    echo "get-securities-java"
+    echo "get-securities-rest"
     echo "stream-historical-ohlc-concurrently-java"
     echo "stream-historical-ohlc-java"
     echo "subscribe-live-top-of-book-java"
