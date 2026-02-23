@@ -31,83 +31,88 @@ The tables below cover stocks. Equivalent crypto samples are planned.
 
 #### Reference
 
-| Data Type | Mode | API | Sample | Foundry | Trading | Status |
-|-----------|------|-----|--------|:-------:|:-------:|--------|
-| Securities | Fetch | REST | GetSecurities | ✓ | ✓ | *WIP* |
-| | | Java | GetSecurities | ✓ | ✓ | *WIP* |
+<table>
+<tr><th>Data Type</th><th>Mode</th><th>API</th><th>Sample</th><th>Foundry</th><th>Trading</th><th>Status</th></tr>
+<tr><td rowspan="2" style="vertical-align:middle">Securities</td><td rowspan="2" style="vertical-align:middle">Fetch</td><td>REST</td><td>GetSecurities</td><td align="center">✓</td><td align="center">✓</td><td><em>WIP</em></td></tr>
+<tr><td>Java</td><td>GetSecurities</td><td align="center">✓</td><td align="center">✓</td><td><em>WIP</em></td></tr>
+</table>
 
 #### Historical
 
 Historical data is available in a Foundry only.
 
-| Data Type | Mode | API | Sample | Foundry | Trading | Status |
-|-----------|------|-----|--------|:-------:|:-------:|--------|
-| Candles | Fetch | REST | GetHistoricalCandles | ✓ | — | Available |
-| | | Java | GetHistoricalCandles | ✓ | — | Available |
-| | Stream | WS | StreamHistoricalCandles | ✓ | — | *WIP* |
-| | | Java | StreamHistoricalCandles | ✓ | — | Available |
-| | | Java | StreamHistoricalCandlesConcurrently | ✓ | — | Available |
-| Ticks | Fetch | REST | GetHistoricalTicks | ✓ | — | *WIP* |
-| | | Java | GetHistoricalTicks | ✓ | — | *WIP* |
-| | Stream | WS | StreamHistoricalTicks | ✓ | — | *WIP* |
-| | | Java | StreamHistoricalTicks | ✓ | — | *WIP* |
-| Top Gainers | Fetch | REST | GetHistoricalTopGainers | ✓ | — | *WIP* |
-| | | Java | GetHistoricalTopGainers | ✓ | — | *WIP* |
+<table>
+<tr><th>Data Type</th><th>Mode</th><th>API</th><th>Sample</th><th>Foundry</th><th>Trading</th><th>Status</th></tr>
+<tr><td rowspan="5" style="vertical-align:middle">Candles</td><td rowspan="2" style="vertical-align:middle">Fetch</td><td>REST</td><td>GetHistoricalCandles</td><td align="center">✓</td><td align="center">—</td><td>Available</td></tr>
+<tr><td>Java</td><td>GetHistoricalCandles</td><td align="center">✓</td><td align="center">—</td><td>Available</td></tr>
+<tr><td rowspan="3" style="vertical-align:middle">Stream</td><td>WS</td><td>StreamHistoricalCandles</td><td align="center">✓</td><td align="center">—</td><td><em>WIP</em></td></tr>
+<tr><td>Java</td><td>StreamHistoricalCandles</td><td align="center">✓</td><td align="center">—</td><td>Available</td></tr>
+<tr><td>Java</td><td>StreamHistoricalCandlesConcurrently</td><td align="center">✓</td><td align="center">—</td><td>Available</td></tr>
+<tr><td rowspan="4" style="vertical-align:middle">Ticks</td><td rowspan="2" style="vertical-align:middle">Fetch</td><td>REST</td><td>GetHistoricalTicks</td><td align="center">✓</td><td align="center">—</td><td><em>WIP</em></td></tr>
+<tr><td>Java</td><td>GetHistoricalTicks</td><td align="center">✓</td><td align="center">—</td><td><em>WIP</em></td></tr>
+<tr><td rowspan="2" style="vertical-align:middle">Stream</td><td>WS</td><td>StreamHistoricalTicks</td><td align="center">✓</td><td align="center">—</td><td><em>WIP</em></td></tr>
+<tr><td>Java</td><td>StreamHistoricalTicks</td><td align="center">✓</td><td align="center">—</td><td><em>WIP</em></td></tr>
+<tr><td rowspan="2" style="vertical-align:middle">Top Gainers</td><td rowspan="2" style="vertical-align:middle">Fetch</td><td>REST</td><td>GetHistoricalTopGainers</td><td align="center">✓</td><td align="center">—</td><td><em>WIP</em></td></tr>
+<tr><td>Java</td><td>GetHistoricalTopGainers</td><td align="center">✓</td><td align="center">—</td><td><em>WIP</em></td></tr>
+</table>
 
 #### Live
 
 In a Foundry, live data is produced by replaying historical tick data — see [Backtesting](#backtesting) for how to download and replay ticks. In a Trading Environment, live data comes directly from the market. The same fetch and subscribe APIs apply in both cases.
 
-| Data Type | Mode | API | Sample | Foundry | Trading | Status |
-|-----------|------|-----|--------|:-------:|:-------:|--------|
-| Candles | Fetch | REST | GetLiveCandles | ✓ | ✓ | Available |
-| | | REST | GetLiveCandlesConcurrently | ✓ | ✓ | Available |
-| | | Java | GetLiveCandles | ✓ | ✓ | Available |
-| | Subscribe | WS | SubscribeLiveCandles | ✓ | ✓ | *WIP* |
-| | | Java | SubscribeLiveCandles | ✓ | ✓ | *WIP* |
-| Top-of-Book | Fetch | REST | GetLiveTopOfBook | ✓ | ✓ | Available |
-| | | Java | GetLiveTopOfBook | ✓ | ✓ | Available |
-| | Subscribe | WS | SubscribeLiveTopOfBook | ✓ | ✓ | *WIP* |
-| | | Java | StreamLiveTopOfBook | ✓ | ✓ | Available |
-| Trades | Fetch | REST | GetLastTrade | ✓ | ✓ | *WIP* |
-| | Subscribe | WS | SubscribeLiveTrades | ✓ | ✓ | *WIP* |
-| | | Java | StreamLiveTrades | ✓ | ✓ | Available |
-| SMA | Fetch | REST | GetLiveSMA | ✓ | ✓ | *WIP* |
-| | | Java | GetLiveSMA | ✓ | ✓ | *WIP* |
-| EMA | Fetch | REST | GetLiveEMA | ✓ | ✓ | *WIP* |
-| | | Java | GetLiveEMA | ✓ | ✓ | *WIP* |
+<table>
+<tr><th>Data Type</th><th>Mode</th><th>API</th><th>Sample</th><th>Foundry</th><th>Trading</th><th>Status</th></tr>
+<tr><td rowspan="5" style="vertical-align:middle">Candles</td><td rowspan="3" style="vertical-align:middle">Fetch</td><td>REST</td><td>GetLiveCandles</td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td>REST</td><td>GetLiveCandlesConcurrently</td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td>Java</td><td>GetLiveCandles</td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td rowspan="2" style="vertical-align:middle">Subscribe</td><td>WS</td><td>SubscribeLiveCandles</td><td align="center">✓</td><td align="center">✓</td><td><em>WIP</em></td></tr>
+<tr><td>Java</td><td>SubscribeLiveCandles</td><td align="center">✓</td><td align="center">✓</td><td><em>WIP</em></td></tr>
+<tr><td rowspan="4" style="vertical-align:middle">Top-of-Book</td><td rowspan="2" style="vertical-align:middle">Fetch</td><td>REST</td><td>GetLiveTopOfBook</td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td>Java</td><td>GetLiveTopOfBook</td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td rowspan="2" style="vertical-align:middle">Subscribe</td><td>WS</td><td>SubscribeLiveTopOfBook</td><td align="center">✓</td><td align="center">✓</td><td><em>WIP</em></td></tr>
+<tr><td>Java</td><td>StreamLiveTopOfBook</td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td rowspan="3" style="vertical-align:middle">Trades</td><td style="vertical-align:middle">Fetch</td><td>REST</td><td>GetLastTrade</td><td align="center">✓</td><td align="center">✓</td><td><em>WIP</em></td></tr>
+<tr><td rowspan="2" style="vertical-align:middle">Subscribe</td><td>WS</td><td>SubscribeLiveTrades</td><td align="center">✓</td><td align="center">✓</td><td><em>WIP</em></td></tr>
+<tr><td>Java</td><td>StreamLiveTrades</td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td rowspan="2" style="vertical-align:middle">SMA</td><td rowspan="2" style="vertical-align:middle">Fetch</td><td>REST</td><td>GetLiveSMA</td><td align="center">✓</td><td align="center">✓</td><td><em>WIP</em></td></tr>
+<tr><td>Java</td><td>GetLiveSMA</td><td align="center">✓</td><td align="center">✓</td><td><em>WIP</em></td></tr>
+<tr><td rowspan="2" style="vertical-align:middle">EMA</td><td rowspan="2" style="vertical-align:middle">Fetch</td><td>REST</td><td>GetLiveEMA</td><td align="center">✓</td><td align="center">✓</td><td><em>WIP</em></td></tr>
+<tr><td>Java</td><td>GetLiveEMA</td><td align="center">✓</td><td align="center">✓</td><td><em>WIP</em></td></tr>
+</table>
 
 #### Backtesting
 
 Backtesting samples are Foundry-only. They demonstrate downloading historical data from the data provider and replaying ticks to produce live data for fetch and subscribe operations.
 
-| Data Type | Operation | API | Sample | Foundry | Trading | Status |
-|-----------|-----------|-----|--------|:-------:|:-------:|--------|
-| Ticks | Download | REST | DownloadTickHistory | ✓ | — | *WIP* |
-| | | Java | DownloadTickHistory | ✓ | — | *WIP* |
-| | Replay | REST | ReplayTicks | ✓ | — | *WIP* |
-| | | Java | ReplayTicks | ✓ | — | *WIP* |
-| Trades | Download | REST | DownloadTradeHistory | ✓ | — | *WIP* |
-| | | Java | DownloadTradeHistory | ✓ | — | *WIP* |
-| Quotes | Download | REST | DownloadQuoteHistory | ✓ | — | *WIP* |
-| | | Java | DownloadQuoteHistory | ✓ | — | *WIP* |
-| Candles | Download | Java | DownloadCandleHistory | ✓ | — | *WIP* |
-| State | Clear | REST | ClearBacktestState | ✓ | — | *WIP* |
+<table>
+<tr><th>Data Type</th><th>Operation</th><th>API</th><th>Sample</th><th>Foundry</th><th>Trading</th><th>Status</th></tr>
+<tr><td rowspan="4" style="vertical-align:middle">Ticks</td><td rowspan="2" style="vertical-align:middle">Download</td><td>REST</td><td>DownloadTickHistory</td><td align="center">✓</td><td align="center">—</td><td><em>WIP</em></td></tr>
+<tr><td>Java</td><td>DownloadTickHistory</td><td align="center">✓</td><td align="center">—</td><td><em>WIP</em></td></tr>
+<tr><td rowspan="2" style="vertical-align:middle">Replay</td><td>REST</td><td>ReplayTicks</td><td align="center">✓</td><td align="center">—</td><td><em>WIP</em></td></tr>
+<tr><td>Java</td><td>ReplayTicks</td><td align="center">✓</td><td align="center">—</td><td><em>WIP</em></td></tr>
+<tr><td rowspan="2" style="vertical-align:middle">Trades</td><td rowspan="2" style="vertical-align:middle">Download</td><td>REST</td><td>DownloadTradeHistory</td><td align="center">✓</td><td align="center">—</td><td><em>WIP</em></td></tr>
+<tr><td>Java</td><td>DownloadTradeHistory</td><td align="center">✓</td><td align="center">—</td><td><em>WIP</em></td></tr>
+<tr><td rowspan="2" style="vertical-align:middle">Quotes</td><td rowspan="2" style="vertical-align:middle">Download</td><td>REST</td><td>DownloadQuoteHistory</td><td align="center">✓</td><td align="center">—</td><td><em>WIP</em></td></tr>
+<tr><td>Java</td><td>DownloadQuoteHistory</td><td align="center">✓</td><td align="center">—</td><td><em>WIP</em></td></tr>
+<tr><td style="vertical-align:middle">Candles</td><td style="vertical-align:middle">Download</td><td>Java</td><td>DownloadCandleHistory</td><td align="center">✓</td><td align="center">—</td><td><em>WIP</em></td></tr>
+<tr><td style="vertical-align:middle">State</td><td style="vertical-align:middle">Clear</td><td>REST</td><td>ClearBacktestState</td><td align="center">✓</td><td align="center">—</td><td><em>WIP</em></td></tr>
+</table>
 
 #### Broker
 
 Broker samples are available in Trading Environments only.
 
-| Operation | API | Sample | Foundry | Trading | Status |
-|-----------|-----|--------|:-------:|:-------:|--------|
-| Place order | REST | PlaceOrder | — | ✓ | *WIP* |
-| | Java | PlaceOrder | — | ✓ | *WIP* |
-| Get orders | REST | GetOrders | — | ✓ | *WIP* |
-| | Java | GetOrders | — | ✓ | *WIP* |
-| Get order | REST | GetOrder | — | ✓ | *WIP* |
-| | Java | GetOrder | — | ✓ | *WIP* |
-| Cancel order | REST | CancelOrder | — | ✓ | *WIP* |
-| | Java | CancelOrder | — | ✓ | *WIP* |
+<table>
+<tr><th>Operation</th><th>API</th><th>Sample</th><th>Foundry</th><th>Trading</th><th>Status</th></tr>
+<tr><td rowspan="2" style="vertical-align:middle">Place order</td><td>REST</td><td>PlaceOrder</td><td align="center">—</td><td align="center">✓</td><td><em>WIP</em></td></tr>
+<tr><td>Java</td><td>PlaceOrder</td><td align="center">—</td><td align="center">✓</td><td><em>WIP</em></td></tr>
+<tr><td rowspan="2" style="vertical-align:middle">Get orders</td><td>REST</td><td>GetOrders</td><td align="center">—</td><td align="center">✓</td><td><em>WIP</em></td></tr>
+<tr><td>Java</td><td>GetOrders</td><td align="center">—</td><td align="center">✓</td><td><em>WIP</em></td></tr>
+<tr><td rowspan="2" style="vertical-align:middle">Get order</td><td>REST</td><td>GetOrder</td><td align="center">—</td><td align="center">✓</td><td><em>WIP</em></td></tr>
+<tr><td>Java</td><td>GetOrder</td><td align="center">—</td><td align="center">✓</td><td><em>WIP</em></td></tr>
+<tr><td rowspan="2" style="vertical-align:middle">Cancel order</td><td>REST</td><td>CancelOrder</td><td align="center">—</td><td align="center">✓</td><td><em>WIP</em></td></tr>
+<tr><td>Java</td><td>CancelOrder</td><td align="center">—</td><td align="center">✓</td><td><em>WIP</em></td></tr>
+</table>
 
 ### Algo Container Samples
 
