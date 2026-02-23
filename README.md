@@ -17,71 +17,94 @@ This repo contains samples for two types of Datafye environments:
 
 For [Foundry: Data Cloud Only](https://docs.datafye.io/quickstart/foundry-data-cloud-only) and [Trading: Data Cloud + Broker](https://docs.datafye.io/quickstart/trading-data-cloud-broker) environments — where you bring your own algo container and use the Data Cloud's REST and client APIs to access market data and broker connectivity.
 
-These samples demonstrate two access modes:
+These samples demonstrate three access modes:
 
-1. **REST API** — Standard HTTP/JSON requests. The samples use [OkHttp](https://square.github.io/okhttp/) but any HTTP client in any language works. Good for straightforward request-response queries (historical candles, live quotes). WebSocket support for streaming will be available shortly.
+1. **REST API** — Standard HTTP/JSON request-response. The samples use [OkHttp](https://square.github.io/okhttp/) but any HTTP client in any language works.
 
-2. **Java Client API** — A native Java library (built on the [Rumi](https://developer.rumi.systems) framework) that communicates directly with the Data Cloud and Broker Connector over the cloud's messaging backbone. This bypasses the HTTP layer entirely, giving you lower latency.
+2. **WebSocket API** — Streaming and subscription over WebSocket connections. This is the streaming counterpart to the REST API for those not using the Java Client.
 
-#### Foundry
+3. **Java Client API** — A native Java library (built on the [Rumi](https://developer.rumi.systems) framework) that communicates directly with the Data Cloud and Broker Connector over the cloud's messaging backbone. Supports request-reply, streaming, and subscription through a single client. Bypasses the HTTP layer entirely for lower latency.
 
-A foundry deals exclusively with historical data. Live data is made available by replaying historical tick data, allowing you to fetch and subscribe to live data using the same APIs you would use in a trading environment.
+> **Sample packages:** REST samples are in `c.d.s.rest`, WebSocket samples in `c.d.s.ws`, and Java Client samples in `c.d.s.java` (where `c.d.s` = `com.datafye.samples`).
 
-**Reference**
+The tables below cover stocks. Equivalent crypto samples are planned.
 
-| Data Type | Mode | API | Name | Main Class | Status |
-|-----------|------|-----|------|------------|--------|
-| Securities | Fetch | REST | — | — | *Work in progress* |
-| Securities | Fetch | Java | — | — | *Work in progress* |
+#### Reference
 
-**Historical**
+| Data Type | Mode | API | Sample | Foundry | Trading | Status |
+|-----------|------|-----|--------|:-------:|:-------:|--------|
+| Securities | Fetch | REST | GetSecurities | ✓ | ✓ | *WIP* |
+| Securities | Fetch | Java | GetSecurities | ✓ | ✓ | *WIP* |
 
-| Data Type | Mode | API | Name | Main Class | Status |
-|-----------|------|-----|------|------------|--------|
-| Candles | Fetch | REST | GetHistoricalCandles | `com.datafye.samples.rest.GetHistoricalCandles` | Available |
-| Candles | Fetch | Java | GetHistoricalCandles | `com.datafye.samples.java.GetHistoricalCandles` | Available |
-| Candles | Stream | Java | StreamHistoricalCandles | `com.datafye.samples.java.StreamHistoricalCandles` | Available |
-| Candles | Stream | Java | StreamHistoricalCandlesConcurrently | `com.datafye.samples.java.StreamHistoricalCandlesConcurrently` | Available |
-| Ticks | Fetch | REST | — | — | *Work in progress* |
-| Ticks | Fetch | Java | — | — | *Work in progress* |
-| Ticks | Stream | Java | — | — | *Work in progress* |
+#### Historical
 
-**Live** (via replay)
+Historical data is available in a Foundry only.
 
-| Data Type | Mode | API | Name | Main Class | Status |
-|-----------|------|-----|------|------------|--------|
-| Candles | Fetch | REST | GetLiveCandles | `com.datafye.samples.rest.GetLiveCandles` | Available |
-| Candles | Fetch | REST | GetLiveCandlesConcurrently | `com.datafye.samples.rest.GetLiveCandlesConcurrently` | Available |
-| Candles | Fetch | Java | GetLiveCandles | `com.datafye.samples.java.GetLiveCandles` | Available |
-| Candles | Subscribe | Java | — | — | *Work in progress* |
-| Ticks | Fetch | REST | GetLiveTopOfBook | `com.datafye.samples.rest.GetLiveTopOfBook` | Available |
-| Ticks | Fetch | Java | GetLiveTopOfBook | `com.datafye.samples.java.GetLiveTopOfBook` | Available |
-| Ticks | Subscribe | Java | StreamLiveTopOfBook | `com.datafye.samples.java.StreamLiveTopOfBook` | Available |
-| Ticks | Subscribe | Java | StreamLiveTrades | `com.datafye.samples.java.StreamLiveTrades` | Available |
+| Data Type | Mode | API | Sample | Foundry | Trading | Status |
+|-----------|------|-----|--------|:-------:|:-------:|--------|
+| Candles | Fetch | REST | GetHistoricalCandles | ✓ | — | Available |
+| Candles | Fetch | Java | GetHistoricalCandles | ✓ | — | Available |
+| Candles | Stream | WS | StreamHistoricalCandles | ✓ | — | *WIP* |
+| Candles | Stream | Java | StreamHistoricalCandles | ✓ | — | Available |
+| Candles | Stream | Java | StreamHistoricalCandlesConcurrently | ✓ | — | Available |
+| Ticks | Fetch | REST | GetHistoricalTicks | ✓ | — | *WIP* |
+| Ticks | Fetch | Java | GetHistoricalTicks | ✓ | — | *WIP* |
+| Ticks | Stream | WS | StreamHistoricalTicks | ✓ | — | *WIP* |
+| Ticks | Stream | Java | StreamHistoricalTicks | ✓ | — | *WIP* |
+| Top Gainers | Fetch | REST | GetHistoricalTopGainers | ✓ | — | *WIP* |
+| Top Gainers | Fetch | Java | GetHistoricalTopGainers | ✓ | — | *WIP* |
 
-#### Trading Environment
+#### Live
 
-A trading environment works with live market data. The same fetch and subscribe APIs used with replayed data in a foundry apply identically here.
+In a Foundry, live data is produced by replaying historical tick data — see [Backtesting](#backtesting) for how to download and replay ticks. In a Trading Environment, live data comes directly from the market. The same fetch and subscribe APIs apply in both cases.
 
-**Reference**
+| Data Type | Mode | API | Sample | Foundry | Trading | Status |
+|-----------|------|-----|--------|:-------:|:-------:|--------|
+| Candles | Fetch | REST | GetLiveCandles | ✓ | ✓ | Available |
+| Candles | Fetch | REST | GetLiveCandlesConcurrently | ✓ | ✓ | Available |
+| Candles | Fetch | Java | GetLiveCandles | ✓ | ✓ | Available |
+| Candles | Subscribe | WS | SubscribeLiveCandles | ✓ | ✓ | *WIP* |
+| Candles | Subscribe | Java | SubscribeLiveCandles | ✓ | ✓ | *WIP* |
+| Top-of-Book | Fetch | REST | GetLiveTopOfBook | ✓ | ✓ | Available |
+| Top-of-Book | Fetch | Java | GetLiveTopOfBook | ✓ | ✓ | Available |
+| Top-of-Book | Subscribe | WS | SubscribeLiveTopOfBook | ✓ | ✓ | *WIP* |
+| Top-of-Book | Subscribe | Java | StreamLiveTopOfBook | ✓ | ✓ | Available |
+| Trades | Fetch | REST | GetLastTrade | ✓ | ✓ | *WIP* |
+| Trades | Subscribe | WS | SubscribeLiveTrades | ✓ | ✓ | *WIP* |
+| Trades | Subscribe | Java | StreamLiveTrades | ✓ | ✓ | Available |
+| SMA | Fetch | REST | GetLiveSMA | ✓ | ✓ | *WIP* |
+| SMA | Fetch | Java | GetLiveSMA | ✓ | ✓ | *WIP* |
+| EMA | Fetch | REST | GetLiveEMA | ✓ | ✓ | *WIP* |
+| EMA | Fetch | Java | GetLiveEMA | ✓ | ✓ | *WIP* |
 
-| Data Type | Mode | API | Name | Main Class | Status |
-|-----------|------|-----|------|------------|--------|
-| Securities | Fetch | REST | — | — | *Work in progress* |
-| Securities | Fetch | Java | — | — | *Work in progress* |
+#### Backtesting
 
-**Live**
+Backtesting samples are Foundry-only. They demonstrate downloading historical data from the data provider and replaying ticks to produce live data for fetch and subscribe operations.
 
-| Data Type | Mode | API | Name | Main Class | Status |
-|-----------|------|-----|------|------------|--------|
-| Candles | Fetch | REST | GetLiveCandles | `com.datafye.samples.rest.GetLiveCandles` | Available |
-| Candles | Fetch | REST | GetLiveCandlesConcurrently | `com.datafye.samples.rest.GetLiveCandlesConcurrently` | Available |
-| Candles | Fetch | Java | GetLiveCandles | `com.datafye.samples.java.GetLiveCandles` | Available |
-| Candles | Subscribe | Java | — | — | *Work in progress* |
-| Ticks | Fetch | REST | GetLiveTopOfBook | `com.datafye.samples.rest.GetLiveTopOfBook` | Available |
-| Ticks | Fetch | Java | GetLiveTopOfBook | `com.datafye.samples.java.GetLiveTopOfBook` | Available |
-| Ticks | Subscribe | Java | StreamLiveTopOfBook | `com.datafye.samples.java.StreamLiveTopOfBook` | Available |
-| Ticks | Subscribe | Java | StreamLiveTrades | `com.datafye.samples.java.StreamLiveTrades` | Available |
+| Operation | API | Sample | Foundry | Trading | Status |
+|-----------|-----|--------|:-------:|:-------:|--------|
+| Download ticks | REST | DownloadTickHistory | ✓ | — | *WIP* |
+| Download ticks | Java | DownloadTickHistory | ✓ | — | *WIP* |
+| Download trades | REST | DownloadTradeHistory | ✓ | — | *WIP* |
+| Download trades | Java | DownloadTradeHistory | ✓ | — | *WIP* |
+| Download quotes | REST | DownloadQuoteHistory | ✓ | — | *WIP* |
+| Download quotes | Java | DownloadQuoteHistory | ✓ | — | *WIP* |
+| Replay ticks | REST | ReplayTicks | ✓ | — | *WIP* |
+| Replay ticks | Java | ReplayTicks | ✓ | — | *WIP* |
+| Clear state | REST | ClearBacktestState | ✓ | — | *WIP* |
+
+#### Broker
+
+Broker samples are available in Trading Environments only.
+
+| Operation | API | Sample | Foundry | Trading | Status |
+|-----------|-----|--------|:-------:|:-------:|--------|
+| Place order | REST | PlaceOrder | — | ✓ | *WIP* |
+| Place order | Java | PlaceOrder | — | ✓ | *WIP* |
+| Get orders | REST | GetOrders | — | ✓ | *WIP* |
+| Get orders | Java | GetOrders | — | ✓ | *WIP* |
+| Cancel order | REST | CancelOrder | — | ✓ | *WIP* |
+| Cancel order | Java | CancelOrder | — | ✓ | *WIP* |
 
 ### Algo Container Samples
 
