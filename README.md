@@ -25,7 +25,27 @@ These samples demonstrate three access modes:
 
 3. **Java Client API** — A native Java library (built on the [Rumi](https://developer.rumi.systems) framework) that communicates directly with the Data Cloud and Broker Connector over the cloud's messaging backbone. Supports request-reply, streaming, and subscription through a single client. Bypasses the HTTP layer entirely for lower latency.
 
-> **Sample packages:** REST samples are in `c.d.s.rest`, WebSocket samples in `c.d.s.ws`, and Java Client samples in `c.d.s.java` (where `c.d.s` = `com.datafye.samples`).
+#### Sample Packages
+
+| API | Package | Source |
+|-----|---------|--------|
+| REST | `com.datafye.samples.rest` | [src/.../rest](src/main/java/com/datafye/samples/rest) |
+| WebSocket | `com.datafye.samples.ws` | [src/.../ws](src/main/java/com/datafye/samples/ws) |
+| Java Client | `com.datafye.samples.java` | [src/.../java](src/main/java/com/datafye/samples/java) |
+
+#### Delivery Modes
+
+<h5 id="fetch">Fetch</h5>
+
+Request-response. Client sends a request, gets back a complete result.
+
+<h5 id="stream">Stream</h5>
+
+Server pushes data one record at a time over a dedicated channel. Efficient for large historical datasets.
+
+<h5 id="subscribe">Subscribe</h5>
+
+Client subscribes and receives live updates as they occur in real time.
 
 The tables below cover stocks. Equivalent crypto samples are planned.
 
@@ -33,7 +53,7 @@ The tables below cover stocks. Equivalent crypto samples are planned.
 
 <table>
 <tr><th>Data Type</th><th>Mode</th><th>API</th><th>Sample</th><th>Foundry</th><th>Trading</th><th>Status</th></tr>
-<tr><td rowspan="2" style="vertical-align:middle">Securities</td><td rowspan="2" style="vertical-align:middle">Fetch</td><td>REST</td><td>GetSecurities</td><td align="center">✓</td><td align="center">✓</td><td><em>WIP</em></td></tr>
+<tr><td rowspan="2" style="vertical-align:middle">Securities</td><td rowspan="2" style="vertical-align:middle"><a href="#fetch">Fetch</a></td><td>REST</td><td>GetSecurities</td><td align="center">✓</td><td align="center">✓</td><td><em>WIP</em></td></tr>
 <tr><td>Java</td><td>GetSecurities</td><td align="center">✓</td><td align="center">✓</td><td><em>WIP</em></td></tr>
 </table>
 
@@ -43,12 +63,12 @@ Historical data is available in a Foundry only.
 
 <table>
 <tr><th>Data Type</th><th>Mode</th><th>API</th><th>Sample</th><th>Foundry</th><th>Trading</th><th>Status</th></tr>
-<tr><td rowspan="5" style="vertical-align:middle">OHLC</td><td rowspan="2" style="vertical-align:middle">Fetch</td><td>REST</td><td>GetHistoricalOHLC</td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
-<tr><td>Java</td><td>GetHistoricalOHLC</td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
-<tr><td rowspan="3" style="vertical-align:middle">Stream</td><td>WS</td><td>StreamHistoricalOHLC</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
-<tr><td>Java</td><td>StreamHistoricalOHLC</td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
-<tr><td>Java</td><td>StreamHistoricalOHLCConcurrently</td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
-<tr><td rowspan="2" style="vertical-align:middle">Top Gainers</td><td rowspan="2" style="vertical-align:middle">Fetch</td><td>REST</td><td>GetHistoricalTopGainers</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
+<tr><td rowspan="5" style="vertical-align:middle">OHLC</td><td rowspan="2" style="vertical-align:middle"><a href="#fetch">Fetch</a></td><td>REST</td><td><a href="src/main/java/com/datafye/samples/rest/GetHistoricalOHLC.java">GetHistoricalOHLC</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
+<tr><td>Java</td><td><a href="src/main/java/com/datafye/samples/java/GetHistoricalOHLC.java">GetHistoricalOHLC</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
+<tr><td rowspan="3" style="vertical-align:middle"><a href="#stream">Stream</a></td><td>WS</td><td>StreamHistoricalOHLC</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
+<tr><td>Java</td><td><a href="src/main/java/com/datafye/samples/java/StreamHistoricalOHLC.java">StreamHistoricalOHLC</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
+<tr><td>Java</td><td><a href="src/main/java/com/datafye/samples/java/StreamHistoricalOHLCConcurrently.java">StreamHistoricalOHLCConcurrently</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
+<tr><td rowspan="2" style="vertical-align:middle">Top Gainers</td><td rowspan="2" style="vertical-align:middle"><a href="#fetch">Fetch</a></td><td>REST</td><td>GetHistoricalTopGainers</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
 <tr><td>Java</td><td>GetHistoricalTopGainers</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
 </table>
 
@@ -58,22 +78,22 @@ In a Foundry, live data is produced by replaying historical tick data — see [B
 
 <table>
 <tr><th>Data Type</th><th>Mode</th><th>API</th><th>Sample</th><th>Foundry</th><th>Trading</th><th>Status</th></tr>
-<tr><td rowspan="4" style="vertical-align:middle">Top-of-Book</td><td rowspan="2" style="vertical-align:middle">Fetch</td><td>REST</td><td>GetLiveTopOfBook</td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
-<tr><td>Java</td><td>GetLiveTopOfBook</td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
-<tr><td rowspan="2" style="vertical-align:middle">Subscribe</td><td>WS</td><td>SubscribeLiveTopOfBook</td><td align="center">✓</td><td align="center">✓</td><td><em>WIP</em></td></tr>
-<tr><td>Java</td><td>StreamLiveTopOfBook</td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
-<tr><td rowspan="4" style="vertical-align:middle">Trades</td><td rowspan="2" style="vertical-align:middle">Fetch</td><td>REST</td><td>GetLastTrade</td><td align="center">✓</td><td align="center">✓</td><td><em>WIP</em></td></tr>
+<tr><td rowspan="4" style="vertical-align:middle">Top-of-Book</td><td rowspan="2" style="vertical-align:middle"><a href="#fetch">Fetch</a></td><td>REST</td><td><a href="src/main/java/com/datafye/samples/rest/GetLiveTopOfBook.java">GetLiveTopOfBook</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td>Java</td><td><a href="src/main/java/com/datafye/samples/java/GetLiveTopOfBook.java">GetLiveTopOfBook</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td rowspan="2" style="vertical-align:middle"><a href="#subscribe">Subscribe</a></td><td>WS</td><td>SubscribeLiveTopOfBook</td><td align="center">✓</td><td align="center">✓</td><td><em>WIP</em></td></tr>
+<tr><td>Java</td><td><a href="src/main/java/com/datafye/samples/java/StreamLiveTopOfBook.java">StreamLiveTopOfBook</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td rowspan="4" style="vertical-align:middle">Trades</td><td rowspan="2" style="vertical-align:middle"><a href="#fetch">Fetch</a></td><td>REST</td><td>GetLastTrade</td><td align="center">✓</td><td align="center">✓</td><td><em>WIP</em></td></tr>
 <tr><td>Java</td><td>GetLastTrade</td><td align="center">✓</td><td align="center">✓</td><td><em>WIP</em></td></tr>
-<tr><td rowspan="2" style="vertical-align:middle">Subscribe</td><td>WS</td><td>SubscribeLiveTrades</td><td align="center">✓</td><td align="center">✓</td><td><em>WIP</em></td></tr>
-<tr><td>Java</td><td>StreamLiveTrades</td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
-<tr><td rowspan="5" style="vertical-align:middle">OHLC</td><td rowspan="3" style="vertical-align:middle">Fetch</td><td>REST</td><td>GetLiveOHLC</td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
-<tr><td>REST</td><td>GetLiveOHLCConcurrently</td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
-<tr><td>Java</td><td>GetLiveOHLC</td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
-<tr><td rowspan="2" style="vertical-align:middle">Subscribe</td><td>WS</td><td>SubscribeLiveOHLC</td><td align="center">✓</td><td align="center">✓</td><td><em>WIP</em></td></tr>
+<tr><td rowspan="2" style="vertical-align:middle"><a href="#subscribe">Subscribe</a></td><td>WS</td><td>SubscribeLiveTrades</td><td align="center">✓</td><td align="center">✓</td><td><em>WIP</em></td></tr>
+<tr><td>Java</td><td><a href="src/main/java/com/datafye/samples/java/StreamLiveTrades.java">StreamLiveTrades</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td rowspan="5" style="vertical-align:middle">OHLC</td><td rowspan="3" style="vertical-align:middle"><a href="#fetch">Fetch</a></td><td>REST</td><td><a href="src/main/java/com/datafye/samples/rest/GetLiveOHLC.java">GetLiveOHLC</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td>REST</td><td><a href="src/main/java/com/datafye/samples/rest/GetLiveOHLCConcurrently.java">GetLiveOHLCConcurrently</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td>Java</td><td><a href="src/main/java/com/datafye/samples/java/GetLiveOHLC.java">GetLiveOHLC</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td rowspan="2" style="vertical-align:middle"><a href="#subscribe">Subscribe</a></td><td>WS</td><td>SubscribeLiveOHLC</td><td align="center">✓</td><td align="center">✓</td><td><em>WIP</em></td></tr>
 <tr><td>Java</td><td>SubscribeLiveOHLC</td><td align="center">✓</td><td align="center">✓</td><td><em>WIP</em></td></tr>
-<tr><td rowspan="2" style="vertical-align:middle">SMA</td><td rowspan="2" style="vertical-align:middle">Fetch</td><td>REST</td><td>GetLiveSMA</td><td align="center">✓</td><td align="center">✓</td><td><em>WIP</em></td></tr>
+<tr><td rowspan="2" style="vertical-align:middle">SMA</td><td rowspan="2" style="vertical-align:middle"><a href="#fetch">Fetch</a></td><td>REST</td><td>GetLiveSMA</td><td align="center">✓</td><td align="center">✓</td><td><em>WIP</em></td></tr>
 <tr><td>Java</td><td>GetLiveSMA</td><td align="center">✓</td><td align="center">✓</td><td><em>WIP</em></td></tr>
-<tr><td rowspan="2" style="vertical-align:middle">EMA</td><td rowspan="2" style="vertical-align:middle">Fetch</td><td>REST</td><td>GetLiveEMA</td><td align="center">✓</td><td align="center">✓</td><td><em>WIP</em></td></tr>
+<tr><td rowspan="2" style="vertical-align:middle">EMA</td><td rowspan="2" style="vertical-align:middle"><a href="#fetch">Fetch</a></td><td>REST</td><td>GetLiveEMA</td><td align="center">✓</td><td align="center">✓</td><td><em>WIP</em></td></tr>
 <tr><td>Java</td><td>GetLiveEMA</td><td align="center">✓</td><td align="center">✓</td><td><em>WIP</em></td></tr>
 </table>
 
