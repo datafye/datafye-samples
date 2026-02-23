@@ -28,7 +28,7 @@ import com.neeve.aep.annotations.EventHandler;
 import com.datafye.roe.*;
 import com.datafye.client.synthetic.FeedClient;
 
-public class StreamLiveTrades {
+public class SubscribeLiveTrades {
     static {
         System.setProperty("datafye-synthetic-feed.client.samples.connectionDescriptor",
             "solace://solace.rumi.local:55555&client_name=samples-synthetic-feed");
@@ -189,7 +189,7 @@ public class StreamLiveTrades {
             System.out.println("}");
 
             // execute
-            new StreamLiveTrades().run(symbols);
+            new SubscribeLiveTrades().run(symbols);
         }
         else {
             printUsage();

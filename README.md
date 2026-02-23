@@ -47,6 +47,16 @@ Server pushes data one record at a time over a dedicated channel. Efficient for 
 
 Client subscribes and receives live updates as they occur in real time.
 
+#### Backtesting Operations
+
+<h5 id="download">Download</h5>
+
+Downloads historical data from the data provider into the Foundry's local store for backtesting. Includes lifecycle operations to check download status and cancel a running download.
+
+<h5 id="replay">Replay</h5>
+
+Replays downloaded historical tick data to produce a simulated live feed within the Foundry. Includes lifecycle operations to check replay status and stop a running replay.
+
 The tables below cover stocks. Equivalent crypto samples are planned.
 
 #### Reference
@@ -81,11 +91,11 @@ In a Foundry, live data is produced by replaying historical tick data — see [B
 <tr><td rowspan="4" style="vertical-align:middle">Top-of-Book</td><td rowspan="2" style="vertical-align:middle"><a href="#fetch">Fetch</a></td><td>REST</td><td><a href="src/main/java/com/datafye/samples/rest/GetLiveTopOfBook.java">GetLiveTopOfBook</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
 <tr><td>Java</td><td><a href="src/main/java/com/datafye/samples/java/GetLiveTopOfBook.java">GetLiveTopOfBook</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
 <tr><td rowspan="2" style="vertical-align:middle"><a href="#subscribe">Subscribe</a></td><td>WS</td><td>SubscribeLiveTopOfBook</td><td align="center">✓</td><td align="center">✓</td><td><em>WIP</em></td></tr>
-<tr><td>Java</td><td><a href="src/main/java/com/datafye/samples/java/StreamLiveTopOfBook.java">StreamLiveTopOfBook</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td>Java</td><td><a href="src/main/java/com/datafye/samples/java/SubscribeLiveTopOfBook.java">SubscribeLiveTopOfBook</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
 <tr><td rowspan="4" style="vertical-align:middle">Trades</td><td rowspan="2" style="vertical-align:middle"><a href="#fetch">Fetch</a></td><td>REST</td><td>GetLastTrade</td><td align="center">✓</td><td align="center">✓</td><td><em>WIP</em></td></tr>
 <tr><td>Java</td><td>GetLastTrade</td><td align="center">✓</td><td align="center">✓</td><td><em>WIP</em></td></tr>
 <tr><td rowspan="2" style="vertical-align:middle"><a href="#subscribe">Subscribe</a></td><td>WS</td><td>SubscribeLiveTrades</td><td align="center">✓</td><td align="center">✓</td><td><em>WIP</em></td></tr>
-<tr><td>Java</td><td><a href="src/main/java/com/datafye/samples/java/StreamLiveTrades.java">StreamLiveTrades</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td>Java</td><td><a href="src/main/java/com/datafye/samples/java/SubscribeLiveTrades.java">SubscribeLiveTrades</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
 <tr><td rowspan="5" style="vertical-align:middle">OHLC</td><td rowspan="3" style="vertical-align:middle"><a href="#fetch">Fetch</a></td><td>REST</td><td><a href="src/main/java/com/datafye/samples/rest/GetLiveOHLC.java">GetLiveOHLC</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
 <tr><td>REST</td><td><a href="src/main/java/com/datafye/samples/rest/GetLiveOHLCConcurrently.java">GetLiveOHLCConcurrently</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
 <tr><td>Java</td><td><a href="src/main/java/com/datafye/samples/java/GetLiveOHLC.java">GetLiveOHLC</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
@@ -102,34 +112,16 @@ In a Foundry, live data is produced by replaying historical tick data — see [B
 Backtesting samples are Foundry-only. They demonstrate downloading historical data from the data provider and replaying ticks to produce live data for fetch and subscribe operations.
 
 <table>
-<tr><th>Data Type</th><th>Operation</th><th>API</th><th>Sample</th><th>Foundry</th><th>Trading</th><th>Status</th></tr>
-<tr><td rowspan="12" style="vertical-align:middle">Ticks</td><td rowspan="2" style="vertical-align:middle">Download</td><td>REST</td><td>DownloadTickHistory</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
-<tr><td>Java</td><td>DownloadTickHistory</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
-<tr><td rowspan="2" style="vertical-align:middle">Download status</td><td>REST</td><td>IsTickDownloadRunning</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
-<tr><td>Java</td><td>IsTickDownloadRunning</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
-<tr><td rowspan="2" style="vertical-align:middle">Cancel download</td><td>REST</td><td>CancelTickDownload</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
-<tr><td>Java</td><td>CancelTickDownload</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
-<tr><td rowspan="2" style="vertical-align:middle">Replay</td><td>REST</td><td>ReplayTicks</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
-<tr><td>Java</td><td>ReplayTicks</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
-<tr><td rowspan="2" style="vertical-align:middle">Replay status</td><td>REST</td><td>IsTickReplayRunning</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
-<tr><td>Java</td><td>IsTickReplayRunning</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
-<tr><td rowspan="2" style="vertical-align:middle">Stop replay</td><td>REST</td><td>StopTickReplay</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
-<tr><td>Java</td><td>StopTickReplay</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
-<tr><td rowspan="6" style="vertical-align:middle">Trades</td><td rowspan="2" style="vertical-align:middle">Download</td><td>REST</td><td>DownloadTradeHistory</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
-<tr><td>Java</td><td>DownloadTradeHistory</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
-<tr><td rowspan="2" style="vertical-align:middle">Download status</td><td>REST</td><td>IsTradeDownloadRunning</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
-<tr><td>Java</td><td>IsTradeDownloadRunning</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
-<tr><td rowspan="2" style="vertical-align:middle">Cancel download</td><td>REST</td><td>CancelTradeDownload</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
-<tr><td>Java</td><td>CancelTradeDownload</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
-<tr><td rowspan="6" style="vertical-align:middle">Quotes</td><td rowspan="2" style="vertical-align:middle">Download</td><td>REST</td><td>DownloadQuoteHistory</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
-<tr><td>Java</td><td>DownloadQuoteHistory</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
-<tr><td rowspan="2" style="vertical-align:middle">Download status</td><td>REST</td><td>IsQuoteDownloadRunning</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
-<tr><td>Java</td><td>IsQuoteDownloadRunning</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
-<tr><td rowspan="2" style="vertical-align:middle">Cancel download</td><td>REST</td><td>CancelQuoteDownload</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
-<tr><td>Java</td><td>CancelQuoteDownload</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
-<tr><td rowspan="3" style="vertical-align:middle">OHLC</td><td style="vertical-align:middle">Download</td><td>Java</td><td>DownloadOHLCHistory</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
-<tr><td style="vertical-align:middle">Download status</td><td>Java</td><td>IsOHLCDownloadRunning</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
-<tr><td style="vertical-align:middle">Cancel download</td><td>Java</td><td>CancelOHLCDownload</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
+<tr><th>Data Type</th><th>Mode</th><th>API</th><th>Samples</th><th>Foundry</th><th>Trading</th><th>Status</th></tr>
+<tr><td rowspan="4" style="vertical-align:middle">Ticks</td><td rowspan="2" style="vertical-align:middle"><a href="#download">Download</a></td><td>REST</td><td>DownloadTickHistory, IsTickDownloadRunning, CancelTickDownload</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
+<tr><td>Java</td><td>DownloadTickHistory, IsTickDownloadRunning, CancelTickDownload</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
+<tr><td rowspan="2" style="vertical-align:middle"><a href="#replay">Replay</a></td><td>REST</td><td>ReplayTicks, IsTickReplayRunning, StopTickReplay</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
+<tr><td>Java</td><td>ReplayTicks, IsTickReplayRunning, StopTickReplay</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
+<tr><td rowspan="2" style="vertical-align:middle">Trades</td><td rowspan="2" style="vertical-align:middle"><a href="#download">Download</a></td><td>REST</td><td>DownloadTradeHistory, IsTradeDownloadRunning, CancelTradeDownload</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
+<tr><td>Java</td><td>DownloadTradeHistory, IsTradeDownloadRunning, CancelTradeDownload</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
+<tr><td rowspan="2" style="vertical-align:middle">Quotes</td><td rowspan="2" style="vertical-align:middle"><a href="#download">Download</a></td><td>REST</td><td>DownloadQuoteHistory, IsQuoteDownloadRunning, CancelQuoteDownload</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
+<tr><td>Java</td><td>DownloadQuoteHistory, IsQuoteDownloadRunning, CancelQuoteDownload</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
+<tr><td style="vertical-align:middle">OHLC</td><td style="vertical-align:middle"><a href="#download">Download</a></td><td>Java</td><td>DownloadOHLCHistory, IsOHLCDownloadRunning, CancelOHLCDownload</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
 <tr><td style="vertical-align:middle">State</td><td style="vertical-align:middle">Clear</td><td>REST</td><td>ClearBacktestState</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
 </table>
 

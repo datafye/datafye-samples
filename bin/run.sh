@@ -22,8 +22,8 @@ resolve_class() {
         get-live-top-of-book-java)                echo "com.datafye.samples.java.GetLiveTopOfBook" ;;
         stream-historical-ohlc-java)              echo "com.datafye.samples.java.StreamHistoricalOHLC" ;;
         stream-historical-ohlc-concurrently-java) echo "com.datafye.samples.java.StreamHistoricalOHLCConcurrently" ;;
-        stream-live-top-of-book-java)             echo "com.datafye.samples.java.StreamLiveTopOfBook" ;;
-        stream-live-trades-java)                  echo "com.datafye.samples.java.StreamLiveTrades" ;;
+        subscribe-live-top-of-book-java)             echo "com.datafye.samples.java.SubscribeLiveTopOfBook" ;;
+        subscribe-live-trades-java)                  echo "com.datafye.samples.java.SubscribeLiveTrades" ;;
         *) return 1 ;;
     esac
 }
@@ -43,11 +43,11 @@ usage() {
     echo "    get-historical-ohlc-java             Fetch historical OHLC bars"
     echo "    get-live-ohlc-java                   Fetch current trading day OHLC bars"
     echo "    get-live-top-of-book-java             Fetch live top-of-book quotes"
-    echo "    stream-historical-ohlc-java           Stream historical OHLC bars"
+    echo "    stream-historical-ohlc-java              Stream historical OHLC bars"
     echo "    stream-historical-ohlc-concurrently-java"
-    echo "                                          Stream historical OHLC bars concurrently"
-    echo "    stream-live-top-of-book-java          Stream live top-of-book quotes"
-    echo "    stream-live-trades-java               Stream live trades"
+    echo "                                              Stream historical OHLC bars concurrently"
+    echo "    subscribe-live-top-of-book-java            Subscribe to live top-of-book quotes"
+    echo "    subscribe-live-trades-java                 Subscribe to live trades"
     echo ""
     echo "Example:"
     echo "  $(basename "$0") get-historical-ohlc-rest -s AAPL -f 2024-01-15T09:00:00 -t 2024-01-15T18:00:00"
@@ -68,8 +68,8 @@ if [ "$1" = "--list" ]; then
     echo "get-live-top-of-book-rest"
     echo "stream-historical-ohlc-concurrently-java"
     echo "stream-historical-ohlc-java"
-    echo "stream-live-top-of-book-java"
-    echo "stream-live-trades-java"
+    echo "subscribe-live-top-of-book-java"
+    echo "subscribe-live-trades-java"
     exit 0
 fi
 

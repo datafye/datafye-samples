@@ -64,8 +64,8 @@ src/main/java/com/datafye/samples/
 │   ├── GetLiveTopOfBook.java
 │   ├── StreamHistoricalOHLC.java
 │   ├── StreamHistoricalOHLCConcurrently.java
-│   ├── StreamLiveTopOfBook.java
-│   └── StreamLiveTrades.java
+│   ├── SubscribeLiveTopOfBook.java
+│   └── SubscribeLiveTrades.java
 │
 bin/
 │   ├── run.sh                     # Master run script (Linux/macOS)
@@ -78,7 +78,7 @@ pom.xml                            # Maven build with assembly plugin
 distribution.xml                   # Packages everything into a deployable tar.gz
 ```
 
-Notice how `rest/` has 4 samples and `java/` has 7. The extra 3 are the streaming and subscription samples — `StreamHistoricalOHLC`, `StreamLiveTopOfBook`, and `StreamLiveTrades`. REST is request-response only; streaming and subscription require either the WebSocket API or the Java Client. As the WebSocket samples are built out, a `ws/` package will appear alongside these two.
+Notice how `rest/` has 4 samples and `java/` has 7. The extra 3 are the streaming and subscription samples — `StreamHistoricalOHLC`, `SubscribeLiveTopOfBook`, and `SubscribeLiveTrades`. REST is request-response only; streaming and subscription require either the WebSocket API or the Java Client. As the WebSocket samples are built out, a `ws/` package will appear alongside these two.
 
 ### How the Parts Connect
 
@@ -232,7 +232,7 @@ This is a performance optimization for high-throughput scenarios. When you're st
 Live streaming follows a pub/sub model. You subscribe to symbols, and the server pushes data as it arrives in real time.
 
 ```java
-// From java/StreamLiveTopOfBook.java
+// From java/SubscribeLiveTopOfBook.java
 
 FeedClient client = new FeedClient("samples", "0");
 client.openStream(this);              // Open the pub/sub channel

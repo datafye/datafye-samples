@@ -28,7 +28,7 @@ import com.neeve.aep.annotations.EventHandler;
 import com.datafye.roe.*;
 import com.datafye.client.synthetic.FeedClient;
 
-public class StreamLiveTopOfBook {
+public class SubscribeLiveTopOfBook {
     static {
         System.setProperty("datafye-synthetic-feed.client.samples.connectionDescriptor",
             "solace://solace.rumi.local:55555&client_name=samples-synthetic-feed");
@@ -192,7 +192,7 @@ public class StreamLiveTopOfBook {
             System.out.println("}");
 
             // execute
-            new StreamLiveTopOfBook().run(symbols);
+            new SubscribeLiveTopOfBook().run(symbols);
         }
         else {
             printUsage();

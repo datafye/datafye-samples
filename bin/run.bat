@@ -27,8 +27,8 @@ if "%SAMPLE_NAME%"=="get-live-ohlc-java" set CLASS=com.datafye.samples.java.GetL
 if "%SAMPLE_NAME%"=="get-live-top-of-book-java" set CLASS=com.datafye.samples.java.GetLiveTopOfBook
 if "%SAMPLE_NAME%"=="stream-historical-ohlc-java" set CLASS=com.datafye.samples.java.StreamHistoricalOHLC
 if "%SAMPLE_NAME%"=="stream-historical-ohlc-concurrently-java" set CLASS=com.datafye.samples.java.StreamHistoricalOHLCConcurrently
-if "%SAMPLE_NAME%"=="stream-live-top-of-book-java" set CLASS=com.datafye.samples.java.StreamLiveTopOfBook
-if "%SAMPLE_NAME%"=="stream-live-trades-java" set CLASS=com.datafye.samples.java.StreamLiveTrades
+if "%SAMPLE_NAME%"=="subscribe-live-top-of-book-java" set CLASS=com.datafye.samples.java.SubscribeLiveTopOfBook
+if "%SAMPLE_NAME%"=="subscribe-live-trades-java" set CLASS=com.datafye.samples.java.SubscribeLiveTrades
 
 if not defined CLASS (
     echo Error: Unknown sample '%SAMPLE_NAME%' >&2
@@ -56,11 +56,11 @@ echo   Java Client:
 echo     get-historical-ohlc-java             Fetch historical OHLC bars
 echo     get-live-ohlc-java                   Fetch current trading day OHLC bars
 echo     get-live-top-of-book-java             Fetch live top-of-book quotes
-echo     stream-historical-ohlc-java           Stream historical OHLC bars
+echo     stream-historical-ohlc-java              Stream historical OHLC bars
 echo     stream-historical-ohlc-concurrently-java
-echo                                            Stream historical OHLC bars concurrently
-echo     stream-live-top-of-book-java          Stream live top-of-book quotes
-echo     stream-live-trades-java               Stream live trades
+echo                                                Stream historical OHLC bars concurrently
+echo     subscribe-live-top-of-book-java            Subscribe to live top-of-book quotes
+echo     subscribe-live-trades-java                 Subscribe to live trades
 echo.
 echo Example:
 echo   %~nx0 get-historical-ohlc-rest -s AAPL -f 2024-01-15T09:00:00 -t 2024-01-15T18:00:00
@@ -76,6 +76,6 @@ echo get-live-top-of-book-java
 echo get-live-top-of-book-rest
 echo stream-historical-ohlc-concurrently-java
 echo stream-historical-ohlc-java
-echo stream-live-top-of-book-java
-echo stream-live-trades-java
+echo subscribe-live-top-of-book-java
+echo subscribe-live-trades-java
 exit /b 0
