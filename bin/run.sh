@@ -24,6 +24,14 @@ resolve_class() {
         stream-historical-ohlc-concurrently-java) echo "com.datafye.samples.java.StreamHistoricalOHLCConcurrently" ;;
         subscribe-live-top-of-book-java)             echo "com.datafye.samples.java.SubscribeLiveTopOfBook" ;;
         subscribe-live-trades-java)                  echo "com.datafye.samples.java.SubscribeLiveTrades" ;;
+        get-historical-top-gainers-rest)             echo "com.datafye.samples.rest.GetHistoricalTopGainers" ;;
+        get-historical-top-gainers-java)             echo "com.datafye.samples.java.GetHistoricalTopGainers" ;;
+        get-last-trade-rest)                         echo "com.datafye.samples.rest.GetLastTrade" ;;
+        get-last-trade-java)                         echo "com.datafye.samples.java.GetLastTrade" ;;
+        get-live-sma-rest)                           echo "com.datafye.samples.rest.GetLiveSMA" ;;
+        get-live-sma-java)                           echo "com.datafye.samples.java.GetLiveSMA" ;;
+        get-live-ema-rest)                           echo "com.datafye.samples.rest.GetLiveEMA" ;;
+        get-live-ema-java)                           echo "com.datafye.samples.java.GetLiveEMA" ;;
         *) return 1 ;;
     esac
 }
@@ -35,14 +43,22 @@ usage() {
     echo ""
     echo "  REST API:"
     echo "    get-historical-ohlc-rest             Fetch historical OHLC bars"
+    echo "    get-historical-top-gainers-rest       Fetch historical top gainers"
     echo "    get-live-ohlc-rest                   Fetch current trading day OHLC bars"
-    echo "    get-live-top-of-book-rest             Fetch live top-of-book quotes"
     echo "    get-live-ohlc-concurrently-rest       Fetch live OHLC bars concurrently"
+    echo "    get-live-top-of-book-rest             Fetch live top-of-book quotes"
+    echo "    get-last-trade-rest                   Fetch last trade for symbols"
+    echo "    get-live-sma-rest                     Fetch live SMA values"
+    echo "    get-live-ema-rest                     Fetch live EMA values"
     echo ""
     echo "  Java Client:"
     echo "    get-historical-ohlc-java             Fetch historical OHLC bars"
+    echo "    get-historical-top-gainers-java       Fetch historical top gainers"
     echo "    get-live-ohlc-java                   Fetch current trading day OHLC bars"
     echo "    get-live-top-of-book-java             Fetch live top-of-book quotes"
+    echo "    get-last-trade-java                   Fetch last trade for symbols"
+    echo "    get-live-sma-java                     Fetch live SMA values"
+    echo "    get-live-ema-java                     Fetch live EMA values"
     echo "    stream-historical-ohlc-java              Stream historical OHLC bars"
     echo "    stream-historical-ohlc-concurrently-java"
     echo "                                              Stream historical OHLC bars concurrently"
@@ -61,9 +77,17 @@ fi
 if [ "$1" = "--list" ]; then
     echo "get-historical-ohlc-java"
     echo "get-historical-ohlc-rest"
+    echo "get-historical-top-gainers-java"
+    echo "get-historical-top-gainers-rest"
+    echo "get-last-trade-java"
+    echo "get-last-trade-rest"
+    echo "get-live-ema-java"
+    echo "get-live-ema-rest"
     echo "get-live-ohlc-concurrently-rest"
     echo "get-live-ohlc-java"
     echo "get-live-ohlc-rest"
+    echo "get-live-sma-java"
+    echo "get-live-sma-rest"
     echo "get-live-top-of-book-java"
     echo "get-live-top-of-book-rest"
     echo "stream-historical-ohlc-concurrently-java"
