@@ -43,15 +43,15 @@ Historical data is available in a Foundry only.
 
 <table>
 <tr><th>Data Type</th><th>Mode</th><th>API</th><th>Sample</th><th>Foundry</th><th>Trading</th><th>Status</th></tr>
-<tr><td rowspan="5" style="vertical-align:middle">Candles</td><td rowspan="2" style="vertical-align:middle">Fetch</td><td>REST</td><td>GetHistoricalCandles</td><td align="center">✓</td><td align="center">—</td><td>Available</td></tr>
-<tr><td>Java</td><td>GetHistoricalCandles</td><td align="center">✓</td><td align="center">—</td><td>Available</td></tr>
-<tr><td rowspan="3" style="vertical-align:middle">Stream</td><td>WS</td><td>StreamHistoricalCandles</td><td align="center">✓</td><td align="center">—</td><td><em>WIP</em></td></tr>
-<tr><td>Java</td><td>StreamHistoricalCandles</td><td align="center">✓</td><td align="center">—</td><td>Available</td></tr>
-<tr><td>Java</td><td>StreamHistoricalCandlesConcurrently</td><td align="center">✓</td><td align="center">—</td><td>Available</td></tr>
 <tr><td rowspan="4" style="vertical-align:middle">Ticks</td><td rowspan="2" style="vertical-align:middle">Fetch</td><td>REST</td><td>GetHistoricalTicks</td><td align="center">✓</td><td align="center">—</td><td><em>WIP</em></td></tr>
 <tr><td>Java</td><td>GetHistoricalTicks</td><td align="center">✓</td><td align="center">—</td><td><em>WIP</em></td></tr>
 <tr><td rowspan="2" style="vertical-align:middle">Stream</td><td>WS</td><td>StreamHistoricalTicks</td><td align="center">✓</td><td align="center">—</td><td><em>WIP</em></td></tr>
 <tr><td>Java</td><td>StreamHistoricalTicks</td><td align="center">✓</td><td align="center">—</td><td><em>WIP</em></td></tr>
+<tr><td rowspan="5" style="vertical-align:middle">OHLC</td><td rowspan="2" style="vertical-align:middle">Fetch</td><td>REST</td><td>GetHistoricalOHLC</td><td align="center">✓</td><td align="center">—</td><td>Available</td></tr>
+<tr><td>Java</td><td>GetHistoricalOHLC</td><td align="center">✓</td><td align="center">—</td><td>Available</td></tr>
+<tr><td rowspan="3" style="vertical-align:middle">Stream</td><td>WS</td><td>StreamHistoricalOHLC</td><td align="center">✓</td><td align="center">—</td><td><em>WIP</em></td></tr>
+<tr><td>Java</td><td>StreamHistoricalOHLC</td><td align="center">✓</td><td align="center">—</td><td>Available</td></tr>
+<tr><td>Java</td><td>StreamHistoricalOHLCConcurrently</td><td align="center">✓</td><td align="center">—</td><td>Available</td></tr>
 <tr><td rowspan="2" style="vertical-align:middle">Top Gainers</td><td rowspan="2" style="vertical-align:middle">Fetch</td><td>REST</td><td>GetHistoricalTopGainers</td><td align="center">✓</td><td align="center">—</td><td><em>WIP</em></td></tr>
 <tr><td>Java</td><td>GetHistoricalTopGainers</td><td align="center">✓</td><td align="center">—</td><td><em>WIP</em></td></tr>
 </table>
@@ -62,11 +62,6 @@ In a Foundry, live data is produced by replaying historical tick data — see [B
 
 <table>
 <tr><th>Data Type</th><th>Mode</th><th>API</th><th>Sample</th><th>Foundry</th><th>Trading</th><th>Status</th></tr>
-<tr><td rowspan="5" style="vertical-align:middle">Candles</td><td rowspan="3" style="vertical-align:middle">Fetch</td><td>REST</td><td>GetLiveCandles</td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
-<tr><td>REST</td><td>GetLiveCandlesConcurrently</td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
-<tr><td>Java</td><td>GetLiveCandles</td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
-<tr><td rowspan="2" style="vertical-align:middle">Subscribe</td><td>WS</td><td>SubscribeLiveCandles</td><td align="center">✓</td><td align="center">✓</td><td><em>WIP</em></td></tr>
-<tr><td>Java</td><td>SubscribeLiveCandles</td><td align="center">✓</td><td align="center">✓</td><td><em>WIP</em></td></tr>
 <tr><td rowspan="4" style="vertical-align:middle">Top-of-Book</td><td rowspan="2" style="vertical-align:middle">Fetch</td><td>REST</td><td>GetLiveTopOfBook</td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
 <tr><td>Java</td><td>GetLiveTopOfBook</td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
 <tr><td rowspan="2" style="vertical-align:middle">Subscribe</td><td>WS</td><td>SubscribeLiveTopOfBook</td><td align="center">✓</td><td align="center">✓</td><td><em>WIP</em></td></tr>
@@ -74,6 +69,11 @@ In a Foundry, live data is produced by replaying historical tick data — see [B
 <tr><td rowspan="3" style="vertical-align:middle">Trades</td><td style="vertical-align:middle">Fetch</td><td>REST</td><td>GetLastTrade</td><td align="center">✓</td><td align="center">✓</td><td><em>WIP</em></td></tr>
 <tr><td rowspan="2" style="vertical-align:middle">Subscribe</td><td>WS</td><td>SubscribeLiveTrades</td><td align="center">✓</td><td align="center">✓</td><td><em>WIP</em></td></tr>
 <tr><td>Java</td><td>StreamLiveTrades</td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td rowspan="5" style="vertical-align:middle">OHLC</td><td rowspan="3" style="vertical-align:middle">Fetch</td><td>REST</td><td>GetLiveOHLC</td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td>REST</td><td>GetLiveOHLCConcurrently</td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td>Java</td><td>GetLiveOHLC</td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td rowspan="2" style="vertical-align:middle">Subscribe</td><td>WS</td><td>SubscribeLiveOHLC</td><td align="center">✓</td><td align="center">✓</td><td><em>WIP</em></td></tr>
+<tr><td>Java</td><td>SubscribeLiveOHLC</td><td align="center">✓</td><td align="center">✓</td><td><em>WIP</em></td></tr>
 <tr><td rowspan="2" style="vertical-align:middle">SMA</td><td rowspan="2" style="vertical-align:middle">Fetch</td><td>REST</td><td>GetLiveSMA</td><td align="center">✓</td><td align="center">✓</td><td><em>WIP</em></td></tr>
 <tr><td>Java</td><td>GetLiveSMA</td><td align="center">✓</td><td align="center">✓</td><td><em>WIP</em></td></tr>
 <tr><td rowspan="2" style="vertical-align:middle">EMA</td><td rowspan="2" style="vertical-align:middle">Fetch</td><td>REST</td><td>GetLiveEMA</td><td align="center">✓</td><td align="center">✓</td><td><em>WIP</em></td></tr>
@@ -94,7 +94,7 @@ Backtesting samples are Foundry-only. They demonstrate downloading historical da
 <tr><td>Java</td><td>DownloadTradeHistory</td><td align="center">✓</td><td align="center">—</td><td><em>WIP</em></td></tr>
 <tr><td rowspan="2" style="vertical-align:middle">Quotes</td><td rowspan="2" style="vertical-align:middle">Download</td><td>REST</td><td>DownloadQuoteHistory</td><td align="center">✓</td><td align="center">—</td><td><em>WIP</em></td></tr>
 <tr><td>Java</td><td>DownloadQuoteHistory</td><td align="center">✓</td><td align="center">—</td><td><em>WIP</em></td></tr>
-<tr><td style="vertical-align:middle">Candles</td><td style="vertical-align:middle">Download</td><td>Java</td><td>DownloadCandleHistory</td><td align="center">✓</td><td align="center">—</td><td><em>WIP</em></td></tr>
+<tr><td style="vertical-align:middle">OHLC</td><td style="vertical-align:middle">Download</td><td>Java</td><td>DownloadOHLCHistory</td><td align="center">✓</td><td align="center">—</td><td><em>WIP</em></td></tr>
 <tr><td style="vertical-align:middle">State</td><td style="vertical-align:middle">Clear</td><td>REST</td><td>ClearBacktestState</td><td align="center">✓</td><td align="center">—</td><td><em>WIP</em></td></tr>
 </table>
 
@@ -159,7 +159,7 @@ curl -o quickstart.yaml https://downloads.n5corp.com/datafye/quickstarts/latest/
 datafye foundry local provision --descriptor quickstart.yaml
 
 # Run a sample (from the extracted distribution directory)
-bin/run.sh get-historical-candles-rest -s AAPL -c Minute -f 2024-01-15T09:00:00 -t 2024-01-15T18:00:00
+bin/run.sh get-historical-ohlc-rest -s AAPL -c Minute -f 2024-01-15T09:00:00 -t 2024-01-15T18:00:00
 ```
 
 Use `bin/run.sh --help` to see all available samples.

@@ -19,37 +19,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datafye.samples.rest;
+package com.datafye.samples.java;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
-import java.util.concurrent.TimeUnit;
 
 import jargs.gnu.CmdLineParser;
 
-import okhttp3.HttpUrl;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
+import com.datafye.roe.*;
+import com.datafye.client.synthetic.HistoryClient;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import com.neeve.config.Config;
-
-import com.datafye.samples.rest.domain.*;
-
-public class GetHistoricalCandles {
+public class GetHistoricalOHLC {
     static {
-        System.setProperty("datafye-samples.api.endpoint", "api.rest.rumi.local:7776");
+        System.setProperty("datafye-synthetic-history.client.samples.connectionDescriptor",
+            "solace://solace.rumi.local:55555&client_name=samples-synthetic-history");
     }
 
     final private static void printUsage() {
-        System.err.println("    [{-s, --symbol the symbol to fetch the candles for (required)]");
-        System.err.println("    [{-c, --frequency the candle frequency to fetch for]");
-        System.err.println("    [{-f, --from the lower bound of the time window to fetch candles for (format=YYYY-MM-DDTHH:mm:ss)]");
-        System.err.println("    [{-t, --to the upper bound of the time window to fetch candles for (format=YYYY-MM-DDTHH:mm:ss))]");
+        System.err.println("    [{-s, --symbol the symbol to fetch OHLC bars for (required)]");
+        System.err.println("    [{-c, --frequency the OHLC frequency to fetch for]");
+        System.err.println("    [{-f, --from the lower bound of the time window to fetch OHLC bars for (format=YYYY-MM-DDTHH:mm:ss)]");
+        System.err.println("    [{-t, --to the upper bound of the time window to fetch OHLC bars for (format=YYYY-MM-DDTHH:mm:ss))]");
         System.err.println("    [{-h, --help} print this help string]");
         System.exit(-1);
     }
@@ -60,35 +51,38 @@ public class GetHistoricalCandles {
         return df;
     }
 
-    final private static void run(final String symbol, final String frequency, final Date from, final Date to) throws Exception {
-        // create client and response mapper
-        final OkHttpClient webClient = new OkHttpClient.Builder().readTimeout(300, TimeUnit.SECONDS).build();
-        final ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    final private static void run(final String symbol, final String frequency, final Date from, final Date to) {
+        // create the client
+        HistoryClient client = new HistoryClient("samples", "0");
 
         // perform 100 fetches
         long totalTime = 0;
         long totalCount = 0;
         for (int i = 0 ; i < 100 ; i++) {
+            // run and benchmark
             long start = System.currentTimeMillis();
-            HttpUrl.Builder urlBuilder = HttpUrl.parse("http://" + Config.getValue("datafye-samples.api.endpoint") + "/datafye-api/v1/stocks/history/ohlc").newBuilder();
-            urlBuilder.addQueryParameter("dataset", "Synthetic");
-            urlBuilder.addQueryParameter("frequency", frequency);
-            urlBuilder.addQueryParameter("symbols", symbol);
-            urlBuilder.addQueryParameter("from", dateFormat().format(from));
-            urlBuilder.addQueryParameter("to", dateFormat().format(to));
-            Request request = new Request.Builder().url(urlBuilder.build().toString()).addHeader("Accept", "application/json").build();
-            Response response = webClient.newCall(request).execute();
-            GetHistoricalCandlesResponse candlesResponse = objectMapper.readValue(response.body().string(), GetHistoricalCandlesResponse.class);
+            GetHistoricalStocksOHLCsRequestMessage request = GetHistoricalStocksOHLCsRequestMessage.create();
+            request.setFrequency(OHLCFrequency.valueOf(frequency));
+            request.setSymbol(symbol);
+            request.setFromAsTimestamp(from.getTime());
+            request.setToAsTimestamp(to.getTime());
+            GetHistoricalStocksOHLCsResponseMessage response = client.getHistoricalOHLCs(request);
+            final int candlesCount = response.getCandlesCount();
             long stop = System.currentTimeMillis();
 
             // update totals
             totalTime += (stop-start);
-            totalCount += candlesResponse.getCandles() != null ? candlesResponse.getCandles().length : 0;
+            totalCount += candlesCount;
+
+            // dispose the response
+            response.dispose();
         }
 
         // average time
-        System.out.println("Fetched '" + (totalCount/100) + "' candles for '" + symbol + "' in " + (totalTime/100) + " milliseconds.");
+        System.out.println("Fetched '" + (totalCount/100) + "' OHLC bars for '" + symbol + "' in " + (totalTime/100) + " milliseconds.");
+
+        // close the client
+        client.close();
     }
 
     public static void main(String args[]) throws Exception {

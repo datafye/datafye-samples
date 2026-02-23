@@ -11,13 +11,13 @@ This repository is a cookbook for the Datafye platform. It covers two types of D
 
 2. **Algo Container Samples** — For environments where you use the Datafye Algo Container and build algo logic with the Datafye SDK. (Work in progress.)
 
-The Data Cloud API samples are intentionally parallel: the same operation (say, "get historical candles for AAPL") is implemented across REST, WebSocket, and Java so you can compare them side by side and understand the trade-offs. The samples span reference data, historical data, live data, backtesting operations, and broker connectivity — organized by whether they apply to a Foundry (historical + replayed live data), a Trading Environment (real live data), or both.
+The Data Cloud API samples are intentionally parallel: the same operation (say, "get historical OHLC bars for AAPL") is implemented across REST, WebSocket, and Java so you can compare them side by side and understand the trade-offs. The samples span reference data, historical data, live data, backtesting operations, and broker connectivity — organized by whether they apply to a Foundry (historical + replayed live data), a Trading Environment (real live data), or both.
 
 ## Technical Architecture
 
 ### The Big Picture
 
-Datafye's Data Cloud is a cluster of specialized backend services — a history service that stores OHLC bars, a feed service that distributes live quotes and trades, an aggregation service that computes live candles, a reference service that maintains the security master, and (in Trading Environments) a broker connector for order management. These services communicate internally over the cloud's messaging backbone.
+Datafye's Data Cloud is a cluster of specialized backend services — a history service that stores OHLC bars, a feed service that distributes live quotes and trades, an aggregation service that computes live OHLC bars, a reference service that maintains the security master, and (in Trading Environments) a broker connector for order management. These services communicate internally over the cloud's messaging backbone.
 
 There are three ways in:
 
@@ -47,23 +47,23 @@ The **Java Client samples** skip both gateways entirely. They use code-generated
 ```
 src/main/java/com/datafye/samples/
 ├── rest/                          # HTTP/JSON approach
-│   ├── GetHistoricalCandles.java
-│   ├── GetLiveCandles.java
+│   ├── GetHistoricalOHLC.java
+│   ├── GetLiveOHLC.java
 │   ├── GetLiveTopOfBook.java
-│   ├── GetLiveCandlesConcurrently.java
+│   ├── GetLiveOHLCConcurrently.java
 │   └── domain/                    # Jackson POJOs for JSON deserialization
-│       ├── Candle.java
+│       ├── OHLC.java
 │       ├── Quote.java
-│       ├── GetHistoricalCandlesResponse.java
-│       ├── GetLiveCandlesResponse.java
+│       ├── GetHistoricalOHLCResponse.java
+│       ├── GetLiveOHLCResponse.java
 │       └── GetLiveTopOfBookQuotesResponse.java
 │
 ├── java/                          # Native messaging backbone approach
-│   ├── GetHistoricalCandles.java
-│   ├── GetLiveCandles.java
+│   ├── GetHistoricalOHLC.java
+│   ├── GetLiveOHLC.java
 │   ├── GetLiveTopOfBook.java
-│   ├── StreamHistoricalCandles.java
-│   ├── StreamHistoricalCandlesConcurrently.java
+│   ├── StreamHistoricalOHLC.java
+│   ├── StreamHistoricalOHLCConcurrently.java
 │   ├── StreamLiveTopOfBook.java
 │   └── StreamLiveTrades.java
 │
@@ -78,7 +78,7 @@ pom.xml                            # Maven build with assembly plugin
 distribution.xml                   # Packages everything into a deployable tar.gz
 ```
 
-Notice how `rest/` has 4 samples and `java/` has 7. The extra 3 are the streaming and subscription samples — `StreamHistoricalCandles`, `StreamLiveTopOfBook`, and `StreamLiveTrades`. REST is request-response only; streaming and subscription require either the WebSocket API or the Java Client. As the WebSocket samples are built out, a `ws/` package will appear alongside these two.
+Notice how `rest/` has 4 samples and `java/` has 7. The extra 3 are the streaming and subscription samples — `StreamHistoricalOHLC`, `StreamLiveTopOfBook`, and `StreamLiveTrades`. REST is request-response only; streaming and subscription require either the WebSocket API or the Java Client. As the WebSocket samples are built out, a `ws/` package will appear alongside these two.
 
 ### How the Parts Connect
 
@@ -107,7 +107,7 @@ The naming convention in the property keys is important: `{service}.{type}.{inst
 
 **The build produces a self-contained distribution**. `mvn clean install` compiles the code, pulls all dependencies into `target/dependency/`, then the Maven Assembly Plugin packages everything into a `tar.gz` using the layout defined in `distribution.xml`. Extract it and you get a `libs/` directory with every JAR you need, plus a `bin/` directory with run scripts — no classpath headaches, no memorizing JVM flags.
 
-The `bin/run.sh` (and `run.bat` for Windows) is a single master script that maps friendly sample names to fully-qualified Java class names. Instead of typing `java --add-opens=java.base/jdk.internal.ref=ALL-UNNAMED ... -cp "libs/*" com.datafye.samples.rest.GetHistoricalCandles`, you type `bin/run.sh get-historical-candles-rest`. JVM options, classpath, and class resolution are all handled in one place. This is a deliberate design choice: 22 per-sample scripts would be 95% identical boilerplate, and if the JVM options ever change, you'd have to update all of them. One script, one place to maintain.
+The `bin/run.sh` (and `run.bat` for Windows) is a single master script that maps friendly sample names to fully-qualified Java class names. Instead of typing `java --add-opens=java.base/jdk.internal.ref=ALL-UNNAMED ... -cp "libs/*" com.datafye.samples.rest.GetHistoricalOHLC`, you type `bin/run.sh get-historical-ohlc-rest`. JVM options, classpath, and class resolution are all handled in one place. This is a deliberate design choice: 22 per-sample scripts would be 95% identical boilerplate, and if the JVM options ever change, you'd have to update all of them. One script, one place to maintain.
 
 ## The Communication Patterns
 
@@ -118,7 +118,7 @@ This is the architectural heart of the project. Every sample falls into one of t
 The simplest pattern. Build an HTTP URL, send a GET request, deserialize the JSON response.
 
 ```java
-// From rest/GetHistoricalCandles.java
+// From rest/GetHistoricalOHLC.java
 HttpUrl.Builder urlBuilder = HttpUrl.parse("http://" + Config.getValue("datafye-samples.api.endpoint")
     + "/datafye-api/v1/stocks/history/ohlc").newBuilder();
 urlBuilder.addQueryParameter("dataset", "Synthetic");
@@ -128,7 +128,7 @@ urlBuilder.addQueryParameter("from", dateFormat().format(from));
 urlBuilder.addQueryParameter("to", dateFormat().format(to));
 Request request = new Request.Builder().url(urlBuilder.build().toString()).build();
 Response response = webClient.newCall(request).execute();
-GetHistoricalCandlesResponse candlesResponse = objectMapper.readValue(response.body().string(), ...);
+GetHistoricalOHLCResponse ohlcResponse = objectMapper.readValue(response.body().string(), ...);
 ```
 
 Every REST sample follows this exact shape. The only things that change are the URL path and the response POJO. It's the kind of code any backend developer has written a hundred times.
@@ -140,7 +140,7 @@ The domain POJOs in `rest/domain/` are pure data holders — Lombok's `@Data` an
 Same logical operation as the REST version, but the protocol is different. Instead of HTTP/JSON, you're creating typed Rumi messages and calling methods on a code-generated client class.
 
 ```java
-// From java/GetHistoricalCandles.java
+// From java/GetHistoricalOHLC.java
 HistoryClient client = new HistoryClient("samples", "0");
 
 GetHistoricalStocksOHLCsRequestMessage request = GetHistoricalStocksOHLCsRequestMessage.create();
@@ -169,12 +169,12 @@ This is where things get interesting, and it's where the Java Client and WebSock
 
 #### Historical Streaming (three-step handshake)
 
-Imagine you want to replay a full day of minute-by-minute OHLC data for all symbols. That could be thousands of candles. A REST request would have to materialize the entire result set in memory, serialize it to JSON, send it over HTTP, and deserialize it on the other side. Streaming avoids all of that — the server pushes candles to you one at a time over a dedicated messaging channel.
+Imagine you want to replay a full day of minute-by-minute OHLC data for all symbols. That could be thousands of bars. A REST request would have to materialize the entire result set in memory, serialize it to JSON, send it over HTTP, and deserialize it on the other side. Streaming avoids all of that — the server pushes OHLC bars to you one at a time over a dedicated messaging channel.
 
 The protocol is a three-step handshake:
 
 ```java
-// From java/StreamHistoricalCandles.java
+// From java/StreamHistoricalOHLC.java
 
 // Step 1: Ask the server to prepare the stream
 OpenHistoricalStocksOHLCStreamRequestMessage request = OpenHistoricalStocksOHLCStreamRequestMessage.create();
@@ -214,18 +214,18 @@ public void onStreamError(HistoricalOHLCStreamErrorMessage message) { ... }
 
 The Rumi framework routes each message type to the correct handler based on its type signature — you never write a switch statement or check message types manually. You just declare "when this type of message arrives, do this" and the framework handles dispatch.
 
-The `StreamHistoricalCandles` sample also demonstrates **zero-copy deserialization** via the `CandlePopulator` inner class. Instead of deserializing an entire message into a Java object (which allocates memory), you implement a callback interface where each field is delivered individually:
+The `StreamHistoricalOHLC` sample also demonstrates **zero-copy deserialization** via the `OHLCPopulator` inner class. Instead of deserializing an entire message into a Java object (which allocates memory), you implement a callback interface where each field is delivered individually:
 
 ```java
-class CandlePopulator extends StocksMinuteOHLCMessage.Deserializer.AbstractCallbackImpl {
-    @Override public void handleOpen(double val) { _candle.setOpen(val); }
-    @Override public void handleHigh(double val) { _candle.setHigh(val); }
-    @Override public void handleClose(double val) { _candle.setClose(val); }
+class OHLCPopulator extends StocksMinuteOHLCMessage.Deserializer.AbstractCallbackImpl {
+    @Override public void handleOpen(double val) { _ohlc.setOpen(val); }
+    @Override public void handleHigh(double val) { _ohlc.setHigh(val); }
+    @Override public void handleClose(double val) { _ohlc.setClose(val); }
     ...
 }
 ```
 
-This is a performance optimization for high-throughput scenarios. When you're streaming millions of candles, avoiding object allocation per message makes a real difference. You reuse a single `Candle` instance and overwrite its fields on every message.
+This is a performance optimization for high-throughput scenarios. When you're streaming millions of OHLC bars, avoiding object allocation per message makes a real difference. You reuse a single `OHLC` instance and overwrite its fields on every message.
 
 #### Live Streaming (subscribe/unsubscribe)
 
@@ -299,7 +299,7 @@ try {
 
 ### 2. Streaming is SIP-only (for history)
 
-The Synthetic History client doesn't support streaming — only the SIP History client does. If you try to call `openStream()` on a Synthetic History client, you'll get an error. This is why `StreamHistoricalCandles.java` imports `com.datafye.client.sip.HistoryClient` while `GetHistoricalCandles.java` imports `com.datafye.client.synthetic.HistoryClient`. A subtle but critical difference.
+The Synthetic History client doesn't support streaming — only the SIP History client does. If you try to call `openStream()` on a Synthetic History client, you'll get an error. This is why `StreamHistoricalOHLC.java` imports `com.datafye.client.sip.HistoryClient` while `GetHistoricalOHLC.java` imports `com.datafye.client.synthetic.HistoryClient`. A subtle but critical difference.
 
 Live streaming (quotes and trades) works with both Synthetic and SIP feed clients.
 
@@ -313,7 +313,7 @@ In the `System.setProperty()` calls, the naming convention `{service}.{type}.{in
 
 ### 5. Concurrency patterns are deliberately simple
 
-The concurrent samples (`GetLiveCandlesConcurrently`, `StreamHistoricalCandlesConcurrently`) use plain `Thread` and `join()` rather than `CompletableFuture` or reactive streams. This is intentional — sample code should teach one concept at a time. The concurrency here is straightforward fork-join parallelism, not something that requires understanding reactive programming.
+The concurrent samples (`GetLiveOHLCConcurrently`, `StreamHistoricalOHLCConcurrently`) use plain `Thread` and `join()` rather than `CompletableFuture` or reactive streams. This is intentional — sample code should teach one concept at a time. The concurrency here is straightforward fork-join parallelism, not something that requires understanding reactive programming.
 
 In the historical streaming concurrent sample, notice how each thread gets a different date (each offset by one day) but shares the same `HistoryClient`. The `openStream()` call is synchronized on the client because the initial request-reply handshake must be serialized, but once the streams are open, data flows independently on separate messaging sessions.
 
@@ -323,7 +323,7 @@ All REST samples pass `dataset=Synthetic` as a query parameter. The Synthetic da
 
 ### 7. Zero-copy deserialization is a power tool
 
-The `CandlePopulator` pattern in the streaming samples (implementing `StocksMinuteOHLCMessage.Deserializer.AbstractCallbackImpl`) is not beginner-friendly, but it exists for a good reason. In a streaming scenario where millions of messages flow per second, allocating a new object per message creates GC pressure that causes latency spikes. The callback pattern lets you reuse a single object and overwrite its fields — zero allocation per message.
+The `OHLCPopulator` pattern in the streaming samples (implementing `StocksMinuteOHLCMessage.Deserializer.AbstractCallbackImpl`) is not beginner-friendly, but it exists for a good reason. In a streaming scenario where millions of messages flow per second, allocating a new object per message creates GC pressure that causes latency spikes. The callback pattern lets you reuse a single object and overwrite its fields — zero allocation per message.
 
 You don't need this for request-reply. It's a streaming optimization for when throughput matters more than code clarity. The fact that it's shown in the samples is a nod to the kind of performance-sensitive use cases Datafye is built for.
 

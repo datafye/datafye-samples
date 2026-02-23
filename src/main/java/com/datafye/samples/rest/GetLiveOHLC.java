@@ -19,55 +19,62 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datafye.samples.java;
+package com.datafye.samples.rest;
+
+import java.util.concurrent.TimeUnit;
 
 import jargs.gnu.CmdLineParser;
 
-import com.datafye.roe.*;
-import com.datafye.client.synthetic.AggClient;
+import okhttp3.HttpUrl;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
-public class GetLiveCandles {
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import com.neeve.config.Config;
+
+import com.datafye.samples.rest.domain.*;
+
+public class GetLiveOHLC {
     static {
-        System.setProperty("datafye-synthetic-agg.client.samples.connectionDescriptor",
-            "solace://solace.rumi.local:55555&client_name=samples-synthetic-agg");
+        System.setProperty("datafye-samples.api.endpoint", "api.rest.rumi.local:7776");
     }
 
     final private static void printUsage() {
-        System.err.println("    [{-s, --symbol the symbol to fetch the candles for (required)]");
+        System.err.println("    [{-s, --symbol the symbol to fetch OHLC bars for (required)]");
         System.err.println("    [{-h, --help} print this help string]");
         System.exit(-1);
     }
 
-    final private static void run(final String symbol) {
-        // create the client
-        AggClient client = new AggClient("samples", "0");
+    final private static void run(final String symbol) throws Exception {
+        // create client and response mapper
+        final OkHttpClient webClient = new OkHttpClient.Builder().readTimeout(300, TimeUnit.SECONDS).build();
+        final ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
         // perform 100 fetches
         long totalTime = 0;
         long totalCount = 0;
         for (int i = 0 ; i < 100 ; i++) {
-            // run and benchmark
             long start = System.currentTimeMillis();
-            GetLiveStocksOHLCsRequestMessage request = GetLiveStocksOHLCsRequestMessage.create();
-            request.setFrequency(OHLCFrequency.Minute);
-            request.setSymbol(symbol);
-            GetLiveStocksOHLCsResponseMessage response = client.getLiveOHLCs(request);
-            final int candlesCount = response.getCandlesCount();
+            HttpUrl.Builder urlBuilder = HttpUrl.parse("http://" + Config.getValue("datafye-samples.api.endpoint") + "/datafye-api/v1/stocks/live/agg/ohlc").newBuilder();
+            urlBuilder.addQueryParameter("dataset", "Synthetic");
+            urlBuilder.addQueryParameter("frequency", "Minute");
+            urlBuilder.addQueryParameter("symbol", symbol);
+            Request request = new Request.Builder().url(urlBuilder.build().toString()).addHeader("Accept", "application/json").build();
+            Response response = webClient.newCall(request).execute();
+            GetLiveOHLCResponse ohlcResponse = objectMapper.readValue(response.body().string(), GetLiveOHLCResponse.class);
             long stop = System.currentTimeMillis();
 
-            // update total
+            // update totals
             totalTime += (stop-start);
-            totalCount += candlesCount;
-
-            // dispose the response
-            response.dispose();
+            totalCount += ohlcResponse.getCandles() != null ? ohlcResponse.getCandles().length : 0;
         }
 
         // average time
-        System.out.println("Fetched '" + (totalCount/100) + "' candles for '" + symbol + "' in " + (totalTime/100) + " milliseconds.");
-
-        // close the client
-        client.close();
+        System.out.println("Fetched '" + (totalCount/100) + "' OHLC bars for '" + symbol + "' in " + (totalTime/100) + " milliseconds.");
     }
 
     public static void main(String args[]) throws Exception {

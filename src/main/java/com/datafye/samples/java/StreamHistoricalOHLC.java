@@ -34,16 +34,16 @@ import com.datafye.roe.*;
 import com.datafye.client.sip.HistoryClient;
 import com.datafye.sip.history.Client.Stream;
 
-import com.datafye.samples.rest.domain.Candle;
+import com.datafye.samples.rest.domain.OHLC;
 
 /**
- * Streams historical OHLC candles using the SIP History client.
+ * Streams historical OHLC bars using the SIP History client.
  *
  * Note: Streaming requires the SIP History client which provides
  * the Stream class and openStream method. The Synthetic History
  * client does not yet support streaming.
  */
-public class StreamHistoricalCandles {
+public class StreamHistoricalOHLC {
     static {
         System.setProperty("datafye-sip-history.client.samples.connectionDescriptor",
             "solace://solace.rumi.local:55555&client_name=samples-sip-history");
@@ -51,58 +51,58 @@ public class StreamHistoricalCandles {
             "solace://solace.rumi.local:55555&client_name=samples-sip-history-stream");
     }
 
-    final private class CandlePopulator extends StocksMinuteOHLCMessage.Deserializer.AbstractCallbackImpl {
-        private Candle _candle;
+    final private class OHLCPopulator extends StocksMinuteOHLCMessage.Deserializer.AbstractCallbackImpl {
+        private OHLC _ohlc;
 
-        void populate(Candle candle, StocksMinuteOHLCMessage message) {
-            _candle = candle;
+        void populate(OHLC ohlc, StocksMinuteOHLCMessage message) {
+            _ohlc = ohlc;
             message.deserializer().run(this);
         }
 
         @Override
         public void handleTimestamp(long val) {
-            _candle.setDatetime(val);
+            _ohlc.setDatetime(val);
         }
 
         @Override
         public void handleOpen(double val) {
-            _candle.setOpen(val);
+            _ohlc.setOpen(val);
         }
 
         @Override
         public void handleHigh(double val) {
-            _candle.setHigh(val);
+            _ohlc.setHigh(val);
         }
 
         @Override
         public void handleLow(double val) {
-            _candle.setLow(val);
+            _ohlc.setLow(val);
         }
 
         @Override
         public void handleClose(double val) {
-            _candle.setClose(val);
+            _ohlc.setClose(val);
         }
 
         @Override
         public void handleVolume(long val) {
-            _candle.setVolume(val);
+            _ohlc.setVolume(val);
         }
 
         @Override
         public void handleSymbol(XStringDeserializer val) {
-            _candle.setSymbol(val.toASCIIString());
+            _ohlc.setSymbol(val.toASCIIString());
         }
     }
 
-    private Candle _candle = new Candle();
-    private CandlePopulator _candlePopulator = new CandlePopulator();
+    private OHLC _ohlc = new OHLC();
+    private OHLCPopulator _ohlcPopulator = new OHLCPopulator();
     private boolean _done;
 
     final private static void printUsage() {
-        System.err.println("    [{-s, --symbol the symbol to stream the candles for (not specified means all symbols)]");
-        System.err.println("    [{-f, --from the lower bound of the time window to fetch candles for (format=YYYY-MM-DDTHH:mm:ss)]");
-        System.err.println("    [{-t, --to the upper bound of the time window to fetch candles for (format=YYYY-MM-DDTHH:mm:ss))]");
+        System.err.println("    [{-s, --symbol the symbol to stream OHLC bars for (not specified means all symbols)]");
+        System.err.println("    [{-f, --from the lower bound of the time window to fetch OHLC bars for (format=YYYY-MM-DDTHH:mm:ss)]");
+        System.err.println("    [{-t, --to the upper bound of the time window to fetch OHLC bars for (format=YYYY-MM-DDTHH:mm:ss))]");
         System.err.println("    [{-r, --rate the maximum rate at which the server should stream the data)]");
         System.err.println("    [{-h, --help} print this help string]");
         System.exit(-1);
@@ -169,11 +169,11 @@ public class StreamHistoricalCandles {
 
     /**
      * This method handles the "Stream data" message i.e. the a data message
-     * containing the candle data
+     * containing the OHLC data
      */
     @EventHandler
     final public void onStreamData(final StocksMinuteOHLCMessage message) {
-        _candlePopulator.populate(_candle, message);
+        _ohlcPopulator.populate(_ohlc, message);
     }
 
     /**
@@ -250,7 +250,7 @@ public class StreamHistoricalCandles {
             System.out.println("}");
 
             // execute
-            new StreamHistoricalCandles().run(symbol, from, to, rate);
+            new StreamHistoricalOHLC().run(symbol, from, to, rate);
         }
         else {
             printUsage();

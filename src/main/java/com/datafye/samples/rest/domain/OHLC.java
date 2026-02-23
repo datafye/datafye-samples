@@ -32,7 +32,7 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class Candle {
+public class OHLC {
     private String symbol;
     private long datetime;
     private double open;

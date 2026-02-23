@@ -40,7 +40,7 @@ import com.neeve.config.Config;
 
 import com.datafye.samples.rest.domain.*;
 
-public class GetLiveCandlesConcurrently {
+public class GetLiveOHLCConcurrently {
     static {
         System.setProperty("datafye-samples.api.endpoint", "api.rest.rumi.local:7776");
     }
@@ -71,16 +71,16 @@ public class GetLiveCandlesConcurrently {
                     urlBuilder.addQueryParameter("symbol", symbol);
                     Request request = new Request.Builder().url(urlBuilder.build().toString()).addHeader("Accept", "application/json").build();
                     Response response = webClient.newCall(request).execute();
-                    GetLiveCandlesResponse candlesResponse = objectMapper.readValue(response.body().string(), GetLiveCandlesResponse.class);
+                    GetLiveOHLCResponse ohlcResponse = objectMapper.readValue(response.body().string(), GetLiveOHLCResponse.class);
                     long stop = System.currentTimeMillis();
 
                     // update totals
                     totalTime += (stop-start);
-                    totalCount += candlesResponse.getCandles() != null ? candlesResponse.getCandles().length : 0;
+                    totalCount += ohlcResponse.getCandles() != null ? ohlcResponse.getCandles().length : 0;
                 }
 
                 // total time
-                System.out.println("Fetched '" + totalCount + "' candles for " + _symbols.size() + " symbols in " + totalTime + " milliseconds.");
+                System.out.println("Fetched '" + totalCount + "' OHLC bars for " + _symbols.size() + " symbols in " + totalTime + " milliseconds.");
             }
             catch (Throwable e) {
                 e.printStackTrace();

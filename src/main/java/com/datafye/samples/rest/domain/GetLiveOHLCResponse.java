@@ -32,8 +32,8 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class GetLiveCandlesResponse {
+public class GetLiveOHLCResponse {
     private boolean empty;
     private String symbol;
-    private Candle[] candles;
+    private OHLC[] candles;
 }

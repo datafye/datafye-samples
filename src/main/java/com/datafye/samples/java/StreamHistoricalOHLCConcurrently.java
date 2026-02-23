@@ -36,7 +36,7 @@ import com.datafye.roe.*;
 import com.datafye.client.sip.HistoryClient;
 import com.datafye.sip.history.Client.Stream;
 
-import com.datafye.samples.rest.domain.Candle;
+import com.datafye.samples.rest.domain.OHLC;
 
 /**
  * Streams multiple historical OHLC streams concurrently using the SIP History client.
@@ -45,7 +45,7 @@ import com.datafye.samples.rest.domain.Candle;
  * the Stream class and openStream method. The Synthetic History
  * client does not yet support streaming.
  */
-public class StreamHistoricalCandlesConcurrently {
+public class StreamHistoricalOHLCConcurrently {
     static {
         System.setProperty("datafye-sip-history.client.samples.connectionDescriptor",
             "solace://solace.rumi.local:55555&client_name=samples-sip-history");
@@ -54,55 +54,55 @@ public class StreamHistoricalCandlesConcurrently {
     }
 
     final private static class Streamer implements Runnable {
-        final private class CandlePopulator extends StocksMinuteOHLCMessage.Deserializer.AbstractCallbackImpl {
-            private Candle _candle;
+        final private class OHLCPopulator extends StocksMinuteOHLCMessage.Deserializer.AbstractCallbackImpl {
+            private OHLC _ohlc;
 
-            void populate(Candle candle, StocksMinuteOHLCMessage message) {
-                _candle = candle;
+            void populate(OHLC ohlc, StocksMinuteOHLCMessage message) {
+                _ohlc = ohlc;
                 message.deserializer().run(this);
             }
 
             @Override
             public void handleTimestamp(long val) {
-                _candle.setDatetime(val);
+                _ohlc.setDatetime(val);
             }
 
             @Override
             public void handleOpen(double val) {
-                _candle.setOpen(val);
+                _ohlc.setOpen(val);
             }
 
             @Override
             public void handleHigh(double val) {
-                _candle.setHigh(val);
+                _ohlc.setHigh(val);
             }
 
             @Override
             public void handleLow(double val) {
-                _candle.setLow(val);
+                _ohlc.setLow(val);
             }
 
             @Override
             public void handleClose(double val) {
-                _candle.setClose(val);
+                _ohlc.setClose(val);
             }
 
             @Override
             public void handleVolume(long val) {
-                _candle.setVolume(val);
+                _ohlc.setVolume(val);
             }
 
             @Override
             public void handleSymbol(XStringDeserializer val) {
-                _candle.setSymbol(val.toASCIIString());
+                _ohlc.setSymbol(val.toASCIIString());
             }
         }
 
         final private HistoryClient _client;
         final private Date _from;
         final private int _rate;
-        final private Candle _candle;
-        final private CandlePopulator _candlePopulator;
+        final private OHLC _ohlc;
+        final private OHLCPopulator _ohlcPopulator;
         final private GregorianCalendar _calendar;
         private boolean _done;
 
@@ -110,8 +110,8 @@ public class StreamHistoricalCandlesConcurrently {
             _client = client;
             _from = from;
             _rate = rate;
-            _candle = new Candle();
-            _candlePopulator = new CandlePopulator();
+            _ohlc = new OHLC();
+            _ohlcPopulator = new OHLCPopulator();
             _calendar = new GregorianCalendar(TimeZone.getTimeZone("America/New_York"));
         }
 
@@ -133,11 +133,11 @@ public class StreamHistoricalCandlesConcurrently {
 
         /**
          * This method handles the "Stream data" message i.e. the a data message
-         * containing the candle data
+         * containing the OHLC data
          */
         @EventHandler
         final public void onStreamData(final StocksMinuteOHLCMessage message) {
-            _candlePopulator.populate(_candle, message);
+            _ohlcPopulator.populate(_ohlc, message);
         }
 
         /**
@@ -200,7 +200,7 @@ public class StreamHistoricalCandlesConcurrently {
 
     final private static void printUsage() {
         System.err.println("    [{-i, --client instance id (default=0)]");
-        System.err.println("    [{-f, --from the lower bound of the time window to fetch candles for (format=YYYY-MM-DD)]");
+        System.err.println("    [{-f, --from the lower bound of the time window to fetch OHLC bars for (format=YYYY-MM-DD)]");
         System.err.println("    [{-r, --rate the maximum rate at which the server should stream the data)]");
         System.err.println("    [{-h, --help} print this help string]");
         System.exit(-1);

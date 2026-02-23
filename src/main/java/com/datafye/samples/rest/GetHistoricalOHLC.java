@@ -21,6 +21,9 @@
  */
 package com.datafye.samples.rest;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 import jargs.gnu.CmdLineParser;
@@ -37,18 +40,27 @@ import com.neeve.config.Config;
 
 import com.datafye.samples.rest.domain.*;
 
-public class GetLiveCandles {
+public class GetHistoricalOHLC {
     static {
         System.setProperty("datafye-samples.api.endpoint", "api.rest.rumi.local:7776");
     }
 
     final private static void printUsage() {
-        System.err.println("    [{-s, --symbol the symbol to fetch the candles for (required)]");
+        System.err.println("    [{-s, --symbol the symbol to fetch OHLC bars for (required)]");
+        System.err.println("    [{-c, --frequency the OHLC frequency to fetch for]");
+        System.err.println("    [{-f, --from the lower bound of the time window to fetch OHLC bars for (format=YYYY-MM-DDTHH:mm:ss)]");
+        System.err.println("    [{-t, --to the upper bound of the time window to fetch OHLC bars for (format=YYYY-MM-DDTHH:mm:ss))]");
         System.err.println("    [{-h, --help} print this help string]");
         System.exit(-1);
     }
 
-    final private static void run(final String symbol) throws Exception {
+    final private static SimpleDateFormat dateFormat() {
+        final SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+        df.setTimeZone(TimeZone.getTimeZone("America/New_York"));
+        return df;
+    }
+
+    final private static void run(final String symbol, final String frequency, final Date from, final Date to) throws Exception {
         // create client and response mapper
         final OkHttpClient webClient = new OkHttpClient.Builder().readTimeout(300, TimeUnit.SECONDS).build();
         final ObjectMapper objectMapper = new ObjectMapper();
@@ -59,28 +71,33 @@ public class GetLiveCandles {
         long totalCount = 0;
         for (int i = 0 ; i < 100 ; i++) {
             long start = System.currentTimeMillis();
-            HttpUrl.Builder urlBuilder = HttpUrl.parse("http://" + Config.getValue("datafye-samples.api.endpoint") + "/datafye-api/v1/stocks/live/agg/ohlc").newBuilder();
+            HttpUrl.Builder urlBuilder = HttpUrl.parse("http://" + Config.getValue("datafye-samples.api.endpoint") + "/datafye-api/v1/stocks/history/ohlc").newBuilder();
             urlBuilder.addQueryParameter("dataset", "Synthetic");
-            urlBuilder.addQueryParameter("frequency", "Minute");
-            urlBuilder.addQueryParameter("symbol", symbol);
+            urlBuilder.addQueryParameter("frequency", frequency);
+            urlBuilder.addQueryParameter("symbols", symbol);
+            urlBuilder.addQueryParameter("from", dateFormat().format(from));
+            urlBuilder.addQueryParameter("to", dateFormat().format(to));
             Request request = new Request.Builder().url(urlBuilder.build().toString()).addHeader("Accept", "application/json").build();
             Response response = webClient.newCall(request).execute();
-            GetLiveCandlesResponse candlesResponse = objectMapper.readValue(response.body().string(), GetLiveCandlesResponse.class);
+            GetHistoricalOHLCResponse ohlcResponse = objectMapper.readValue(response.body().string(), GetHistoricalOHLCResponse.class);
             long stop = System.currentTimeMillis();
 
             // update totals
             totalTime += (stop-start);
-            totalCount += candlesResponse.getCandles() != null ? candlesResponse.getCandles().length : 0;
+            totalCount += ohlcResponse.getCandles() != null ? ohlcResponse.getCandles().length : 0;
         }
 
         // average time
-        System.out.println("Fetched '" + (totalCount/100) + "' candles for '" + symbol + "' in " + (totalTime/100) + " milliseconds.");
+        System.out.println("Fetched '" + (totalCount/100) + "' OHLC bars for '" + symbol + "' in " + (totalTime/100) + " milliseconds.");
     }
 
     public static void main(String args[]) throws Exception {
         // parse command line
         final CmdLineParser parser = new CmdLineParser();
         final CmdLineParser.Option symbolOption = parser.addStringOption('s', "symbol");
+        final CmdLineParser.Option frequencyOption = parser.addStringOption('c', "frequency");
+        final CmdLineParser.Option fromOption = parser.addStringOption('f', "from");
+        final CmdLineParser.Option toOption = parser.addStringOption('t', "to");
         final CmdLineParser.Option helpOption = parser.addBooleanOption('h', "help");
 
         parser.parse(args);
@@ -89,14 +106,47 @@ public class GetLiveCandles {
             // ...symbol
             final String symbol = (String)parser.getOptionValue(symbolOption, null);
             if (symbol == null) printUsage();
+            // ...frequency
+            final String frequency = (String)parser.getOptionValue(frequencyOption, "Minute");
+            // ...from
+            final String fromStr = (String)parser.getOptionValue(fromOption, null);
+            if (fromStr == null) printUsage();
+            final SimpleDateFormat fromDateFormat = dateFormat();
+            Date from = null;
+            if (fromStr != null) {
+                try {
+                    from = fromDateFormat.parse(fromStr);
+                }
+                catch (Exception e) {
+                    e.printStackTrace();
+                    printUsage();
+                }
+            }
+            // ...to
+            final String toStr = (String)parser.getOptionValue(toOption, null);
+            if (toStr == null) printUsage();
+            final SimpleDateFormat toDateFormat = dateFormat();
+            Date to = null;
+            if (toStr != null) {
+                try {
+                    to = toDateFormat.parse(toStr);
+                }
+                catch (Exception e) {
+                    e.printStackTrace();
+                    printUsage();
+                }
+            }
 
             // dump parameters
             System.out.println("Parameters {");
             System.out.println("...Symbol: " + symbol);
+            System.out.println("...Frequency: " + frequency);
+            System.out.println("...From: " + fromStr);
+            System.out.println("...To: " + toStr);
             System.out.println("}");
 
             // execute
-            run(symbol);
+            run(symbol, frequency, from, to);
         }
         else {
             printUsage();
