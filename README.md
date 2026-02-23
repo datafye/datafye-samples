@@ -1,6 +1,13 @@
 # Datafye Samples
 
-Sample code and guides that use these samples for working with [Datafye](https://developer.datafye.io) deployments.
+Sample code for working with [Datafye](https://developer.datafye.io) deployments.
+
+- [What is Datafye?](#what-is-datafye)
+- [What's in This Repo](#whats-in-this-repo)
+  - [Data Cloud API Samples](#data-cloud-api-samples)
+  - [Algo Container Samples](#algo-container-samples)
+- [Build](#build)
+- [Running the Samples](#running-the-samples)
 
 ## What is Datafye?
 
@@ -163,7 +170,7 @@ Broker samples are available in Trading Environments only.
 
 For [Foundry: Full Stack](https://docs.datafye.io/quickstart/foundry-full-stack) and [Trading: Full Stack](https://docs.datafye.io/quickstart/trading-full-stack) environments — where you use the Datafye Algo Container and build your algo logic with the Datafye SDK.
 
-> **Work in progress.** Algo container samples and guides are coming soon.
+> **Work in progress.** Algo container samples are coming soon.
 
 ## Build
 
