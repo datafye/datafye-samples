@@ -32,6 +32,6 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class GetLastTradeResponse {
+public class GetLiveLastTradeResponse {
     private Trade[] trades;
 }

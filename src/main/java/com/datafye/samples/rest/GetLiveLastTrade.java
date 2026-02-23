@@ -19,17 +19,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datafye.samples.java;
+package com.datafye.samples.rest;
+
+import java.util.concurrent.TimeUnit;
 
 import jargs.gnu.CmdLineParser;
 
-import com.datafye.roe.*;
-import com.datafye.client.synthetic.FeedClient;
+import okhttp3.HttpUrl;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
-public class GetLastTrade {
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import com.neeve.config.Config;
+
+import com.datafye.samples.rest.domain.*;
+
+public class GetLiveLastTrade {
     static {
-        System.setProperty("datafye-synthetic-feed.client.samples.connectionDescriptor",
-            "solace://solace.rumi.local:55555&client_name=samples-synthetic-feed");
+        System.setProperty("datafye-samples.api.endpoint", "api.rest.rumi.local:7776");
     }
 
     final private static void printUsage() {
@@ -38,38 +48,32 @@ public class GetLastTrade {
         System.exit(-1);
     }
 
-    final private static void run(final String commaSeparatedSymbols) {
-        // create the client
-        FeedClient client = new FeedClient("samples", "0");
-
-        // split into individual symbols
-        final String[] symbols = commaSeparatedSymbols.split(",");
+    final private static void run(final String symbols) throws Exception {
+        // create client and response mapper
+        final OkHttpClient webClient = new OkHttpClient.Builder().readTimeout(300, TimeUnit.SECONDS).build();
+        final ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
         // perform 100 fetches
         long totalTime = 0;
         long totalCount = 0;
         for (int i = 0 ; i < 100 ; i++) {
-            // run and benchmark
             long start = System.currentTimeMillis();
-            GetLiveLastStocksTradesRequestMessage request = GetLiveLastStocksTradesRequestMessage.create();
-            request.setSymbols(symbols);
-            GetLiveLastStocksTradesResponseMessage response = client.getLiveLastTrades(request);
-            final int tradesCount = response.getTradesCount();
+            HttpUrl.Builder urlBuilder = HttpUrl.parse("http://" + Config.getValue("datafye-samples.api.endpoint") + "/datafye-api/v1/stocks/live/trades/lasttrade").newBuilder();
+            urlBuilder.addQueryParameter("dataset", "Synthetic");
+            urlBuilder.addQueryParameter("symbols", symbols);
+            Request request = new Request.Builder().url(urlBuilder.build().toString()).addHeader("Accept", "application/json").build();
+            Response response = webClient.newCall(request).execute();
+            GetLiveLastTradeResponse tradeResponse = objectMapper.readValue(response.body().string(), GetLiveLastTradeResponse.class);
             long stop = System.currentTimeMillis();
 
-            // update total
+            // update totals
             totalTime += (stop-start);
-            totalCount += tradesCount;
-
-            // dispose the response
-            response.dispose();
+            totalCount += tradeResponse.getTrades() != null ? tradeResponse.getTrades().length : 0;
         }
 
         // average time
-        System.out.println("Fetched '" + (totalCount/100) + "' trades for [" + commaSeparatedSymbols + "] in " + (totalTime/100) + " milliseconds.");
-
-        // close the client
-        client.close();
+        System.out.println("Fetched '" + (totalCount/100) + "' trades for [" + symbols + "] in " + (totalTime/100) + " milliseconds.");
     }
 
     public static void main(String args[]) throws Exception {

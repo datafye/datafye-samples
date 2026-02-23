@@ -31,8 +31,8 @@ if "%SAMPLE_NAME%"=="subscribe-live-top-of-book-java" set CLASS=com.datafye.samp
 if "%SAMPLE_NAME%"=="subscribe-live-trades-java" set CLASS=com.datafye.samples.java.SubscribeLiveTrades
 if "%SAMPLE_NAME%"=="get-historical-top-gainers-rest" set CLASS=com.datafye.samples.rest.GetHistoricalTopGainers
 if "%SAMPLE_NAME%"=="get-historical-top-gainers-java" set CLASS=com.datafye.samples.java.GetHistoricalTopGainers
-if "%SAMPLE_NAME%"=="get-last-trade-rest" set CLASS=com.datafye.samples.rest.GetLastTrade
-if "%SAMPLE_NAME%"=="get-last-trade-java" set CLASS=com.datafye.samples.java.GetLastTrade
+if "%SAMPLE_NAME%"=="get-live-last-trade-rest" set CLASS=com.datafye.samples.rest.GetLiveLastTrade
+if "%SAMPLE_NAME%"=="get-live-last-trade-java" set CLASS=com.datafye.samples.java.GetLiveLastTrade
 if "%SAMPLE_NAME%"=="get-live-sma-rest" set CLASS=com.datafye.samples.rest.GetLiveSMA
 if "%SAMPLE_NAME%"=="get-live-sma-java" set CLASS=com.datafye.samples.java.GetLiveSMA
 if "%SAMPLE_NAME%"=="get-live-ema-rest" set CLASS=com.datafye.samples.rest.GetLiveEMA
@@ -60,7 +60,7 @@ echo     get-historical-top-gainers-rest       Fetch historical top gainers
 echo     get-live-ohlc-rest                   Fetch current trading day OHLC bars
 echo     get-live-ohlc-concurrently-rest       Fetch live OHLC bars concurrently
 echo     get-live-top-of-book-rest             Fetch live top-of-book quotes
-echo     get-last-trade-rest                   Fetch last trade for symbols
+echo     get-live-last-trade-rest                   Fetch last trade for symbols
 echo     get-live-sma-rest                     Fetch live SMA values
 echo     get-live-ema-rest                     Fetch live EMA values
 echo.
@@ -69,7 +69,7 @@ echo     get-historical-ohlc-java             Fetch historical OHLC bars
 echo     get-historical-top-gainers-java       Fetch historical top gainers
 echo     get-live-ohlc-java                   Fetch current trading day OHLC bars
 echo     get-live-top-of-book-java             Fetch live top-of-book quotes
-echo     get-last-trade-java                   Fetch last trade for symbols
+echo     get-live-last-trade-java                   Fetch last trade for symbols
 echo     get-live-sma-java                     Fetch live SMA values
 echo     get-live-ema-java                     Fetch live EMA values
 echo     stream-historical-ohlc-java              Stream historical OHLC bars
@@ -87,8 +87,8 @@ echo get-historical-ohlc-java
 echo get-historical-ohlc-rest
 echo get-historical-top-gainers-java
 echo get-historical-top-gainers-rest
-echo get-last-trade-java
-echo get-last-trade-rest
+echo get-live-last-trade-java
+echo get-live-last-trade-rest
 echo get-live-ema-java
 echo get-live-ema-rest
 echo get-live-ohlc-concurrently-rest
