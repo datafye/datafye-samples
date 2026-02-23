@@ -5,6 +5,7 @@ Sample code for working with [Datafye](https://developer.datafye.io) deployments
 - [What is Datafye?](#what-is-datafye)
 - [What's in This Repo](#whats-in-this-repo)
   - [Data Cloud API Samples](#data-cloud-api-samples)
+  - [Broker Connector API Samples](#broker-connector-api-samples)
   - [Algo Container Samples](#algo-container-samples)
 - [Build](#build)
 - [Running the Samples](#running-the-samples)
@@ -18,11 +19,11 @@ Datafye is a cloud platform that democratizes institutional-grade algorithmic tr
 
 ## What's in This Repo
 
-This repo contains samples for two types of Datafye environments:
+This repo contains samples for three types of Datafye APIs:
 
 ### Data Cloud API Samples
 
-For [Foundry: Data Cloud Only](https://docs.datafye.io/quickstart/foundry-data-cloud-only) and [Trading: Data Cloud + Broker](https://docs.datafye.io/quickstart/trading-data-cloud-broker) environments — where you bring your own algo container and use the Data Cloud's REST and client APIs to access market data and broker connectivity.
+For [Foundry: Data Cloud Only](https://docs.datafye.io/quickstart/foundry-data-cloud-only) and [Trading: Data Cloud + Broker](https://docs.datafye.io/quickstart/trading-data-cloud-broker) environments — where you bring your own algo container and use the Data Cloud's REST and client APIs to access market data.
 
 These samples demonstrate three access modes:
 
@@ -150,20 +151,20 @@ Backtesting samples are Foundry-only. They demonstrate downloading historical da
 <tr><td style="vertical-align:middle">State</td><td style="vertical-align:middle">Clear</td><td>REST</td><td>ClearBacktestState</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
 </table>
 
-#### Broker
+### Broker Connector API Samples
 
-Broker samples are available in Trading Environments only.
+For [Trading: Data Cloud + Broker](https://docs.datafye.io/quickstart/trading-data-cloud-broker) environments — where you connect to a broker for order management and execution.
 
 <table>
-<tr><th>Operation</th><th>API</th><th>Sample</th><th>Foundry</th><th>Trading</th><th>Status</th></tr>
-<tr><td rowspan="2" style="vertical-align:middle">Place order</td><td>REST</td><td>PlaceOrder</td><td align="center">X</td><td align="center">✓</td><td><em>WIP</em></td></tr>
-<tr><td>Java</td><td>PlaceOrder</td><td align="center">X</td><td align="center">✓</td><td><em>WIP</em></td></tr>
-<tr><td rowspan="2" style="vertical-align:middle">Get orders</td><td>REST</td><td>GetOrders</td><td align="center">X</td><td align="center">✓</td><td><em>WIP</em></td></tr>
-<tr><td>Java</td><td>GetOrders</td><td align="center">X</td><td align="center">✓</td><td><em>WIP</em></td></tr>
-<tr><td rowspan="2" style="vertical-align:middle">Get order</td><td>REST</td><td>GetOrder</td><td align="center">X</td><td align="center">✓</td><td><em>WIP</em></td></tr>
-<tr><td>Java</td><td>GetOrder</td><td align="center">X</td><td align="center">✓</td><td><em>WIP</em></td></tr>
-<tr><td rowspan="2" style="vertical-align:middle">Cancel order</td><td>REST</td><td>CancelOrder</td><td align="center">X</td><td align="center">✓</td><td><em>WIP</em></td></tr>
-<tr><td>Java</td><td>CancelOrder</td><td align="center">X</td><td align="center">✓</td><td><em>WIP</em></td></tr>
+<tr><th>Operation</th><th>API</th><th>Sample</th><th>Status</th></tr>
+<tr><td rowspan="2" style="vertical-align:middle">Place order</td><td>REST</td><td>PlaceOrder</td><td><em>WIP</em></td></tr>
+<tr><td>Java</td><td>PlaceOrder</td><td><em>WIP</em></td></tr>
+<tr><td rowspan="2" style="vertical-align:middle">Get orders</td><td>REST</td><td>GetOrders</td><td><em>WIP</em></td></tr>
+<tr><td>Java</td><td>GetOrders</td><td><em>WIP</em></td></tr>
+<tr><td rowspan="2" style="vertical-align:middle">Get order</td><td>REST</td><td>GetOrder</td><td><em>WIP</em></td></tr>
+<tr><td>Java</td><td>GetOrder</td><td><em>WIP</em></td></tr>
+<tr><td rowspan="2" style="vertical-align:middle">Cancel order</td><td>REST</td><td>CancelOrder</td><td><em>WIP</em></td></tr>
+<tr><td>Java</td><td>CancelOrder</td><td><em>WIP</em></td></tr>
 </table>
 
 ### Algo Container Samples
