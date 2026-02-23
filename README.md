@@ -113,33 +113,33 @@ Backtesting samples are Foundry-only. They demonstrate downloading historical da
 
 <table>
 <tr><th>Data Type</th><th>Mode</th><th>API</th><th>Sample</th><th>Foundry</th><th>Trading</th><th>Status</th></tr>
-<tr><td rowspan="12" style="vertical-align:middle">Ticks</td><td rowspan="6" style="vertical-align:middle"><a href="#download">Download</a></td><td rowspan="3" style="vertical-align:middle">REST</td><td>DownloadTickHistory</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
-<tr><td>IsTickDownloadRunning</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
-<tr><td>CancelTickDownload</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
-<tr><td rowspan="3" style="vertical-align:middle">Java</td><td>DownloadTickHistory</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
-<tr><td>IsTickDownloadRunning</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
-<tr><td>CancelTickDownload</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
-<tr><td rowspan="6" style="vertical-align:middle"><a href="#replay">Replay</a></td><td rowspan="3" style="vertical-align:middle">REST</td><td>ReplayTicks</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
-<tr><td>IsTickReplayRunning</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
-<tr><td>StopTickReplay</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
-<tr><td rowspan="3" style="vertical-align:middle">Java</td><td>ReplayTicks</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
-<tr><td>IsTickReplayRunning</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
-<tr><td>StopTickReplay</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
-<tr><td rowspan="6" style="vertical-align:middle">Trades</td><td rowspan="6" style="vertical-align:middle"><a href="#download">Download</a></td><td rowspan="3" style="vertical-align:middle">REST</td><td>DownloadTradeHistory</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
-<tr><td>IsTradeDownloadRunning</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
-<tr><td>CancelTradeDownload</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
-<tr><td rowspan="3" style="vertical-align:middle">Java</td><td>DownloadTradeHistory</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
-<tr><td>IsTradeDownloadRunning</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
-<tr><td>CancelTradeDownload</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
-<tr><td rowspan="6" style="vertical-align:middle">Quotes</td><td rowspan="6" style="vertical-align:middle"><a href="#download">Download</a></td><td rowspan="3" style="vertical-align:middle">REST</td><td>DownloadQuoteHistory</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
-<tr><td>IsQuoteDownloadRunning</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
-<tr><td>CancelQuoteDownload</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
-<tr><td rowspan="3" style="vertical-align:middle">Java</td><td>DownloadQuoteHistory</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
-<tr><td>IsQuoteDownloadRunning</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
-<tr><td>CancelQuoteDownload</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
-<tr><td rowspan="3" style="vertical-align:middle">OHLC</td><td rowspan="3" style="vertical-align:middle"><a href="#download">Download</a></td><td rowspan="3" style="vertical-align:middle">Java</td><td>DownloadOHLCHistory</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
-<tr><td>IsOHLCDownloadRunning</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
-<tr><td>CancelOHLCDownload</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
+<tr><td rowspan="12" style="vertical-align:middle">Ticks</td><td rowspan="6" style="vertical-align:middle"><a href="#download">Download</a></td><td rowspan="3" style="vertical-align:middle">REST</td><td><a href="src/main/java/com/datafye/samples/rest/DownloadTickHistory.java">DownloadTickHistory</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
+<tr><td><a href="src/main/java/com/datafye/samples/rest/IsTickDownloadRunning.java">IsTickDownloadRunning</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
+<tr><td><a href="src/main/java/com/datafye/samples/rest/CancelTickDownload.java">CancelTickDownload</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
+<tr><td rowspan="3" style="vertical-align:middle">Java</td><td><a href="src/main/java/com/datafye/samples/java/DownloadTickHistory.java">DownloadTickHistory</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
+<tr><td><a href="src/main/java/com/datafye/samples/java/IsTickDownloadRunning.java">IsTickDownloadRunning</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
+<tr><td><a href="src/main/java/com/datafye/samples/java/CancelTickDownload.java">CancelTickDownload</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
+<tr><td rowspan="6" style="vertical-align:middle"><a href="#replay">Replay</a></td><td rowspan="3" style="vertical-align:middle">REST</td><td><a href="src/main/java/com/datafye/samples/rest/ReplayTicks.java">ReplayTicks</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
+<tr><td><a href="src/main/java/com/datafye/samples/rest/IsTickReplayRunning.java">IsTickReplayRunning</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
+<tr><td><a href="src/main/java/com/datafye/samples/rest/StopTickReplay.java">StopTickReplay</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
+<tr><td rowspan="3" style="vertical-align:middle">Java</td><td><a href="src/main/java/com/datafye/samples/java/ReplayTicks.java">ReplayTicks</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
+<tr><td><a href="src/main/java/com/datafye/samples/java/IsTickReplayRunning.java">IsTickReplayRunning</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
+<tr><td><a href="src/main/java/com/datafye/samples/java/StopTickReplay.java">StopTickReplay</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
+<tr><td rowspan="6" style="vertical-align:middle">Trades</td><td rowspan="6" style="vertical-align:middle"><a href="#download">Download</a></td><td rowspan="3" style="vertical-align:middle">REST</td><td><a href="src/main/java/com/datafye/samples/rest/DownloadTradeHistory.java">DownloadTradeHistory</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
+<tr><td><a href="src/main/java/com/datafye/samples/rest/IsTradeDownloadRunning.java">IsTradeDownloadRunning</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
+<tr><td><a href="src/main/java/com/datafye/samples/rest/CancelTradeDownload.java">CancelTradeDownload</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
+<tr><td rowspan="3" style="vertical-align:middle">Java</td><td><a href="src/main/java/com/datafye/samples/java/DownloadTradeHistory.java">DownloadTradeHistory</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
+<tr><td><a href="src/main/java/com/datafye/samples/java/IsTradeDownloadRunning.java">IsTradeDownloadRunning</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
+<tr><td><a href="src/main/java/com/datafye/samples/java/CancelTradeDownload.java">CancelTradeDownload</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
+<tr><td rowspan="6" style="vertical-align:middle">Quotes</td><td rowspan="6" style="vertical-align:middle"><a href="#download">Download</a></td><td rowspan="3" style="vertical-align:middle">REST</td><td><a href="src/main/java/com/datafye/samples/rest/DownloadQuoteHistory.java">DownloadQuoteHistory</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
+<tr><td><a href="src/main/java/com/datafye/samples/rest/IsQuoteDownloadRunning.java">IsQuoteDownloadRunning</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
+<tr><td><a href="src/main/java/com/datafye/samples/rest/CancelQuoteDownload.java">CancelQuoteDownload</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
+<tr><td rowspan="3" style="vertical-align:middle">Java</td><td><a href="src/main/java/com/datafye/samples/java/DownloadQuoteHistory.java">DownloadQuoteHistory</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
+<tr><td><a href="src/main/java/com/datafye/samples/java/IsQuoteDownloadRunning.java">IsQuoteDownloadRunning</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
+<tr><td><a href="src/main/java/com/datafye/samples/java/CancelQuoteDownload.java">CancelQuoteDownload</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
+<tr><td rowspan="3" style="vertical-align:middle">OHLC</td><td rowspan="3" style="vertical-align:middle"><a href="#download">Download</a></td><td rowspan="3" style="vertical-align:middle">Java</td><td><a href="src/main/java/com/datafye/samples/java/DownloadOHLCHistory.java">DownloadOHLCHistory</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
+<tr><td><a href="src/main/java/com/datafye/samples/java/IsOHLCDownloadRunning.java">IsOHLCDownloadRunning</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
+<tr><td><a href="src/main/java/com/datafye/samples/java/CancelOHLCDownload.java">CancelOHLCDownload</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
 <tr><td style="vertical-align:middle">State</td><td style="vertical-align:middle">Clear</td><td>REST</td><td>ClearBacktestState</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
 </table>
 
