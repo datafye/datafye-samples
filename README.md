@@ -234,12 +234,22 @@ curl -fsSL https://downloads.n5corp.com/datafye/cli/latest/install.sh | sudo bas
 
 **Download the quickstart descriptor and provision:**
 
+**Option A: Synthetic Data (no API keys required)**
+
 ```bash
-curl -o quickstart.yaml https://downloads.n5corp.com/datafye/quickstarts/latest/foundry-data-cloud-only.yaml
+curl -o quickstart.yaml https://downloads.n5corp.com/datafye/quickstarts/latest/foundry-data-cloud-only-with-synthetic.yaml
 datafye foundry local provision --descriptor quickstart.yaml
 ```
 
-This provisions a Data Cloud with a Synthetic dataset containing 10 symbols (AAPL, MSFT, GOOGL, AMZN, NVDA, TSLA, META, NFLX, AMD, INTC), 90 days of historical data, and live tick and OHLC data. No API keys required.
+**Option B: Real Market Data (SIP via Polygon)**
+
+```bash
+export POLYGON_API_KEY="your-polygon-api-key"
+curl -o quickstart.yaml https://downloads.n5corp.com/datafye/quickstarts/latest/foundry-data-cloud-only-with-sip.yaml
+datafye foundry local provision --descriptor quickstart.yaml
+```
+
+Both options provision a Data Cloud with 10 symbols (AAPL, MSFT, GOOGL, AMZN, NVDA, TSLA, META, NFLX, AMD, INTC), 90 days of historical data, and live tick and OHLC data. The Synthetic option requires no API keys; the SIP option uses real market data via [Polygon](https://polygon.io).
 
 For full details see the [Foundry: Data Cloud Only](https://docs.datafye.io/quickstart/foundry-data-cloud-only) quickstart, or explore other quickstart scenarios in the [Datafye docs](https://docs.datafye.io).
 
