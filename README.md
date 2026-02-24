@@ -222,7 +222,7 @@ The extracted distribution contains:
 
 ### 1. Provision a Local Datafye Environment
 
-The samples need a running Datafye Data Cloud to connect to. The easiest way to get one is to provision a local environment using the Datafye CLI.
+The samples need a running Datafye environment to connect to. The easiest way to get one is to provision a local environment using the Datafye CLI.
 
 **Install the Datafye CLI:**
 
