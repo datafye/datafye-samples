@@ -70,11 +70,8 @@ The tables below cover stocks. Equivalent crypto samples are planned.
 #### Health
 
 <table>
-<tr><th>Subsystem</th><th>API</th><th>Sample</th><th>Foundry</th><th>Trading</th><th>Status</th></tr>
-<tr><td>Reference</td><td>REST</td><td><a href="src/main/java/com/datafye/samples/rest/health/PingReference.java">PingReference</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
-<tr><td>Live Feed</td><td>REST</td><td><a href="src/main/java/com/datafye/samples/rest/health/PingLiveFeed.java">PingLiveFeed</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
-<tr><td>Live Aggregates</td><td>REST</td><td><a href="src/main/java/com/datafye/samples/rest/health/PingLiveAggregates.java">PingLiveAggregates</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
-<tr><td>History</td><td>REST</td><td><a href="src/main/java/com/datafye/samples/rest/health/PingHistory.java">PingHistory</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><th>Operation</th><th>API</th><th>Sample</th><th>Foundry</th><th>Trading</th><th>Status</th></tr>
+<tr><td>Ping</td><td>REST</td><td><a href="src/main/java/com/datafye/samples/rest/health/Ping.java">Ping</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
 </table>
 
 #### Reference

@@ -13,10 +13,7 @@ JAVA_OPTS="--add-opens=java.base/jdk.internal.ref=ALL-UNNAMED \
 
 resolve_class() {
     case "$1" in
-        ping-reference-rest)                        echo "com.datafye.samples.rest.health.PingReference" ;;
-        ping-live-feed-rest)                        echo "com.datafye.samples.rest.health.PingLiveFeed" ;;
-        ping-live-aggregates-rest)                  echo "com.datafye.samples.rest.health.PingLiveAggregates" ;;
-        ping-history-rest)                          echo "com.datafye.samples.rest.health.PingHistory" ;;
+        ping-rest)                                  echo "com.datafye.samples.rest.health.Ping" ;;
         get-securities-rest)                        echo "com.datafye.samples.rest.reference.GetSecurities" ;;
         get-securities-java)                        echo "com.datafye.samples.java.reference.GetSecurities" ;;
         get-live-top-of-book-rest)                  echo "com.datafye.samples.rest.live.ticks.GetLiveTopOfBook" ;;
@@ -74,10 +71,7 @@ usage() {
     echo "Available samples:"
     echo ""
     echo "  Health:"
-    echo "    ping-reference-rest                    Ping reference subsystem"
-    echo "    ping-live-feed-rest                    Ping live feed subsystem"
-    echo "    ping-live-aggregates-rest              Ping live aggregates subsystem"
-    echo "    ping-history-rest                      Ping history subsystem"
+    echo "    ping-rest                              Ping deployment health"
     echo ""
     echo "  Reference:"
     echo "    get-securities-rest                    Fetch securities reference data"
@@ -181,10 +175,7 @@ if [ "$1" = "--list" ]; then
     echo "is-tick-replay-running-rest"
     echo "is-trade-download-running-java"
     echo "is-trade-download-running-rest"
-    echo "ping-history-rest"
-    echo "ping-live-aggregates-rest"
-    echo "ping-live-feed-rest"
-    echo "ping-reference-rest"
+    echo "ping-rest"
     echo "start-ohlc-download-java"
     echo "start-quote-download-java"
     echo "start-quote-download-rest"

@@ -18,10 +18,7 @@ if "%~1"=="--list" goto :list
 
 set SAMPLE_NAME=%~1
 
-if "%SAMPLE_NAME%"=="ping-reference-rest" set CLASS=com.datafye.samples.rest.health.PingReference
-if "%SAMPLE_NAME%"=="ping-live-feed-rest" set CLASS=com.datafye.samples.rest.health.PingLiveFeed
-if "%SAMPLE_NAME%"=="ping-live-aggregates-rest" set CLASS=com.datafye.samples.rest.health.PingLiveAggregates
-if "%SAMPLE_NAME%"=="ping-history-rest" set CLASS=com.datafye.samples.rest.health.PingHistory
+if "%SAMPLE_NAME%"=="ping-rest" set CLASS=com.datafye.samples.rest.health.Ping
 if "%SAMPLE_NAME%"=="get-securities-rest" set CLASS=com.datafye.samples.rest.reference.GetSecurities
 if "%SAMPLE_NAME%"=="get-securities-java" set CLASS=com.datafye.samples.java.reference.GetSecurities
 if "%SAMPLE_NAME%"=="get-live-top-of-book-rest" set CLASS=com.datafye.samples.rest.live.ticks.GetLiveTopOfBook
@@ -87,10 +84,7 @@ echo.
 echo Available samples:
 echo.
 echo   Health:
-echo     ping-reference-rest                    Ping reference subsystem
-echo     ping-live-feed-rest                    Ping live feed subsystem
-echo     ping-live-aggregates-rest              Ping live aggregates subsystem
-echo     ping-history-rest                      Ping history subsystem
+echo     ping-rest                              Ping deployment health
 echo.
 echo   Reference:
 echo     get-securities-rest                    Fetch securities reference data
@@ -189,10 +183,7 @@ echo is-tick-replay-running-java
 echo is-tick-replay-running-rest
 echo is-trade-download-running-java
 echo is-trade-download-running-rest
-echo ping-history-rest
-echo ping-live-aggregates-rest
-echo ping-live-feed-rest
-echo ping-reference-rest
+echo ping-rest
 echo start-ohlc-download-java
 echo start-quote-download-java
 echo start-quote-download-rest
