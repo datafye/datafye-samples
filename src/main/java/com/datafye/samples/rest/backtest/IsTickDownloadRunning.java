@@ -54,7 +54,7 @@ public class IsTickDownloadRunning {
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
         // check if download is running
-        HttpUrl.Builder urlBuilder = HttpUrl.parse("http://" + Config.getValue("datafye-samples.api.endpoint") + "/datafye-api/v1/backtest/history/ticks/fetch/status").newBuilder();
+        HttpUrl.Builder urlBuilder = HttpUrl.parse("http://" + Config.getValue("datafye-samples.api.endpoint") + "/datafye-api/v1/stocks/backtest/history/ticks").newBuilder();
         urlBuilder.addQueryParameter("dataset", "Synthetic");
         Request request = new Request.Builder().url(urlBuilder.build().toString()).addHeader("Accept", "application/json").build();
         Response response = webClient.newCall(request).execute();

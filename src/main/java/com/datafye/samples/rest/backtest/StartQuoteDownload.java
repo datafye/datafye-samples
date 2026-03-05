@@ -58,7 +58,7 @@ public class StartQuoteDownload {
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
         // start the download
-        HttpUrl.Builder urlBuilder = HttpUrl.parse("http://" + Config.getValue("datafye-samples.api.endpoint") + "/datafye-api/v1/backtest/history/quotes/fetch/start").newBuilder();
+        HttpUrl.Builder urlBuilder = HttpUrl.parse("http://" + Config.getValue("datafye-samples.api.endpoint") + "/datafye-api/v1/stocks/backtest/history/quotes").newBuilder();
         urlBuilder.addQueryParameter("dataset", "Synthetic");
         urlBuilder.addQueryParameter("date", date);
         if (symbols != null) urlBuilder.addQueryParameter("symbols", symbols);
@@ -81,7 +81,7 @@ public class StartQuoteDownload {
                 long elapsed = (System.currentTimeMillis() - startTime) / 1000;
                 System.out.println("Downloading quote history... (" + elapsed + "s elapsed)");
 
-                HttpUrl.Builder statusUrlBuilder = HttpUrl.parse("http://" + Config.getValue("datafye-samples.api.endpoint") + "/datafye-api/v1/backtest/history/quotes/fetch/status").newBuilder();
+                HttpUrl.Builder statusUrlBuilder = HttpUrl.parse("http://" + Config.getValue("datafye-samples.api.endpoint") + "/datafye-api/v1/stocks/backtest/history/quotes").newBuilder();
                 statusUrlBuilder.addQueryParameter("dataset", "Synthetic");
                 Request statusRequest = new Request.Builder().url(statusUrlBuilder.build().toString()).addHeader("Accept", "application/json").build();
                 Response statusResp = webClient.newCall(statusRequest).execute();

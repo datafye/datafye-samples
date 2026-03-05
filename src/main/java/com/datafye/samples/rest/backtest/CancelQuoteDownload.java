@@ -28,7 +28,6 @@ import jargs.gnu.CmdLineParser;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import okhttp3.RequestBody;
 import okhttp3.Response;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -55,9 +54,9 @@ public class CancelQuoteDownload {
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
         // cancel the download
-        HttpUrl.Builder urlBuilder = HttpUrl.parse("http://" + Config.getValue("datafye-samples.api.endpoint") + "/datafye-api/v1/backtest/history/quotes/fetch/stop").newBuilder();
+        HttpUrl.Builder urlBuilder = HttpUrl.parse("http://" + Config.getValue("datafye-samples.api.endpoint") + "/datafye-api/v1/stocks/backtest/history/quotes").newBuilder();
         urlBuilder.addQueryParameter("dataset", "Synthetic");
-        Request request = new Request.Builder().url(urlBuilder.build().toString()).addHeader("Accept", "application/json").post(RequestBody.create("", null)).build();
+        Request request = new Request.Builder().url(urlBuilder.build().toString()).addHeader("Accept", "application/json").delete().build();
         Response response = webClient.newCall(request).execute();
         StatusResponse statusResponse = objectMapper.readValue(response.body().string(), StatusResponse.class);
 

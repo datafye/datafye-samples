@@ -54,7 +54,7 @@ public class IsTickReplayRunning {
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
         // check if replay is running
-        HttpUrl.Builder urlBuilder = HttpUrl.parse("http://" + Config.getValue("datafye-samples.api.endpoint") + "/datafye-api/v1/backtest/history/ticks/replay/status").newBuilder();
+        HttpUrl.Builder urlBuilder = HttpUrl.parse("http://" + Config.getValue("datafye-samples.api.endpoint") + "/datafye-api/v1/stocks/backtest/replay/ticks").newBuilder();
         urlBuilder.addQueryParameter("dataset", "Synthetic");
         Request request = new Request.Builder().url(urlBuilder.build().toString()).addHeader("Accept", "application/json").build();
         Response response = webClient.newCall(request).execute();

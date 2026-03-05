@@ -57,7 +57,7 @@ public class StartTickReplay {
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
         // start the replay
-        HttpUrl.Builder urlBuilder = HttpUrl.parse("http://" + Config.getValue("datafye-samples.api.endpoint") + "/datafye-api/v1/backtest/history/ticks/replay/start").newBuilder();
+        HttpUrl.Builder urlBuilder = HttpUrl.parse("http://" + Config.getValue("datafye-samples.api.endpoint") + "/datafye-api/v1/stocks/backtest/replay/ticks").newBuilder();
         urlBuilder.addQueryParameter("dataset", "Synthetic");
         urlBuilder.addQueryParameter("date", date);
         Request request = new Request.Builder().url(urlBuilder.build().toString()).addHeader("Accept", "application/json").post(RequestBody.create("", null)).build();
@@ -79,7 +79,7 @@ public class StartTickReplay {
                 long elapsed = (System.currentTimeMillis() - startTime) / 1000;
                 System.out.println("Replaying ticks... (" + elapsed + "s elapsed)");
 
-                HttpUrl.Builder statusUrlBuilder = HttpUrl.parse("http://" + Config.getValue("datafye-samples.api.endpoint") + "/datafye-api/v1/backtest/history/ticks/replay/status").newBuilder();
+                HttpUrl.Builder statusUrlBuilder = HttpUrl.parse("http://" + Config.getValue("datafye-samples.api.endpoint") + "/datafye-api/v1/stocks/backtest/replay/ticks").newBuilder();
                 statusUrlBuilder.addQueryParameter("dataset", "Synthetic");
                 Request statusRequest = new Request.Builder().url(statusUrlBuilder.build().toString()).addHeader("Accept", "application/json").build();
                 Response statusResp = webClient.newCall(statusRequest).execute();
