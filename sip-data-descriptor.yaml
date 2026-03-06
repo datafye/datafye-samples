@@ -1,5 +1,4 @@
 apiVersion: datafye.io/v1
-kind: DataSpec
 metadata:
   name: samples-sip
   description: "SIP data for running the Datafye samples (requires Polygon API key)"
