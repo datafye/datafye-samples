@@ -3,6 +3,11 @@
 Sample code for working with [Datafye](https://developer.datafye.io) deployments.
 
 - [What is Datafye?](#what-is-datafye)
+- [Concepts](#concepts)
+  - [Environments](#environments)
+  - [Data Horizon](#data-horizon)
+  - [Delivery Modes](#delivery-modes)
+  - [Backtesting](#backtesting-concepts)
 - [What's in This Repo](#whats-in-this-repo)
   - [Data Cloud API Samples](#data-cloud-api-samples)
   - [Broker Connector API Samples](#broker-connector-api-samples)
@@ -16,6 +21,66 @@ Datafye is a cloud platform that democratizes institutional-grade algorithmic tr
 
 - [developer.datafye.io](https://developer.datafye.io) — An introduction to Datafye through guided questions and chat
 - [docs.datafye.io](https://docs.datafye.io) — Developer documentation
+
+## Concepts
+
+Four ideas come up throughout the samples: **environments**, **data horizon**, **delivery modes**, and **backtesting**. Understanding how they fit together will make the sample tables below much easier to follow.
+
+### Environments
+
+Datafye supports two types of environments:
+
+- **Foundry** — A self-contained sandbox for strategy development and backtesting. A Foundry runs locally (or in the cloud) with downloaded historical data. There is no connection to a live market or broker. Ticks are replayed from stored data to simulate a live trading session, letting you develop and test strategies without risking real capital or requiring live market access.
+
+- **Trading** — An environment connected to a real market data feed and, optionally, a broker for order execution. Used for both paper trading and live trading. Data flows directly from the exchange, and orders can be routed to a broker.
+
+The same APIs work in both environments. Code written against a Foundry requires no changes to run in a Trading environment — only the data source changes.
+
+### Data Horizon
+
+Every piece of market data falls into one of two horizons relative to the **current trading day**:
+
+- **Live** — Data from the current trading day. In a Trading environment, this is literally today's market activity arriving in real time from the exchange. In a Foundry, it is the simulated trading day produced by replaying downloaded historical ticks (see [Backtesting](#backtesting-concepts) below). Live data includes top-of-book quotes, last trades, and intraday aggregates (OHLC, SMA, EMA). It can be [fetched](#fetch) or [subscribed to](#subscribe), but not streamed.
+
+- **Historical** — Data from trading days prior to the current one. Available in both Foundry and Trading environments. Historical aggregates can be [fetched](#fetch) in both environments, or [streamed](#stream) in a Foundry. Historical ticks are not accessed directly — in a Foundry, they are [downloaded](#download) and then [replayed](#replay) to produce live data.
+
+The distinction matters because the delivery modes available to you depend on which horizon the data belongs to:
+
+| | Fetch | Subscribe | Stream |
+|---|:---:|:---:|:---:|
+| **Live** (ticks, aggregates) | Yes | Yes | — |
+| **Historical** (aggregates) | Yes | — | Foundry only |
+| **Historical** (ticks) | — | — | — (download & replay instead) |
+
+<h3 id="delivery-modes">Delivery Modes</h3>
+
+How data gets from the Data Cloud to your code.
+
+<h5 id="fetch">Fetch</h5>
+
+Request-response. Client sends a request, gets back a complete result. Works for both live and historical data.
+
+<h5 id="stream">Stream</h5>
+
+Server pushes data one record at a time over a dedicated channel. Efficient for large historical datasets — for example, streaming months of minute-bar OHLC data without loading it all into memory at once. Available for historical aggregates in a Foundry only.
+
+<h5 id="subscribe">Subscribe</h5>
+
+Client subscribes and receives live updates as they occur in real time. Use this to watch quotes, trades, or aggregates update throughout the current trading day.
+
+<h3 id="backtesting-concepts">Backtesting</h3>
+
+Backtesting lets you test a strategy against historical market conditions as if they were happening live. It is a two-step process available only in a Foundry:
+
+<h5 id="download">1. Download</h5>
+
+Downloads historical data from the data provider into the Foundry's local store. You can download ticks (trades and/or quotes) and aggregates (OHLC). Downloads are long-running operations with lifecycle APIs to check status and cancel.
+
+<h5 id="replay">2. Replay</h5>
+
+Replays downloaded tick data to produce a simulated live feed within the Foundry. The day being replayed becomes the current trading day — the replayed ticks are the environment's "live" data. Once a replay is running, your code can fetch and subscribe to live quotes, trades, and aggregates exactly as it would against a real market. Replays also have lifecycle APIs to check status and stop.
+
+**Putting it together:** To backtest a strategy in a Foundry, you download the historical ticks for the days you want to test, start a replay for a given day, and then run your strategy against the live data produced by the replay. The strategy code itself doesn't need to know whether it's running against replayed data or a real market — the APIs are identical.
 
 ## What's in This Repo
 
@@ -41,30 +106,6 @@ These samples demonstrate three access modes:
 | WebSocket | `com.datafye.samples.ws` | [src/.../ws](src/main/java/com/datafye/samples/ws) |
 | Java Client | `com.datafye.samples.java.*` | [src/.../java](src/main/java/com/datafye/samples/java) |
 
-#### Delivery Modes
-
-<h5 id="fetch">Fetch</h5>
-
-Request-response. Client sends a request, gets back a complete result.
-
-<h5 id="stream">Stream</h5>
-
-Server pushes data one record at a time over a dedicated channel. Efficient for large historical datasets.
-
-<h5 id="subscribe">Subscribe</h5>
-
-Client subscribes and receives live updates as they occur in real time.
-
-#### Backtesting Operations
-
-<h5 id="download">Download</h5>
-
-Downloads historical data from the data provider into the Foundry's local store for backtesting. Includes lifecycle operations to check download status and cancel a running download.
-
-<h5 id="replay">Replay</h5>
-
-Replays downloaded historical tick data to produce a simulated live feed within the Foundry. Includes lifecycle operations to check replay status and stop a running replay.
-
 The tables below cover stocks. Equivalent crypto samples are planned.
 
 #### Health
@@ -83,8 +124,6 @@ The tables below cover stocks. Equivalent crypto samples are planned.
 </table>
 
 #### Live — Ticks
-
-In a Foundry, live data is produced by replaying historical tick data — see [Backtesting](#backtesting) for how to download and replay ticks. In a Trading Environment, live data comes directly from the market. The same fetch and subscribe APIs apply in both cases.
 
 <table>
 <tr><th>Data Type</th><th>Mode</th><th>API</th><th>Sample</th><th>Foundry</th><th>Trading</th><th>Status</th></tr>
@@ -116,9 +155,7 @@ In a Foundry, live data is produced by replaying historical tick data — see [B
 <tr><td>Java</td><td>SubscribeLiveEMA</td><td align="center">✓</td><td align="center">✓</td><td><em>WIP</em></td></tr>
 </table>
 
-#### History
-
-Historical data fetch is available in both Foundry and Trading environments. Streaming is Foundry-only.
+#### Historical Aggregates
 
 <table>
 <tr><th>Data Type</th><th>Mode</th><th>API</th><th>Sample</th><th>Foundry</th><th>Trading</th><th>Status</th></tr>
@@ -133,7 +170,7 @@ Historical data fetch is available in both Foundry and Trading environments. Str
 
 #### Backtesting
 
-Backtesting samples are Foundry-only. They demonstrate downloading historical data from the data provider and replaying ticks to produce live data for fetch and subscribe operations.
+Foundry-only. See [Backtesting under Concepts](#backtesting-concepts) for how download and replay work together.
 
 <table>
 <tr><th>Data Type</th><th>Mode</th><th>API</th><th>Sample</th><th>Foundry</th><th>Trading</th><th>Status</th></tr>
