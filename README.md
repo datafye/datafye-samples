@@ -70,17 +70,27 @@ Client subscribes and receives live updates as they occur in real time. Use this
 
 <h3 id="backtesting-concepts">Backtesting</h3>
 
-Backtesting lets you test a strategy against historical market conditions as if they were happening live. It is a two-step process available only in a Foundry:
+Backtesting lets you test a strategy against historical market conditions. It is available only in a Foundry and always starts with a download.
 
-<h5 id="download">1. Download</h5>
+<h5 id="download">Download (prerequisite)</h5>
 
 Downloads historical data from the data provider into the Foundry's local store. You can download ticks (trades and/or quotes) and aggregates (OHLC). Downloads are long-running operations with lifecycle APIs to check status and cancel.
 
-<h5 id="replay">2. Replay</h5>
+Once data is downloaded, there are three ways to consume it — choose based on what your strategy needs:
 
-Replays downloaded tick data to produce a simulated live feed within the Foundry. The day being replayed becomes the current trading day — the replayed ticks are the environment's "live" data. Once a replay is running, your code can fetch and subscribe to live quotes, trades, and aggregates exactly as it would against a real market. Replays also have lifecycle APIs to check status and stop.
+<h5 id="fetch-aggs">Fetch</h5>
 
-**Putting it together:** To backtest a strategy in a Foundry, you download the historical ticks for the days you want to test, start a replay for a given day, and then run your strategy against the live data produced by the replay. The strategy code itself doesn't need to know whether it's running against replayed data or a real market — the APIs are identical.
+[Fetch](#fetch) downloaded historical aggregates on demand. Suitable when your strategy needs specific aggregate windows.
+
+<h5 id="stream-aggs">Stream</h5>
+
+[Stream](#stream) downloaded historical aggregates record by record. Efficient when your strategy needs to process large volumes of aggregate data — for example, months of minute-bar OHLC — without loading it all into memory.
+
+<h5 id="replay">Replay</h5>
+
+[Replays](#replay) downloaded tick data to produce a simulated live feed within the Foundry. The day being replayed becomes the current trading day — the replayed ticks are the environment's "live" data. Once a replay is running, your code can fetch and subscribe to live quotes, trades, and aggregates exactly as it would against a real market. Replays have lifecycle APIs to check status and stop.
+
+**If your strategy only needs aggregates**, you can download aggs and fetch or stream them directly — no tick replay required. **If your strategy needs tick-level data** (quotes, trades), you must download and replay ticks. Replay also produces live aggregates, so a tick replay covers both cases.
 
 ## What's in This Repo
 
