@@ -92,6 +92,8 @@ Once data is downloaded, there are three ways to consume it — choose based on 
 
 **If your strategy only needs aggregates**, you can download aggs and fetch or stream them directly — no tick replay required. **If your strategy needs tick-level data** (quotes, trades), you must download and replay ticks. Replay also produces live aggregates, so a tick replay covers both cases.
 
+> **Note:** Fetch and stream are useful for early-stage development — quickly iterating on a signal generator or validating aggregate-based logic. However, replay is the most accurate way to backtest. Because it recreates a live trading session tick by tick, it avoids look-ahead bias and tests your strategy in an environment closest to actual trading conditions. For final validation before going live, always use replay.
+
 ## What's in This Repo
 
 This repo contains samples for three types of Datafye APIs:
