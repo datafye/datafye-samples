@@ -37,11 +37,7 @@ import com.datafye.sip.history.Client.Stream;
 import com.datafye.samples.rest.domain.OHLC;
 
 /**
- * Streams historical OHLC bars using the SIP History client.
- *
- * Note: Streaming requires the SIP History client which provides
- * the Stream class and openStream method. The Synthetic History
- * client does not yet support streaming.
+ * Streams historical OHLC bars using the History client.
  */
 public class StreamHistoricalOHLC {
     static {
