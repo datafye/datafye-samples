@@ -98,6 +98,10 @@ setup_info() {
     printf "    ${DIM}%s${RESET}\n" "$1"
 }
 
+setup_warn() {
+    printf "    ${YELLOW}!${RESET} %s\n" "$1"
+}
+
 # Run a numbered test. Usage: run_test <label> <sample-name> [args...]
 run_test() {
     local label="$1"; shift
@@ -181,6 +185,7 @@ section "Setup"
 # --- Detect platform ---
 DISTRO=""
 PKG_MGR=""
+IS_WSL=false
 
 if [[ -f /etc/os-release ]]; then
     . /etc/os-release
@@ -209,6 +214,7 @@ if [[ -f /etc/os-release ]]; then
             DISTRO="$ID"
             PKG_MGR="apt"
             if grep -qi microsoft /proc/version 2>/dev/null; then
+                IS_WSL=true
                 setup_info "${NAME:-$ID} ${VERSION_ID:-} (WSL)"
             else
                 setup_info "${NAME:-$ID} ${VERSION_ID:-}"
@@ -227,6 +233,55 @@ elif [[ "$(uname)" == "Darwin" ]]; then
     setup_info "macOS $(sw_vers -productVersion)"
 else
     fail_setup "Unable to detect platform. Supported: Amazon Linux, RHEL, CentOS, Fedora, Rocky, AlmaLinux, Ubuntu, Debian, macOS."
+fi
+
+# --- Memory check ---
+MEM_TOTAL_MB=0
+if [ "$DISTRO" = "macos" ]; then
+    MEM_TOTAL_MB=$(( $(sysctl -n hw.memsize) / 1048576 ))
+elif [ -f /proc/meminfo ]; then
+    MEM_TOTAL_MB=$(awk '/MemTotal/ { printf "%d", $2 / 1024 }' /proc/meminfo)
+fi
+MEM_TOTAL_GB=$(( MEM_TOTAL_MB / 1024 ))
+
+# macOS and WSL need 12GB (Docker Desktop overhead); native Linux needs 8GB
+if [ "$DISTRO" = "macos" ] || [ "$IS_WSL" = true ]; then
+    MEM_MIN_GB=12
+else
+    MEM_MIN_GB=8
+fi
+
+if [ "$MEM_TOTAL_MB" -gt 0 ]; then
+    if [ "$MEM_TOTAL_GB" -lt "$MEM_MIN_GB" ]; then
+        fail_setup "Insufficient memory: ${MEM_TOTAL_GB}GB detected, ${MEM_MIN_GB}GB required. The local foundry runs in Docker and needs at least ${MEM_MIN_GB}GB of RAM."
+    else
+        setup_ok "Memory: ${MEM_TOTAL_GB}GB (${MEM_MIN_GB}GB required)"
+    fi
+fi
+
+# --- Disk check ---
+# Find the mount point with the most available space
+if [ "$DISTRO" = "macos" ]; then
+    # macOS df uses 512-byte blocks by default; use -g for GB
+    BEST_MOUNT=$(df -g 2>/dev/null | awk 'NR>1 && $4+0 > max { max=$4; mount=$NF } END { print mount }')
+    BEST_AVAIL_GB=$(df -g 2>/dev/null | awk 'NR>1 && $4+0 > max { max=$4 } END { print max }')
+    CWD_AVAIL_GB=$(df -g "${REPO_DIR}" 2>/dev/null | awk 'NR==2 { print $4 }')
+else
+    BEST_MOUNT=$(df -BG --output=avail,target 2>/dev/null | awk 'NR>1 { gsub(/G/,"",$1); if ($1+0 > max) { max=$1; mount=$2 } } END { print mount }')
+    BEST_AVAIL_GB=$(df -BG --output=avail,target 2>/dev/null | awk 'NR>1 { gsub(/G/,"",$1); if ($1+0 > max) { max=$1 } } END { print max }')
+    CWD_AVAIL_GB=$(df -BG --output=avail "${REPO_DIR}" 2>/dev/null | awk 'NR==2 { gsub(/G/,""); print $1 }')
+fi
+
+if [ -n "${CWD_AVAIL_GB:-}" ] && [ -n "${BEST_AVAIL_GB:-}" ]; then
+    setup_ok "Disk: ${CWD_AVAIL_GB}GB available on current volume"
+    if [ "${CWD_AVAIL_GB:-0}" -lt "${BEST_AVAIL_GB:-0}" ] && [ "${BEST_MOUNT:-}" != "/" ] && [ "${BEST_MOUNT:-}" != "$(df "${REPO_DIR}" 2>/dev/null | awk 'NR==2{print $NF}')" ]; then
+        setup_warn "Largest volume is ${BEST_MOUNT} (${BEST_AVAIL_GB}GB free). Consider running from there"
+        setup_warn "so Docker maps container volumes to the disk with the most space."
+    fi
+    if [ "${CWD_AVAIL_GB:-0}" -lt 20 ]; then
+        setup_warn "Less than 20GB free. Historical data downloads may require significant disk space"
+        setup_warn "depending on the number of symbols, date range, and data types downloaded."
+    fi
 fi
 
 # --- Helper: install a package ---
