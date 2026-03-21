@@ -276,7 +276,7 @@ The samples need a running Datafye environment to connect to. The easiest way to
 curl -fsSL https://downloads.n5corp.com/datafye/cli/latest/install.sh | sudo bash
 ```
 
-> No sudo access? See [CLI Installation](https://docs.datafye.io/cli-reference/installation) for alternative methods.
+> **Windows or no sudo access?** Windows requires WSL (Windows Subsystem for Linux). See [CLI Installation](https://docs.datafye.io/cli-reference/installation) for Windows setup and alternative install methods.
 
 **Download the quickstart descriptor and provision:**
 
