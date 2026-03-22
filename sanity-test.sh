@@ -659,6 +659,10 @@ fi
 HOSTS_ENTRIES=(
     "solace.rumi.local"
     "api.rest.rumi.local"
+    "sip.feed.rumi.local"
+    "sip.history.rumi.local"
+    "synthetic.feed.rumi.local"
+    "synthetic.history.rumi.local"
     "local-foundry-dev-api.datafye.local"
     "local-foundry-dev-admin.datafye.local"
     "local-foundry-dev-monitor.datafye.local"
