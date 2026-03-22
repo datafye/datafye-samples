@@ -284,7 +284,10 @@ if [ -n "${CWD_AVAIL_GB:-}" ] && [ -n "${BEST_AVAIL_GB:-}" ]; then
     fi
 fi
 
-# --- Helper: install a package ---
+# --- Helpers ---
+IS_ROOT=false
+[ "$(id -u)" -eq 0 ] && IS_ROOT=true
+
 pkg_install() {
     case "$PKG_MGR" in
         apt)  sudo apt-get install -y -qq "$@" &>/dev/null ;;
@@ -293,6 +296,105 @@ pkg_install() {
         brew) brew install "$@" &>/dev/null ;;
     esac
 }
+
+has_docker_compose() {
+    docker compose version &>/dev/null || docker-compose version &>/dev/null
+}
+
+install_docker_compose() {
+    local compose_version="v2.24.5"
+    local arch
+    arch=$(uname -m)
+    case "$arch" in
+        x86_64)  arch="x86_64" ;;
+        aarch64) arch="aarch64" ;;
+        *)       fail_setup "Unsupported architecture for Docker Compose: $arch" ;;
+    esac
+    local plugin_dir="/usr/local/lib/docker/cli-plugins"
+    sudo mkdir -p "$plugin_dir"
+    sudo curl -fsSL "https://github.com/docker/compose/releases/download/${compose_version}/docker-compose-linux-${arch}" \
+        -o "$plugin_dir/docker-compose"
+    sudo chmod +x "$plugin_dir/docker-compose"
+}
+
+# --- Docker ---
+if [ "$DISTRO" = "macos" ]; then
+    # macOS: Docker Desktop required
+    if ! command -v docker &>/dev/null || ! docker info &>/dev/null 2>&1; then
+        fail_setup "Docker Desktop is not running. Install it from https://docs.docker.com/desktop/install/mac-install/ and start it."
+    fi
+    setup_ok "Docker Desktop $(docker version --format '{{.Server.Version}}' 2>/dev/null)"
+else
+    # Linux: check, install if root, or fail with guidance
+    if command -v docker &>/dev/null; then
+        if docker info &>/dev/null 2>&1; then
+            setup_ok "Docker $(docker version --format '{{.Server.Version}}' 2>/dev/null)"
+        elif [ "$IS_ROOT" = false ]; then
+            fail_setup "Docker is installed but not accessible. Add your user to the docker group:
+      sudo usermod -aG docker \$USER
+    Then log out and back in, or run: newgrp docker"
+        else
+            # root but daemon not running — try to start it
+            setup_msg "Starting Docker daemon..."
+            sudo systemctl start docker &>/dev/null && sudo systemctl enable docker &>/dev/null \
+                || fail_setup "Docker daemon failed to start"
+            setup_ok "Docker $(docker version --format '{{.Server.Version}}' 2>/dev/null)"
+        fi
+    elif [ "$IS_ROOT" = false ]; then
+        fail_setup "Docker is not installed. Install it and add your user to the docker group:
+      sudo yum install -y docker        # Amazon Linux
+      sudo systemctl start docker
+      sudo systemctl enable docker
+      sudo usermod -aG docker \$USER
+    Then log out and back in, and re-run this script."
+    else
+        setup_msg "Installing Docker..."
+        case "$DISTRO" in
+            amzn)
+                pkg_install docker || fail_setup "Docker installation failed"
+                ;;
+            ubuntu|debian)
+                sudo apt-get update -qq &>/dev/null
+                sudo apt-get install -y -qq ca-certificates curl gnupg lsb-release &>/dev/null
+                sudo install -m 0755 -d /etc/apt/keyrings
+                curl -fsSL "https://download.docker.com/linux/$DISTRO/gpg" | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg 2>/dev/null
+                sudo chmod a+r /etc/apt/keyrings/docker.gpg
+                echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/$DISTRO \
+                    $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
+                sudo apt-get update -qq &>/dev/null
+                sudo apt-get install -y -qq docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin &>/dev/null \
+                    || fail_setup "Docker installation failed"
+                ;;
+            centos|rhel|fedora|rocky|almalinux)
+                sudo yum install -y yum-utils &>/dev/null
+                sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo &>/dev/null
+                sudo yum install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin &>/dev/null \
+                    || fail_setup "Docker installation failed"
+                ;;
+            *)
+                fail_setup "Cannot install Docker automatically on ${DISTRO}. Please install Docker manually."
+                ;;
+        esac
+        sudo systemctl start docker &>/dev/null && sudo systemctl enable docker &>/dev/null \
+            || fail_setup "Docker installed but daemon failed to start"
+        if docker info &>/dev/null 2>&1; then
+            setup_ok "Docker $(docker version --format '{{.Server.Version}}' 2>/dev/null) (installed)"
+        else
+            fail_setup "Docker installation failed"
+        fi
+    fi
+
+    # --- Docker Compose ---
+    if has_docker_compose; then
+        setup_ok "Docker Compose $(docker compose version --short 2>/dev/null || docker-compose version --short 2>/dev/null)"
+    elif [ "$IS_ROOT" = true ]; then
+        setup_msg "Installing Docker Compose..."
+        install_docker_compose || fail_setup "Docker Compose installation failed"
+        setup_ok "Docker Compose $(docker compose version --short 2>/dev/null)"
+    else
+        fail_setup "Docker Compose is not installed. Re-run as root to install it, or install manually."
+    fi
+fi
 
 # --- Git ---
 if ! command -v git &>/dev/null; then
