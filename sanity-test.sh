@@ -10,8 +10,8 @@
 #
 # Run from the root of the datafye-samples repo:
 #
-#   bash sanity-test.sh                                  # Synthetic data
-#   POLYGON_API_KEY="key" bash sanity-test.sh            # SIP (real market data)
+#   sudo bash sanity-test.sh                                  # Synthetic data
+#   sudo POLYGON_API_KEY="key" bash sanity-test.sh            # SIP (real market data)
 #
 # Supported platforms:
 #   - Amazon Linux 2 or 2023
@@ -107,6 +107,10 @@ setup_warn() {
     printf "    ${YELLOW}!${RESET} %s\n" "$1"
 }
 
+setup_missing() {
+    printf "    ${RED}✗${RESET} %s\n" "$1"
+}
+
 # Run a numbered test. Usage: run_test <label> <sample-name> [args...]
 run_test() {
     local label="$1"; shift
@@ -180,14 +184,61 @@ fail_setup() {
     exit 1
 }
 
+ask_yn() {
+    local prompt="$1" default="${2:-y}"
+    local yn
+    if [ "$default" = "y" ]; then
+        printf "\n  ${WHITE}%s${RESET} ${DIM}[Y/n]${RESET} " "$prompt"
+    else
+        printf "\n  ${WHITE}%s${RESET} ${DIM}[y/N]${RESET} " "$prompt"
+    fi
+    read -r yn
+    yn="${yn:-$default}"
+    case "$yn" in
+        y|Y) return 0 ;;
+        *)   return 1 ;;
+    esac
+}
+
 # ---------------------------------------------------------------------------
-# Setup: prerequisites
+# Helpers
 # ---------------------------------------------------------------------------
+pkg_install() {
+    case "$PKG_MGR" in
+        apt)  apt-get install -y -qq "$@" &>/dev/null ;;
+        dnf)  dnf install -y "$@" &>/dev/null ;;
+        yum)  yum install -y "$@" &>/dev/null ;;
+        brew) brew install "$@" &>/dev/null ;;
+    esac
+}
+
+has_docker_compose() {
+    docker compose version &>/dev/null || docker-compose version &>/dev/null
+}
+
+install_docker_compose() {
+    local compose_version="v2.24.5"
+    local arch
+    arch=$(uname -m)
+    case "$arch" in
+        x86_64)  arch="x86_64" ;;
+        aarch64) arch="aarch64" ;;
+        *)       fail_setup "Unsupported architecture for Docker Compose: $arch" ;;
+    esac
+    local plugin_dir="/usr/local/lib/docker/cli-plugins"
+    mkdir -p "$plugin_dir"
+    curl -fsSL "https://github.com/docker/compose/releases/download/${compose_version}/docker-compose-linux-${arch}" \
+        -o "$plugin_dir/docker-compose"
+    chmod +x "$plugin_dir/docker-compose"
+}
+
+# ===========================================================================
+# Phase 1: Detect platform and check all prerequisites
+# ===========================================================================
 banner
 
-section "Setup"
+section "Checking Prerequisites"
 
-# Create log directory early so install steps can log to it
 mkdir -p "$WORK_DIR" "$LOG_DIR"
 
 # --- Detect platform ---
@@ -252,7 +303,6 @@ elif [ -f /proc/meminfo ]; then
 fi
 MEM_TOTAL_GB=$(( (MEM_TOTAL_MB + 512) / 1024 ))  # round to nearest GB
 
-# macOS and WSL need 12GB (Docker Desktop overhead); native Linux needs 8GB
 if [ "$DISTRO" = "macos" ] || [ "$IS_WSL" = true ]; then
     MEM_MIN_GB=12
 else
@@ -268,9 +318,7 @@ if [ "$MEM_TOTAL_MB" -gt 0 ]; then
 fi
 
 # --- Disk check ---
-# Find the mount point with the most available space
 if [ "$DISTRO" = "macos" ]; then
-    # macOS df uses 512-byte blocks by default; use -g for GB
     BEST_MOUNT=$(df -g 2>/dev/null | awk 'NR>1 && $4+0 > max { max=$4; mount=$NF } END { print mount }')
     BEST_AVAIL_GB=$(df -g 2>/dev/null | awk 'NR>1 && $4+0 > max { max=$4 } END { print max }')
     CWD_AVAIL_GB=$(df -g "${REPO_DIR}" 2>/dev/null | awk 'NR==2 { print $4 }')
@@ -292,55 +340,109 @@ if [ -n "${CWD_AVAIL_GB:-}" ] && [ -n "${BEST_AVAIL_GB:-}" ]; then
     fi
 fi
 
-# --- Helpers ---
-pkg_install() {
-    case "$PKG_MGR" in
-        apt)  apt-get install -y -qq "$@" &>/dev/null ;;
-        dnf)  dnf install -y "$@" &>/dev/null ;;
-        yum)  yum install -y "$@" &>/dev/null ;;
-        brew) brew install "$@" &>/dev/null ;;
-    esac
-}
+# --- Check software prerequisites ---
+MISSING=()
 
-has_docker_compose() {
-    docker compose version &>/dev/null || docker-compose version &>/dev/null
-}
-
-install_docker_compose() {
-    local compose_version="v2.24.5"
-    local arch
-    arch=$(uname -m)
-    case "$arch" in
-        x86_64)  arch="x86_64" ;;
-        aarch64) arch="aarch64" ;;
-        *)       fail_setup "Unsupported architecture for Docker Compose: $arch" ;;
-    esac
-    local plugin_dir="/usr/local/lib/docker/cli-plugins"
-    mkdir -p "$plugin_dir"
-    curl -fsSL "https://github.com/docker/compose/releases/download/${compose_version}/docker-compose-linux-${arch}" \
-        -o "$plugin_dir/docker-compose"
-    chmod +x "$plugin_dir/docker-compose"
-}
-
-# --- Docker ---
+# Docker
+HAS_DOCKER=false
+DOCKER_VERSION=""
 if [ "$DISTRO" = "macos" ]; then
-    # macOS: Docker Desktop required
-    if ! command -v docker &>/dev/null || ! docker info &>/dev/null 2>&1; then
-        fail_setup "Docker Desktop is not running. Install it from https://docs.docker.com/desktop/install/mac-install/ and start it."
+    if command -v docker &>/dev/null && docker info &>/dev/null 2>&1; then
+        HAS_DOCKER=true
+        DOCKER_VERSION="Docker Desktop $(docker version --format '{{.Server.Version}}' 2>/dev/null)"
     fi
-    setup_ok "Docker Desktop $(docker version --format '{{.Server.Version}}' 2>/dev/null)"
 else
     if command -v docker &>/dev/null; then
         if docker info &>/dev/null 2>&1; then
-            setup_ok "Docker $(docker version --format '{{.Server.Version}}' 2>/dev/null)"
+            HAS_DOCKER=true
+            DOCKER_VERSION="Docker $(docker version --format '{{.Server.Version}}' 2>/dev/null)"
         else
             # daemon not running — try to start it
-            setup_msg "Starting Docker daemon..."
-            systemctl start docker &>/dev/null && systemctl enable docker &>/dev/null \
-                || fail_setup "Docker daemon failed to start"
-            setup_ok "Docker $(docker version --format '{{.Server.Version}}' 2>/dev/null)"
+            systemctl start docker &>/dev/null && systemctl enable docker &>/dev/null
+            if docker info &>/dev/null 2>&1; then
+                HAS_DOCKER=true
+                DOCKER_VERSION="Docker $(docker version --format '{{.Server.Version}}' 2>/dev/null)"
+            fi
         fi
+    fi
+fi
+if [ "$HAS_DOCKER" = true ]; then
+    setup_ok "$DOCKER_VERSION"
+else
+    if [ "$DISTRO" = "macos" ]; then
+        fail_setup "Docker Desktop is not running. Install it from https://docs.docker.com/desktop/install/mac-install/ and start it."
+    fi
+    setup_missing "Docker — not installed"
+    MISSING+=("Docker")
+fi
+
+# Docker Compose
+HAS_COMPOSE=false
+COMPOSE_VERSION=""
+if [ "$HAS_DOCKER" = true ]; then
+    if has_docker_compose; then
+        HAS_COMPOSE=true
+        COMPOSE_VERSION="Docker Compose $(docker compose version --short 2>/dev/null || docker-compose version --short 2>/dev/null)"
+        setup_ok "$COMPOSE_VERSION"
     else
+        setup_missing "Docker Compose — not installed"
+        MISSING+=("Docker Compose")
+    fi
+fi
+
+# Java 17
+HAS_JAVA=false
+JAVA_VERSION=""
+if java -version 2>&1 | grep -q '"17\.'; then
+    HAS_JAVA=true
+    JAVA_VERSION="Java $(java -version 2>&1 | head -1 | sed 's/.*"\(.*\)"/\1/')"
+    setup_ok "$JAVA_VERSION"
+else
+    setup_missing "Java 17 — not installed"
+    MISSING+=("Java 17")
+fi
+
+# Maven
+HAS_MAVEN=false
+MAVEN_VERSION_STR=""
+if command -v mvn &>/dev/null; then
+    HAS_MAVEN=true
+    MAVEN_VERSION_STR="Maven $(mvn --version 2>/dev/null | head -1 | sed 's/Apache Maven \([^ ]*\).*/\1/')"
+    setup_ok "$MAVEN_VERSION_STR"
+else
+    setup_missing "Maven — not installed"
+    MISSING+=("Maven")
+fi
+
+# Datafye CLI
+HAS_CLI=false
+CLI_VERSION=""
+if command -v datafye &>/dev/null; then
+    HAS_CLI=true
+    CLI_VERSION="Datafye CLI $(datafye --version 2>/dev/null | head -1)"
+    setup_ok "$CLI_VERSION"
+else
+    setup_missing "Datafye CLI — not installed"
+    MISSING+=("Datafye CLI")
+fi
+
+# ===========================================================================
+# Phase 2: Install missing prerequisites (if any)
+# ===========================================================================
+if [ ${#MISSING[@]} -gt 0 ]; then
+    echo ""
+    printf "  ${YELLOW}Missing: %s${RESET}\n" "$(IFS=', '; echo "${MISSING[*]}")"
+
+    if ! ask_yn "Install missing prerequisites?"; then
+        echo ""
+        printf "  ${DIM}Exiting. Install the missing prerequisites and re-run.${RESET}\n\n"
+        exit 0
+    fi
+
+    section "Installing Prerequisites"
+
+    # Docker
+    if [ "$HAS_DOCKER" = false ]; then
         setup_msg "Installing Docker..."
         case "$DISTRO" in
             amzn)
@@ -370,93 +472,106 @@ else
         esac
         systemctl start docker &>/dev/null && systemctl enable docker &>/dev/null \
             || fail_setup "Docker installed but daemon failed to start"
-        if docker info &>/dev/null 2>&1; then
-            setup_ok "Docker $(docker version --format '{{.Server.Version}}' 2>/dev/null) (installed)"
-        else
-            fail_setup "Docker installation failed"
-        fi
+        docker info &>/dev/null 2>&1 || fail_setup "Docker installation failed"
+        setup_ok "Docker $(docker version --format '{{.Server.Version}}' 2>/dev/null)"
     fi
 
-    # --- Docker Compose ---
-    if has_docker_compose; then
-        setup_ok "Docker Compose $(docker compose version --short 2>/dev/null || docker-compose version --short 2>/dev/null)"
-    else
+    # Docker Compose
+    if [ "$HAS_COMPOSE" = false ] && ! has_docker_compose; then
         setup_msg "Installing Docker Compose..."
         install_docker_compose || fail_setup "Docker Compose installation failed"
         setup_ok "Docker Compose $(docker compose version --short 2>/dev/null)"
     fi
+
+    # Java 17
+    if [ "$HAS_JAVA" = false ]; then
+        setup_msg "Installing Java 17..."
+        case "$PKG_MGR" in
+            apt)
+                apt-get update -qq &>/dev/null
+                pkg_install openjdk-17-jdk || fail_setup "Java 17 installation failed"
+                ;;
+            dnf)
+                if [ "$DISTRO" = "amzn" ]; then
+                    pkg_install java-17-amazon-corretto-devel || fail_setup "Java 17 installation failed"
+                else
+                    pkg_install java-17-openjdk-devel || fail_setup "Java 17 installation failed"
+                fi
+                ;;
+            yum)
+                if [ "$DISTRO" = "amzn" ]; then
+                    pkg_install java-17-amazon-corretto-devel || fail_setup "Java 17 installation failed"
+                else
+                    rpm --import https://yum.corretto.aws/corretto.key 2>/dev/null || true
+                    curl -sLo /etc/yum.repos.d/corretto.repo https://yum.corretto.aws/corretto.repo
+                    pkg_install java-17-amazon-corretto-devel || fail_setup "Java 17 installation failed"
+                fi
+                ;;
+            brew)
+                pkg_install openjdk@17 || fail_setup "Java 17 installation failed"
+                ;;
+        esac
+        setup_ok "Java $(java -version 2>&1 | head -1 | sed 's/.*"\(.*\)"/\1/')"
+    fi
+
+    # Maven
+    if [ "$HAS_MAVEN" = false ]; then
+        setup_msg "Installing Maven..."
+        if [ "$PKG_MGR" = "brew" ]; then
+            pkg_install maven || fail_setup "Maven installation failed"
+        else
+            MAVEN_VERSION="3.9.6"
+            curl -fsSL "https://archive.apache.org/dist/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz" \
+                | tar -xz -C /opt || fail_setup "Maven installation failed"
+            ln -sf "/opt/apache-maven-${MAVEN_VERSION}/bin/mvn" /usr/local/bin/mvn
+        fi
+        setup_ok "Maven $(mvn --version 2>/dev/null | head -1 | sed 's/Apache Maven \([^ ]*\).*/\1/')"
+    fi
+
+    # Datafye CLI
+    if [ "$HAS_CLI" = false ]; then
+        setup_msg "Installing Datafye CLI..."
+        curl -fsSL https://downloads.n5corp.com/datafye/cli/latest/install.sh \
+            | bash &>"${LOG_DIR}/datafye-cli-install.log" \
+            || fail_setup "Datafye CLI installation failed (see ${LOG_DIR}/datafye-cli-install.log)"
+        setup_ok "Datafye CLI $(datafye --version 2>/dev/null | head -1)"
+    fi
 fi
 
-# --- Java 17 ---
-if java -version 2>&1 | grep -q '"17\.'; then
-    if [ "$DISTRO" = "macos" ]; then
-        JAVA_HOME_DIR=$(/usr/libexec/java_home -v 17 2>/dev/null)
-    else
-        JAVA_HOME_DIR=$(dirname "$(dirname "$(readlink -f "$(which java)")")")
-    fi
+# --- Set JAVA_HOME (needed for build regardless of whether Java was just installed) ---
+if [ "$DISTRO" = "macos" ]; then
+    JAVA_HOME_DIR=$(/usr/libexec/java_home -v 17 2>/dev/null || echo "$(brew --prefix openjdk@17)/libexec/openjdk.jdk/Contents/Home")
 else
-    setup_msg "Installing Java 17..."
-    case "$PKG_MGR" in
-        apt)
-            apt-get update -qq &>/dev/null
-            pkg_install openjdk-17-jdk || fail_setup "Java 17 installation failed"
-            ;;
-        dnf)
-            if [ "$DISTRO" = "amzn" ]; then
-                pkg_install java-17-amazon-corretto-devel || fail_setup "Java 17 installation failed"
-            else
-                pkg_install java-17-openjdk-devel || fail_setup "Java 17 installation failed"
-            fi
-            ;;
-        yum)
-            if [ "$DISTRO" = "amzn" ]; then
-                pkg_install java-17-amazon-corretto-devel || fail_setup "Java 17 installation failed"
-            else
-                rpm --import https://yum.corretto.aws/corretto.key 2>/dev/null || true
-                curl -sLo /etc/yum.repos.d/corretto.repo https://yum.corretto.aws/corretto.repo
-                pkg_install java-17-amazon-corretto-devel || fail_setup "Java 17 installation failed"
-            fi
-            ;;
-        brew)
-            pkg_install openjdk@17 || fail_setup "Java 17 installation failed"
-            ;;
-    esac
-    if [ "$DISTRO" = "macos" ]; then
-        JAVA_HOME_DIR=$(/usr/libexec/java_home -v 17 2>/dev/null || echo "$(brew --prefix openjdk@17)/libexec/openjdk.jdk/Contents/Home")
-    else
-        JAVA_HOME_DIR=$(dirname "$(dirname "$(readlink -f "$(which java)")")")
-    fi
+    JAVA_HOME_DIR=$(dirname "$(dirname "$(readlink -f "$(which java)")")")
 fi
 export JAVA_HOME="${JAVA_HOME_DIR}"
 export PATH="${JAVA_HOME}/bin:${PATH}"
-setup_ok "Java $(java -version 2>&1 | head -1 | sed 's/.*"\(.*\)"/\1/')"
 
-# --- Maven ---
-if ! command -v mvn &>/dev/null; then
-    setup_msg "Installing Maven..."
-    if [ "$PKG_MGR" = "brew" ]; then
-        pkg_install maven || fail_setup "Maven installation failed"
-    else
-        MAVEN_VERSION="3.9.6"
-        curl -fsSL "https://archive.apache.org/dist/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz" \
-            | tar -xz -C /opt || fail_setup "Maven installation failed"
-        ln -sf "/opt/apache-maven-${MAVEN_VERSION}/bin/mvn" /usr/local/bin/mvn
-    fi
+# ===========================================================================
+# Phase 3: Confirm before running tests
+# ===========================================================================
+echo ""
+printf "  ${GREEN}All prerequisites are in place.${RESET}\n"
+echo ""
+printf "  ${DIM}The sanity test will:${RESET}\n"
+printf "  ${DIM}  1. Build the samples from source${RESET}\n"
+printf "  ${DIM}  2. Provision a local Data Cloud Only Foundry (${DATASET} dataset)${RESET}\n"
+printf "  ${DIM}  3. Add DNS entries to /etc/hosts${RESET}\n"
+printf "  ${DIM}  4. Run 9 tests (health, reference, download, fetch, stream)${RESET}\n"
+printf "  ${DIM}  5. Remove DNS entries from /etc/hosts${RESET}\n"
+printf "  ${DIM}  6. Deprovision the foundry${RESET}\n"
+
+if ! ask_yn "Proceed?"; then
+    echo ""
+    printf "  ${DIM}Exiting.${RESET}\n\n"
+    exit 0
 fi
-setup_ok "Maven $(mvn --version 2>/dev/null | head -1 | sed 's/Apache Maven \([^ ]*\).*/\1/')"
 
-# --- Datafye CLI ---
-if ! command -v datafye &>/dev/null; then
-    setup_msg "Installing Datafye CLI..."
-    curl -fsSL https://downloads.n5corp.com/datafye/cli/latest/install.sh \
-        | bash &>"${LOG_DIR}/datafye-cli-install.log" \
-        || fail_setup "Datafye CLI installation failed (see ${LOG_DIR}/datafye-cli-install.log)"
-fi
-setup_ok "Datafye CLI $(datafye --version 2>/dev/null | head -1)"
+TIMER_START=$(date +%s)
 
-# ---------------------------------------------------------------------------
-# Setup: build
-# ---------------------------------------------------------------------------
+# ===========================================================================
+# Build
+# ===========================================================================
 section "Build"
 
 setup_msg "Building samples..."
@@ -476,9 +591,9 @@ tar -xzf "$DIST_TAR" -C "${WORK_DIR}"
 DIST_DIR=$(find "${WORK_DIR}" -maxdepth 1 -type d -name "datafye-samples-*" | head -1)
 setup_ok "Distribution ready"
 
-# ---------------------------------------------------------------------------
-# Setup: provision
-# ---------------------------------------------------------------------------
+# ===========================================================================
+# Provision
+# ===========================================================================
 section "Provision"
 
 setup_msg "Downloading quickstart descriptor..."
@@ -523,9 +638,9 @@ else
     setup_ok "DNS entries already in /etc/hosts"
 fi
 
-# ---------------------------------------------------------------------------
+# ===========================================================================
 # Tests
-# ---------------------------------------------------------------------------
+# ===========================================================================
 
 section "Health"
 run_test "Ping (REST)" \
@@ -555,9 +670,9 @@ section "Historical Aggregates — Stream"
 run_test "Stream Historical OHLC (Java)" \
     stream-historical-ohlc-java -s "$SYMBOL" -f "$STREAM_FROM" -t "$STREAM_TO"
 
-# ---------------------------------------------------------------------------
+# ===========================================================================
 # Teardown
-# ---------------------------------------------------------------------------
+# ===========================================================================
 section "Teardown"
 
 setup_msg "Deprovisioning foundry..."
@@ -575,9 +690,9 @@ if grep -q "$HOSTS_MARKER" /etc/hosts 2>/dev/null; then
         || setup_warn "Could not remove DNS entries from /etc/hosts"
 fi
 
-# ---------------------------------------------------------------------------
+# ===========================================================================
 # Summary
-# ---------------------------------------------------------------------------
+# ===========================================================================
 summary
 
 [ "$FAILED" -eq 0 ]
