@@ -37,7 +37,7 @@ public class AggClient {
     public AggClient(String name, String id, String dataset) {
         String prefix = "SIP".equalsIgnoreCase(dataset) ? "datafye-sip" : "datafye-synthetic";
         System.setProperty(prefix + "-agg.client." + name + ".connectionDescriptor",
-            "solace://solace.rumi.local:55555&client_name=" + name + "-agg");
+            "solace://solace.rumi.local:55554&client_name=" + name + "-agg");
 
         if ("SIP".equalsIgnoreCase(dataset)) {
             sipClient = new com.datafye.client.sip.AggClient(name, id);

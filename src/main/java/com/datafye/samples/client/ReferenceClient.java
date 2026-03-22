@@ -37,7 +37,7 @@ public class ReferenceClient {
     public ReferenceClient(String name, String id, String dataset) {
         String prefix = "SIP".equalsIgnoreCase(dataset) ? "datafye-sip" : "datafye-synthetic";
         System.setProperty(prefix + "-reference.client." + name + ".connectionDescriptor",
-            "solace://solace.rumi.local:55555&client_name=" + name + "-reference");
+            "solace://solace.rumi.local:55554&client_name=" + name + "-reference");
 
         if ("SIP".equalsIgnoreCase(dataset)) {
             sipClient = new com.datafye.client.sip.ReferenceClient(name, id);

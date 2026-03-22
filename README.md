@@ -345,4 +345,4 @@ bin/run.sh get-historical-ohlc-rest -s AAPL -c Minute -f 2024-01-15T09:00:00 -t 
 
 ### Configuration
 
-Each sample embeds its connection config directly in a `static {}` block at the top of the class. By default they point to `solace.rumi.local:55555` (messaging backbone) and `api.rest.rumi.local:7776` (REST API) — which is what the quickstart descriptor provisions. If your environment uses different hosts or ports, update the `System.setProperty()` calls in the sample you're running.
+The Java client samples connect to `solace.rumi.local:55554` (messaging backbone) and the REST samples connect to `api.rest.rumi.local:7776` (REST API) — which is what the quickstart descriptor provisions. Connection config is centralized in the adapter classes under `com.datafye.samples.client`.

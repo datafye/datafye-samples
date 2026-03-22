@@ -37,9 +37,9 @@ public class FeedClient {
     public FeedClient(String name, String id, String dataset) {
         String prefix = "SIP".equalsIgnoreCase(dataset) ? "datafye-sip" : "datafye-synthetic";
         System.setProperty(prefix + "-feed.client." + name + ".connectionDescriptor",
-            "solace://solace.rumi.local:55555&client_name=" + name + "-feed");
+            "solace://solace.rumi.local:55554&client_name=" + name + "-feed");
         System.setProperty(prefix + "-feed.stream." + name + ".connectionDescriptor",
-            "solace://solace.rumi.local:55555&client_name=" + name + "-feed-stream");
+            "solace://solace.rumi.local:55554&client_name=" + name + "-feed-stream");
 
         if ("SIP".equalsIgnoreCase(dataset)) {
             sipClient = new com.datafye.client.sip.FeedClient(name, id);

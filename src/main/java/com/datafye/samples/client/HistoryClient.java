@@ -42,9 +42,9 @@ public class HistoryClient {
     public HistoryClient(String name, String id, String dataset) {
         String prefix = "SIP".equalsIgnoreCase(dataset) ? "datafye-sip" : "datafye-synthetic";
         System.setProperty(prefix + "-history.client." + name + ".connectionDescriptor",
-            "solace://solace.rumi.local:55555&client_name=" + name + "-history");
+            "solace://solace.rumi.local:55554&client_name=" + name + "-history");
         System.setProperty(prefix + "-history.stream." + name + ".connectionDescriptor",
-            "solace://solace.rumi.local:55555&client_name=" + name + "-history-stream");
+            "solace://solace.rumi.local:55554&client_name=" + name + "-history-stream");
 
         if ("SIP".equalsIgnoreCase(dataset)) {
             sipClient = new com.datafye.client.sip.HistoryClient(name, id);
