@@ -33,8 +33,8 @@ import com.neeve.aep.annotations.EventHandler;
 import com.neeve.lang.XStringDeserializer;
 
 import com.datafye.roe.*;
-import com.datafye.client.sip.HistoryClient;
-import com.datafye.sip.history.Client.Stream;
+import com.datafye.samples.client.HistoryClient;
+import com.datafye.samples.client.HistoryClient.HistoricalOHLCStream;
 
 import com.datafye.samples.rest.domain.OHLC;
 
@@ -42,12 +42,6 @@ import com.datafye.samples.rest.domain.OHLC;
  * Streams multiple historical OHLC streams concurrently using the History client.
  */
 public class StreamHistoricalOHLCConcurrently {
-    static {
-        System.setProperty("datafye-sip-history.client.samples.connectionDescriptor",
-            "solace://solace.rumi.local:55555&client_name=samples-sip-history");
-        System.setProperty("datafye-sip-history.stream.samples.connectionDescriptor",
-            "solace://solace.rumi.local:55555&client_name=samples-sip-history-stream");
-    }
 
     final private static class Streamer implements Runnable {
         final private class OHLCPopulator extends StocksMinuteOHLCMessage.Deserializer.AbstractCallbackImpl {
@@ -173,7 +167,7 @@ public class StreamHistoricalOHLCConcurrently {
                 long streamId = response.getStreamId();
                 String connectionDescriptor = response.getStreamConnectionDescriptor();
                 response.dispose();
-                Stream stream = _client.openStream(streamId, connectionDescriptor, this);
+                HistoricalOHLCStream stream = _client.openStream(streamId, connectionDescriptor, this);
 
                 // step 3: start the stream
                 stream.start(_rate);
@@ -198,6 +192,7 @@ public class StreamHistoricalOHLCConcurrently {
         System.err.println("    [{-i, --client instance id (default=0)]");
         System.err.println("    [{-f, --from the lower bound of the time window to fetch OHLC bars for (format=YYYY-MM-DD)]");
         System.err.println("    [{-r, --rate the maximum rate at which the server should stream the data)]");
+        System.err.println("    [{-D, --dataset the dataset (Synthetic, SIP) (default=Synthetic)]");
         System.err.println("    [{-h, --help} print this help string]");
         System.exit(-1);
     }
@@ -215,6 +210,7 @@ public class StreamHistoricalOHLCConcurrently {
         final CmdLineParser.Option concurrencyOption = parser.addIntegerOption('c', "concurrency");
         final CmdLineParser.Option fromOption = parser.addStringOption('f', "from");
         final CmdLineParser.Option rateOption = parser.addIntegerOption('r', "rate");
+        final CmdLineParser.Option datasetOption = parser.addStringOption('D', "dataset");
         final CmdLineParser.Option helpOption = parser.addBooleanOption('h', "help");
 
         parser.parse(args);
@@ -244,8 +240,12 @@ public class StreamHistoricalOHLCConcurrently {
             // ...rate
             final int rate = (Integer)parser.getOptionValue(rateOption, 0);
 
+            // ...dataset
+            final String dataset = (String)parser.getOptionValue(datasetOption, "Synthetic");
+
             // dump parameters
             System.out.println("Parameters {");
+            System.out.println("...Dataset: " + dataset);
             System.out.println("...Instance: " + instance);
             System.out.println("...Concurrency: " + concurrency);
             System.out.println("...From: " + fromStr);
@@ -253,7 +253,7 @@ public class StreamHistoricalOHLCConcurrently {
             System.out.println("}");
 
             // create the client
-            final HistoryClient client = new HistoryClient("samples", String.valueOf(instance));
+            final HistoryClient client = new HistoryClient("samples", String.valueOf(instance), dataset);
 
             // run the streams
             final Thread streamers[] = new Thread[concurrency];

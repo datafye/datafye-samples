@@ -24,23 +24,20 @@ package com.datafye.samples.java.live.aggregates;
 import jargs.gnu.CmdLineParser;
 
 import com.datafye.roe.*;
-import com.datafye.client.synthetic.AggClient;
+import com.datafye.samples.client.AggClient;
 
 public class GetLiveEMA {
-    static {
-        System.setProperty("datafye-synthetic-agg.client.samples.connectionDescriptor",
-            "solace://solace.rumi.local:55555&client_name=samples-synthetic-agg");
-    }
 
     final private static void printUsage() {
         System.err.println("    [{-s, --symbol the symbol to fetch EMA values for (required)]");
+        System.err.println("    [{-D, --dataset the dataset (Synthetic, SIP) (default=Synthetic)]");
         System.err.println("    [{-h, --help} print this help string]");
         System.exit(-1);
     }
 
-    final private static void run(final String symbol) {
+    final private static void run(final String dataset, final String symbol) {
         // create the client
-        AggClient client = new AggClient("samples", "0");
+        AggClient client = new AggClient("samples", "0", dataset);
 
         // perform 100 fetches
         long totalTime = 0;
@@ -74,6 +71,7 @@ public class GetLiveEMA {
         // parse command line
         final CmdLineParser parser = new CmdLineParser();
         final CmdLineParser.Option symbolOption = parser.addStringOption('s', "symbol");
+        final CmdLineParser.Option datasetOption = parser.addStringOption('D', "dataset");
         final CmdLineParser.Option helpOption = parser.addBooleanOption('h', "help");
 
         parser.parse(args);
@@ -83,13 +81,17 @@ public class GetLiveEMA {
             final String symbol = (String)parser.getOptionValue(symbolOption, null);
             if (symbol == null) printUsage();
 
+            // ...dataset
+            final String dataset = (String)parser.getOptionValue(datasetOption, "Synthetic");
+
             // dump parameters
             System.out.println("Parameters {");
+            System.out.println("...Dataset: " + dataset);
             System.out.println("...Symbol: " + symbol);
             System.out.println("}");
 
             // execute
-            run(symbol);
+            run(dataset, symbol);
         }
         else {
             printUsage();

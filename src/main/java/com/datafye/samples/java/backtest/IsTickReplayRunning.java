@@ -24,22 +24,19 @@ package com.datafye.samples.java.backtest;
 import jargs.gnu.CmdLineParser;
 
 import com.datafye.roe.*;
-import com.datafye.client.sip.FeedClient;
+import com.datafye.samples.client.FeedClient;
 
 public class IsTickReplayRunning {
-    static {
-        System.setProperty("datafye-sip-feed.client.samples.connectionDescriptor",
-            "solace://solace.rumi.local:55555&client_name=samples-sip-feed");
-    }
 
     final private static void printUsage() {
+        System.err.println("    [{-D, --dataset the dataset (Synthetic, SIP) (default=Synthetic)]");
         System.err.println("    [{-h, --help} print this help string]");
         System.exit(-1);
     }
 
-    final private static void run() {
+    final private static void run(final String dataset) {
         // create the client
-        FeedClient client = new FeedClient("samples", "0");
+        FeedClient client = new FeedClient("samples", "0", dataset);
 
         // check if replay is running (note: response class has typo in library)
         IsHistoricalStocksTickReplayRunningRequestMessage request = IsHistoricalStocksTickReplayRunningRequestMessage.create();
@@ -56,17 +53,21 @@ public class IsTickReplayRunning {
     public static void main(String args[]) throws Exception {
         // parse command line
         final CmdLineParser parser = new CmdLineParser();
+        final CmdLineParser.Option datasetOption = parser.addStringOption('D', "dataset");
         final CmdLineParser.Option helpOption = parser.addBooleanOption('h', "help");
 
         parser.parse(args);
         if (!((Boolean)parser.getOptionValue(helpOption, false))) {
+            // ...dataset
+            final String dataset = (String)parser.getOptionValue(datasetOption, "Synthetic");
+
             // dump parameters
             System.out.println("Parameters {");
-            System.out.println("...Dataset: Synthetic");
+            System.out.println("...Dataset: " + dataset);
             System.out.println("}");
 
             // execute
-            run();
+            run(dataset);
         }
         else {
             printUsage();

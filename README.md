@@ -211,7 +211,10 @@ Foundry-only. See [Backtesting under Concepts](#backtesting-concepts) for how do
 <tr><td rowspan="3" style="vertical-align:middle">Java</td><td><a href="src/main/java/com/datafye/samples/java/backtest/StartQuoteDownload.java">StartQuoteDownload</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
 <tr><td><a href="src/main/java/com/datafye/samples/java/backtest/IsQuoteDownloadRunning.java">IsQuoteDownloadRunning</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
 <tr><td><a href="src/main/java/com/datafye/samples/java/backtest/CancelQuoteDownload.java">CancelQuoteDownload</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
-<tr><td rowspan="3" style="vertical-align:middle">OHLC</td><td rowspan="3" style="vertical-align:middle"><a href="#download">Download</a></td><td rowspan="3" style="vertical-align:middle">Java</td><td><a href="src/main/java/com/datafye/samples/java/backtest/StartOHLCDownload.java">StartOHLCDownload</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
+<tr><td rowspan="6" style="vertical-align:middle">OHLC</td><td rowspan="6" style="vertical-align:middle"><a href="#download">Download</a></td><td rowspan="3" style="vertical-align:middle">REST</td><td><a href="src/main/java/com/datafye/samples/rest/backtest/StartOHLCDownload.java">StartOHLCDownload</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
+<tr><td><a href="src/main/java/com/datafye/samples/rest/backtest/IsOHLCDownloadRunning.java">IsOHLCDownloadRunning</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
+<tr><td><a href="src/main/java/com/datafye/samples/rest/backtest/CancelOHLCDownload.java">CancelOHLCDownload</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
+<tr><td rowspan="3" style="vertical-align:middle">Java</td><td><a href="src/main/java/com/datafye/samples/java/backtest/StartOHLCDownload.java">StartOHLCDownload</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
 <tr><td><a href="src/main/java/com/datafye/samples/java/backtest/IsOHLCDownloadRunning.java">IsOHLCDownloadRunning</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
 <tr><td><a href="src/main/java/com/datafye/samples/java/backtest/CancelOHLCDownload.java">CancelOHLCDownload</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
 <tr><td style="vertical-align:middle">State</td><td style="vertical-align:middle">Clear</td><td>REST</td><td>ClearBacktestState</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
@@ -252,7 +255,8 @@ The script is interactive — it shows you what's installed and what's missing, 
 To use real market data instead of synthetic:
 
 ```bash
-sudo POLYGON_API_KEY="your-polygon-api-key" bash sanity-test.sh
+export POLYGON_API_KEY="your-polygon-api-key"
+sudo -E bash sanity-test.sh
 ```
 
 Supported platforms: Amazon Linux 2/2023, RHEL, CentOS, Fedora, Rocky Linux, AlmaLinux, Ubuntu/Debian (including WSL), and macOS.

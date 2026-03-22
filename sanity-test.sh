@@ -11,7 +11,9 @@
 # Run from the root of the datafye-samples repo:
 #
 #   sudo bash sanity-test.sh                                  # Synthetic data
-#   sudo POLYGON_API_KEY="key" bash sanity-test.sh            # SIP (real market data)
+#   sudo -E bash sanity-test.sh                               # SIP (if POLYGON_API_KEY is exported)
+#   sudo POLYGON_API_KEY="key" bash sanity-test.sh            # SIP (inline)
+#   sudo bash sanity-test.sh -v                               # Verbose (show sample output)
 #
 # Supported platforms:
 #   - Amazon Linux 2 or 2023
@@ -28,6 +30,13 @@ if [ "$(id -u)" -ne 0 ]; then
     echo "This script requires root privileges. Re-run with: sudo bash sanity-test.sh" >&2
     exit 1
 fi
+
+VERBOSE=false
+for arg in "$@"; do
+    case "$arg" in
+        -v|--verbose) VERBOSE=true ;;
+    esac
+done
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -125,15 +134,36 @@ run_test() {
     local logfile="${LOG_DIR}/${TOTAL}-${sample}.log"
     local t_start t_end elapsed
 
+    if [ "$VERBOSE" = true ]; then
+        echo ""
+    fi
+
     t_start=$(date +%s%N 2>/dev/null || echo $(($(date +%s) * 1000000000)))
-    if "${DIST_DIR}/bin/run.sh" "$sample" "$@" >"$logfile" 2>&1; then
-        t_end=$(date +%s%N 2>/dev/null || echo $(($(date +%s) * 1000000000)))
-        elapsed=$(( (t_end - t_start) / 1000000 ))
+    if [ "$VERBOSE" = true ]; then
+        if "${DIST_DIR}/bin/run.sh" "$sample" "$@" 2>&1 | tee "$logfile"; then
+            local _rc=0
+        else
+            local _rc=1
+        fi
+    else
+        if "${DIST_DIR}/bin/run.sh" "$sample" "$@" >"$logfile" 2>&1; then
+            local _rc=0
+        else
+            local _rc=1
+        fi
+    fi
+
+    t_end=$(date +%s%N 2>/dev/null || echo $(($(date +%s) * 1000000000)))
+    elapsed=$(( (t_end - t_start) / 1000000 ))
+
+    if [ "$VERBOSE" = true ]; then
+        printf "    ${DIM}[%s]${RESET}  %-44s" "$index_str" "$label"
+    fi
+
+    if [ "$_rc" -eq 0 ]; then
         printf "${GREEN}PASS${RESET}  ${DIM}%s${RESET}\n" "$(format_ms $elapsed)"
         PASSED=$((PASSED + 1))
     else
-        t_end=$(date +%s%N 2>/dev/null || echo $(($(date +%s) * 1000000000)))
-        elapsed=$(( (t_end - t_start) / 1000000 ))
         printf "${RED}FAIL${RESET}  ${DIM}%s${RESET}\n" "$(format_ms $elapsed)"
         FAILED=$((FAILED + 1))
         FAILURES="${FAILURES}\n    ${RED}✗${RESET} ${label}  ${DIM}(log: ${logfile})${RESET}"
@@ -557,7 +587,7 @@ printf "  ${DIM}The sanity test will:${RESET}\n"
 printf "  ${DIM}  1. Build the samples from source${RESET}\n"
 printf "  ${DIM}  2. Provision a local Data Cloud Only Foundry (${DATASET} dataset)${RESET}\n"
 printf "  ${DIM}  3. Add DNS entries to /etc/hosts${RESET}\n"
-printf "  ${DIM}  4. Run 9 tests (health, reference, download, fetch, stream)${RESET}\n"
+printf "  ${DIM}  4. Run tests (health, reference, download, fetch, stream)${RESET}\n"
 printf "  ${DIM}  5. Remove DNS entries from /etc/hosts${RESET}\n"
 printf "  ${DIM}  6. Deprovision the foundry${RESET}\n"
 
@@ -576,10 +606,19 @@ section "Build"
 
 setup_msg "Building samples..."
 export MAVEN_OPTS="-Xmx2g --add-exports=java.base/sun.nio.ch=ALL-UNNAMED --add-opens=java.base/java.nio=ALL-UNNAMED --add-opens=java.base/jdk.internal.ref=ALL-UNNAMED"
-if (cd "${REPO_DIR}" && mvn clean install -q) &>"${LOG_DIR}/build.log"; then
-    setup_ok "Build complete"
+if [ "$VERBOSE" = true ]; then
+    echo ""
+    if (cd "${REPO_DIR}" && mvn clean install) 2>&1 | tee "${LOG_DIR}/build.log"; then
+        setup_ok "Build complete"
+    else
+        fail_setup "Build failed (see ${LOG_DIR}/build.log)"
+    fi
 else
-    fail_setup "Build failed (see ${LOG_DIR}/build.log)"
+    if (cd "${REPO_DIR}" && mvn clean install -q) &>"${LOG_DIR}/build.log"; then
+        setup_ok "Build complete"
+    else
+        fail_setup "Build failed (see ${LOG_DIR}/build.log)"
+    fi
 fi
 
 setup_msg "Extracting distribution..."
@@ -601,10 +640,19 @@ curl -fsSL -o "${WORK_DIR}/quickstart.yaml" "$DESCRIPTOR_URL" || fail_setup "Des
 setup_ok "Descriptor downloaded (${DATASET})"
 
 setup_msg "Provisioning foundry (this may take a few minutes)..."
-if datafye foundry local provision --descriptor "${WORK_DIR}/quickstart.yaml" &>"${LOG_DIR}/provision.log"; then
-    setup_ok "Foundry provisioned"
+if [ "$VERBOSE" = true ]; then
+    echo ""
+    if datafye foundry local provision --descriptor "${WORK_DIR}/quickstart.yaml" 2>&1 | tee "${LOG_DIR}/provision.log"; then
+        setup_ok "Foundry provisioned"
+    else
+        fail_setup "Provisioning failed (see ${LOG_DIR}/provision.log)"
+    fi
 else
-    fail_setup "Provisioning failed (see ${LOG_DIR}/provision.log)"
+    if datafye foundry local provision --descriptor "${WORK_DIR}/quickstart.yaml" &>"${LOG_DIR}/provision.log"; then
+        setup_ok "Foundry provisioned"
+    else
+        fail_setup "Provisioning failed (see ${LOG_DIR}/provision.log)"
+    fi
 fi
 
 # --- DNS entries ---
@@ -641,6 +689,8 @@ fi
 # ===========================================================================
 # Tests
 # ===========================================================================
+# Java samples accept -D to select the dataset (Synthetic or SIP).
+# REST samples pass dataset as a query parameter automatically.
 
 section "Health"
 run_test "Ping (REST)" \
@@ -650,25 +700,27 @@ section "Reference Data"
 run_test "Get Securities (REST)" \
     get-securities-rest
 run_test "Get Securities (Java)" \
-    get-securities-java
+    get-securities-java -D "$DATASET"
 
 section "Backtesting — Download OHLC"
+run_test "Download Minute OHLC (REST, --wait)" \
+    start-ohlc-download-rest -d "$TEST_DATE" -s "$SYMBOL" -c Minute -w
 run_test "Download Minute OHLC (Java, --wait)" \
-    start-ohlc-download-java -d "$TEST_DATE" -s "$SYMBOL" -c Minute -w
+    start-ohlc-download-java -d "$TEST_DATE" -s "$SYMBOL" -c Minute -w -D "$DATASET"
 
 section "Historical Aggregates — Fetch"
 run_test "Fetch Historical OHLC (REST)" \
     get-historical-ohlc-rest -s "$SYMBOL" -c Minute -f "$STREAM_FROM" -t "$STREAM_TO"
 run_test "Fetch Historical OHLC (Java)" \
-    get-historical-ohlc-java -s "$SYMBOL" -c Minute -f "$STREAM_FROM" -t "$STREAM_TO"
+    get-historical-ohlc-java -s "$SYMBOL" -c Minute -f "$STREAM_FROM" -t "$STREAM_TO" -D "$DATASET"
 run_test "Fetch Historical Top Gainers (REST)" \
     get-historical-top-gainers-rest -d "$TEST_DATE"
 run_test "Fetch Historical Top Gainers (Java)" \
-    get-historical-top-gainers-java -d "$TEST_DATE"
+    get-historical-top-gainers-java -d "$TEST_DATE" -D "$DATASET"
 
 section "Historical Aggregates — Stream"
 run_test "Stream Historical OHLC (Java)" \
-    stream-historical-ohlc-java -s "$SYMBOL" -f "$STREAM_FROM" -t "$STREAM_TO"
+    stream-historical-ohlc-java -s "$SYMBOL" -f "$STREAM_FROM" -t "$STREAM_TO" -D "$DATASET"
 
 # ===========================================================================
 # Teardown
@@ -676,10 +728,19 @@ run_test "Stream Historical OHLC (Java)" \
 section "Teardown"
 
 setup_msg "Deprovisioning foundry..."
-if datafye foundry local deprovision &>"${LOG_DIR}/deprovision.log"; then
-    setup_ok "Foundry deprovisioned"
+if [ "$VERBOSE" = true ]; then
+    echo ""
+    if datafye foundry local deprovision 2>&1 | tee "${LOG_DIR}/deprovision.log"; then
+        setup_ok "Foundry deprovisioned"
+    else
+        printf "    ${YELLOW}!${RESET} Deprovision returned an error (see ${LOG_DIR}/deprovision.log)\n"
+    fi
 else
-    printf "\r    ${YELLOW}!${RESET} Deprovision returned an error (see ${LOG_DIR}/deprovision.log)\n"
+    if datafye foundry local deprovision &>"${LOG_DIR}/deprovision.log"; then
+        setup_ok "Foundry deprovisioned"
+    else
+        printf "\r    ${YELLOW}!${RESET} Deprovision returned an error (see ${LOG_DIR}/deprovision.log)\n"
+    fi
 fi
 
 # Remove DNS entries added during provisioning

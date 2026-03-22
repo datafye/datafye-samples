@@ -28,19 +28,16 @@ import java.util.TimeZone;
 import jargs.gnu.CmdLineParser;
 
 import com.datafye.roe.*;
-import com.datafye.client.synthetic.HistoryClient;
+import com.datafye.samples.client.HistoryClient;
 
 public class GetHistoricalOHLC {
-    static {
-        System.setProperty("datafye-synthetic-history.client.samples.connectionDescriptor",
-            "solace://solace.rumi.local:55555&client_name=samples-synthetic-history");
-    }
 
     final private static void printUsage() {
         System.err.println("    [{-s, --symbol the symbol to fetch OHLC bars for (required)]");
         System.err.println("    [{-c, --frequency the OHLC frequency to fetch for]");
         System.err.println("    [{-f, --from the lower bound of the time window to fetch OHLC bars for (format=YYYY-MM-DDTHH:mm:ss)]");
         System.err.println("    [{-t, --to the upper bound of the time window to fetch OHLC bars for (format=YYYY-MM-DDTHH:mm:ss))]");
+        System.err.println("    [{-D, --dataset the dataset (Synthetic, SIP) (default=Synthetic)]");
         System.err.println("    [{-h, --help} print this help string]");
         System.exit(-1);
     }
@@ -51,9 +48,9 @@ public class GetHistoricalOHLC {
         return df;
     }
 
-    final private static void run(final String symbol, final String frequency, final Date from, final Date to) {
+    final private static void run(final String dataset, final String symbol, final String frequency, final Date from, final Date to) {
         // create the client
-        HistoryClient client = new HistoryClient("samples", "0");
+        HistoryClient client = new HistoryClient("samples", "0", dataset);
 
         // perform 100 fetches
         long totalTime = 0;
@@ -92,6 +89,7 @@ public class GetHistoricalOHLC {
         final CmdLineParser.Option frequencyOption = parser.addStringOption('c', "frequency");
         final CmdLineParser.Option fromOption = parser.addStringOption('f', "from");
         final CmdLineParser.Option toOption = parser.addStringOption('t', "to");
+        final CmdLineParser.Option datasetOption = parser.addStringOption('D', "dataset");
         final CmdLineParser.Option helpOption = parser.addBooleanOption('h', "help");
 
         parser.parse(args);
@@ -131,8 +129,12 @@ public class GetHistoricalOHLC {
                 }
             }
 
+            // ...dataset
+            final String dataset = (String)parser.getOptionValue(datasetOption, "Synthetic");
+
             // dump parameters
             System.out.println("Parameters {");
+            System.out.println("...Dataset: " + dataset);
             System.out.println("...Symbol: " + symbol);
             System.out.println("...Frequency: " + frequency);
             System.out.println("...From: " + fromStr);
@@ -140,7 +142,7 @@ public class GetHistoricalOHLC {
             System.out.println("}");
 
             // execute
-            run(symbol, frequency, from, to);
+            run(dataset, symbol, frequency, from, to);
         }
         else {
             printUsage();

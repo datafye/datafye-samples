@@ -52,8 +52,11 @@ resolve_class() {
         is-quote-download-running-java)             echo "com.datafye.samples.java.backtest.IsQuoteDownloadRunning" ;;
         cancel-quote-download-rest)                 echo "com.datafye.samples.rest.backtest.CancelQuoteDownload" ;;
         cancel-quote-download-java)                 echo "com.datafye.samples.java.backtest.CancelQuoteDownload" ;;
+        start-ohlc-download-rest)                   echo "com.datafye.samples.rest.backtest.StartOHLCDownload" ;;
         start-ohlc-download-java)                   echo "com.datafye.samples.java.backtest.StartOHLCDownload" ;;
+        is-ohlc-download-running-rest)              echo "com.datafye.samples.rest.backtest.IsOHLCDownloadRunning" ;;
         is-ohlc-download-running-java)              echo "com.datafye.samples.java.backtest.IsOHLCDownloadRunning" ;;
+        cancel-ohlc-download-rest)                  echo "com.datafye.samples.rest.backtest.CancelOHLCDownload" ;;
         cancel-ohlc-download-java)                  echo "com.datafye.samples.java.backtest.CancelOHLCDownload" ;;
         start-tick-replay-rest)                     echo "com.datafye.samples.rest.backtest.StartTickReplay" ;;
         start-tick-replay-java)                     echo "com.datafye.samples.java.backtest.StartTickReplay" ;;
@@ -126,8 +129,11 @@ usage() {
     echo "    start-quote-download-java               Start quote history download"
     echo "    is-quote-download-running-java          Check if quote download is running"
     echo "    cancel-quote-download-java              Cancel quote history download"
+    echo "    start-ohlc-download-rest                Start OHLC history download"
     echo "    start-ohlc-download-java                Start OHLC history download"
+    echo "    is-ohlc-download-running-rest           Check if OHLC download is running"
     echo "    is-ohlc-download-running-java           Check if OHLC download is running"
+    echo "    cancel-ohlc-download-rest               Cancel OHLC history download"
     echo "    cancel-ohlc-download-java               Cancel OHLC history download"
     echo "    start-tick-replay-java                  Start tick replay"
     echo "    is-tick-replay-running-java             Check if tick replay is running"
@@ -144,6 +150,7 @@ fi
 
 if [ "$1" = "--list" ]; then
     echo "cancel-ohlc-download-java"
+    echo "cancel-ohlc-download-rest"
     echo "cancel-quote-download-java"
     echo "cancel-quote-download-rest"
     echo "cancel-tick-download-java"
@@ -167,6 +174,7 @@ if [ "$1" = "--list" ]; then
     echo "get-securities-java"
     echo "get-securities-rest"
     echo "is-ohlc-download-running-java"
+    echo "is-ohlc-download-running-rest"
     echo "is-quote-download-running-java"
     echo "is-quote-download-running-rest"
     echo "is-tick-download-running-java"
@@ -177,6 +185,7 @@ if [ "$1" = "--list" ]; then
     echo "is-trade-download-running-rest"
     echo "ping-rest"
     echo "start-ohlc-download-java"
+    echo "start-ohlc-download-rest"
     echo "start-quote-download-java"
     echo "start-quote-download-rest"
     echo "start-tick-download-java"

@@ -31,8 +31,8 @@ import com.neeve.aep.annotations.EventHandler;
 import com.neeve.lang.XStringDeserializer;
 
 import com.datafye.roe.*;
-import com.datafye.client.sip.HistoryClient;
-import com.datafye.sip.history.Client.Stream;
+import com.datafye.samples.client.HistoryClient;
+import com.datafye.samples.client.HistoryClient.HistoricalOHLCStream;
 
 import com.datafye.samples.rest.domain.OHLC;
 
@@ -40,12 +40,6 @@ import com.datafye.samples.rest.domain.OHLC;
  * Streams historical OHLC bars using the History client.
  */
 public class StreamHistoricalOHLC {
-    static {
-        System.setProperty("datafye-sip-history.client.samples.connectionDescriptor",
-            "solace://solace.rumi.local:55555&client_name=samples-sip-history");
-        System.setProperty("datafye-sip-history.stream.samples.connectionDescriptor",
-            "solace://solace.rumi.local:55555&client_name=samples-sip-history-stream");
-    }
 
     final private class OHLCPopulator extends StocksMinuteOHLCMessage.Deserializer.AbstractCallbackImpl {
         private OHLC _ohlc;
@@ -100,6 +94,7 @@ public class StreamHistoricalOHLC {
         System.err.println("    [{-f, --from the lower bound of the time window to fetch OHLC bars for (format=YYYY-MM-DDTHH:mm:ss)]");
         System.err.println("    [{-t, --to the upper bound of the time window to fetch OHLC bars for (format=YYYY-MM-DDTHH:mm:ss))]");
         System.err.println("    [{-r, --rate the maximum rate at which the server should stream the data)]");
+        System.err.println("    [{-D, --dataset the dataset (Synthetic, SIP) (default=Synthetic)]");
         System.err.println("    [{-h, --help} print this help string]");
         System.exit(-1);
     }
@@ -110,9 +105,9 @@ public class StreamHistoricalOHLC {
         return df;
     }
 
-    final private void run(final String symbol, final Date from, final Date to, final int rate) throws Exception {
+    final private void run(final String dataset, final String symbol, final Date from, final Date to, final int rate) throws Exception {
         // create the client
-        HistoryClient client = new HistoryClient("samples", "0");
+        HistoryClient client = new HistoryClient("samples", "0", dataset);
 
         // streaming historical OHLCs is a three step process
         //  1. open the stream on the server side
@@ -134,7 +129,7 @@ public class StreamHistoricalOHLC {
         long streamId = response.getStreamId();
         String connectionDescriptor = response.getStreamConnectionDescriptor();
         response.dispose();
-        Stream stream = client.openStream(streamId, connectionDescriptor, this);
+        HistoricalOHLCStream stream = client.openStream(streamId, connectionDescriptor, this);
 
         // step 3: start the stream
         stream.start(rate);
@@ -198,6 +193,7 @@ public class StreamHistoricalOHLC {
         final CmdLineParser.Option fromOption = parser.addStringOption('f', "from");
         final CmdLineParser.Option toOption = parser.addStringOption('t', "to");
         final CmdLineParser.Option rateOption = parser.addIntegerOption('r', "rate");
+        final CmdLineParser.Option datasetOption = parser.addStringOption('D', "dataset");
         final CmdLineParser.Option helpOption = parser.addBooleanOption('h', "help");
 
         parser.parse(args);
@@ -237,8 +233,12 @@ public class StreamHistoricalOHLC {
             // ...rate
             final int rate = (Integer)parser.getOptionValue(rateOption, 0);
 
+            // ...dataset
+            final String dataset = (String)parser.getOptionValue(datasetOption, "Synthetic");
+
             // dump parameters
             System.out.println("Parameters {");
+            System.out.println("...Dataset: " + dataset);
             System.out.println("...Symbol: " + symbol);
             System.out.println("...From: " + fromStr);
             System.out.println("...To: " + toStr);
@@ -246,7 +246,7 @@ public class StreamHistoricalOHLC {
             System.out.println("}");
 
             // execute
-            new StreamHistoricalOHLC().run(symbol, from, to, rate);
+            new StreamHistoricalOHLC().run(dataset, symbol, from, to, rate);
         }
         else {
             printUsage();

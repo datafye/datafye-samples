@@ -24,24 +24,21 @@ package com.datafye.samples.java.backtest;
 import jargs.gnu.CmdLineParser;
 
 import com.datafye.roe.*;
-import com.datafye.client.sip.FeedClient;
+import com.datafye.samples.client.FeedClient;
 
 public class StartTickReplay {
-    static {
-        System.setProperty("datafye-sip-feed.client.samples.connectionDescriptor",
-            "solace://solace.rumi.local:55555&client_name=samples-sip-feed");
-    }
 
     final private static void printUsage() {
         System.err.println("    [{-d, --date the date to replay ticks for (format=YYYY-MM-DD) (required)]");
         System.err.println("    [{-w, --wait wait for replay to complete]");
+        System.err.println("    [{-D, --dataset the dataset (Synthetic, SIP) (default=Synthetic)]");
         System.err.println("    [{-h, --help} print this help string]");
         System.exit(-1);
     }
 
-    final private static void run(final String date, final boolean wait) throws Exception {
+    final private static void run(final String dataset, final String date, final boolean wait) throws Exception {
         // create the client
-        FeedClient client = new FeedClient("samples", "0");
+        FeedClient client = new FeedClient("samples", "0", dataset);
 
         // start the replay
         StartHistoricalStocksTickReplayRequestMessage request = StartHistoricalStocksTickReplayRequestMessage.create();
@@ -80,6 +77,7 @@ public class StartTickReplay {
         final CmdLineParser parser = new CmdLineParser();
         final CmdLineParser.Option dateOption = parser.addStringOption('d', "date");
         final CmdLineParser.Option waitOption = parser.addBooleanOption('w', "wait");
+        final CmdLineParser.Option datasetOption = parser.addStringOption('D', "dataset");
         final CmdLineParser.Option helpOption = parser.addBooleanOption('h', "help");
 
         parser.parse(args);
@@ -89,15 +87,18 @@ public class StartTickReplay {
             if (date == null) printUsage();
             final boolean wait = (Boolean)parser.getOptionValue(waitOption, false);
 
+            // ...dataset
+            final String dataset = (String)parser.getOptionValue(datasetOption, "Synthetic");
+
             // dump parameters
             System.out.println("Parameters {");
-            System.out.println("...Dataset: Synthetic");
+            System.out.println("...Dataset: " + dataset);
             System.out.println("...Date: " + date);
             System.out.println("...Wait: " + wait);
             System.out.println("}");
 
             // execute
-            run(date, wait);
+            run(dataset, date, wait);
         }
         else {
             printUsage();

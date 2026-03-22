@@ -26,20 +26,15 @@ import jargs.gnu.CmdLineParser;
 import com.neeve.aep.annotations.EventHandler;
 
 import com.datafye.roe.*;
-import com.datafye.client.synthetic.FeedClient;
+import com.datafye.samples.client.FeedClient;
 
 public class SubscribeLiveTopOfBook {
-    static {
-        System.setProperty("datafye-synthetic-feed.client.samples.connectionDescriptor",
-            "solace://solace.rumi.local:55555&client_name=samples-synthetic-feed");
-        System.setProperty("datafye-synthetic-feed.stream.samples.connectionDescriptor",
-            "solace://solace.rumi.local:55555&client_name=samples-synthetic-feed-stream");
-    }
 
     private int _numQuotesReceived = 0;
 
     final private static void printUsage() {
         System.err.println("    [{-s, --symbols the symbols (comma separated) to stream the top-of-book quote for (required)]");
+        System.err.println("    [{-D, --dataset the dataset (Synthetic, SIP) (default=Synthetic)]");
         System.err.println("    [{-h, --help} print this help string]");
         System.exit(-1);
     }
@@ -88,9 +83,9 @@ public class SubscribeLiveTopOfBook {
         }
     }
 
-    final private void run(final String commaSeparatedSymbols) throws Exception {
+    final private void run(final String dataset, final String commaSeparatedSymbols) throws Exception {
         // create the live feed client
-        final FeedClient client = new FeedClient("samples", "0");
+        final FeedClient client = new FeedClient("samples", "0", dataset);
         try {
             // split into individual symbols
             final String[] symbols = commaSeparatedSymbols.split(",");
@@ -177,6 +172,7 @@ public class SubscribeLiveTopOfBook {
         // parse command line
         final CmdLineParser parser = new CmdLineParser();
         final CmdLineParser.Option symbolsOption = parser.addStringOption('s', "symbols");
+        final CmdLineParser.Option datasetOption = parser.addStringOption('D', "dataset");
         final CmdLineParser.Option helpOption = parser.addBooleanOption('h', "help");
 
         parser.parse(args);
@@ -186,13 +182,17 @@ public class SubscribeLiveTopOfBook {
             final String symbols = (String)parser.getOptionValue(symbolsOption, null);
             if (symbols == null) printUsage();
 
+            // ...dataset
+            final String dataset = (String)parser.getOptionValue(datasetOption, "Synthetic");
+
             // dump parameters
             System.out.println("Parameters {");
+            System.out.println("...Dataset: " + dataset);
             System.out.println("...Symbols: " + symbols);
             System.out.println("}");
 
             // execute
-            new SubscribeLiveTopOfBook().run(symbols);
+            new SubscribeLiveTopOfBook().run(dataset, symbols);
         }
         else {
             printUsage();

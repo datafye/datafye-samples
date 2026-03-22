@@ -28,16 +28,13 @@ import java.util.TimeZone;
 import jargs.gnu.CmdLineParser;
 
 import com.datafye.roe.*;
-import com.datafye.client.synthetic.HistoryClient;
+import com.datafye.samples.client.HistoryClient;
 
 public class GetHistoricalTopGainers {
-    static {
-        System.setProperty("datafye-synthetic-history.client.samples.connectionDescriptor",
-            "solace://solace.rumi.local:55555&client_name=samples-synthetic-history");
-    }
 
     final private static void printUsage() {
         System.err.println("    [{-d, --date the date to fetch top gainers for (format=YYYY-MM-DD) (required)]");
+        System.err.println("    [{-D, --dataset the dataset (Synthetic, SIP) (default=Synthetic)]");
         System.err.println("    [{-h, --help} print this help string]");
         System.exit(-1);
     }
@@ -48,9 +45,9 @@ public class GetHistoricalTopGainers {
         return df;
     }
 
-    final private static void run(final Date date) {
+    final private static void run(final String dataset, final Date date) {
         // create the client
-        HistoryClient client = new HistoryClient("samples", "0");
+        HistoryClient client = new HistoryClient("samples", "0", dataset);
 
         // perform 100 fetches
         long totalTime = 0;
@@ -83,6 +80,7 @@ public class GetHistoricalTopGainers {
         // parse command line
         final CmdLineParser parser = new CmdLineParser();
         final CmdLineParser.Option dateOption = parser.addStringOption('d', "date");
+        final CmdLineParser.Option datasetOption = parser.addStringOption('D', "dataset");
         final CmdLineParser.Option helpOption = parser.addBooleanOption('h', "help");
 
         parser.parse(args);
@@ -103,13 +101,17 @@ public class GetHistoricalTopGainers {
                 }
             }
 
+            // ...dataset
+            final String dataset = (String)parser.getOptionValue(datasetOption, "Synthetic");
+
             // dump parameters
             System.out.println("Parameters {");
+            System.out.println("...Dataset: " + dataset);
             System.out.println("...Date: " + dateStr);
             System.out.println("}");
 
             // execute
-            run(date);
+            run(dataset, date);
         }
         else {
             printUsage();

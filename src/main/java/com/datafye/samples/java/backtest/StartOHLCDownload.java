@@ -28,19 +28,16 @@ import java.util.TimeZone;
 import jargs.gnu.CmdLineParser;
 
 import com.datafye.roe.*;
-import com.datafye.client.sip.HistoryClient;
+import com.datafye.samples.client.HistoryClient;
 
 public class StartOHLCDownload {
-    static {
-        System.setProperty("datafye-sip-history.client.samples.connectionDescriptor",
-            "solace://solace.rumi.local:55555&client_name=samples-sip-history");
-    }
 
     final private static void printUsage() {
         System.err.println("    [{-d, --date the date to download OHLC history for (format=YYYY-MM-DD) (required)]");
         System.err.println("    [{-s, --symbols the symbols (comma separated) to download OHLC history for (optional)]");
         System.err.println("    [{-c, --frequency the OHLC frequency (Second, Minute, Hour, Day) (default=Minute)]");
         System.err.println("    [{-w, --wait wait for download to complete]");
+        System.err.println("    [{-D, --dataset the dataset (Synthetic, SIP) (default=Synthetic)]");
         System.err.println("    [{-h, --help} print this help string]");
         System.exit(-1);
     }
@@ -119,9 +116,9 @@ public class StartOHLCDownload {
         }
     }
 
-    final private static void run(final String frequency, final Date date, final String[] symbols, final boolean wait) throws Exception {
+    final private static void run(final String dataset, final String frequency, final Date date, final String[] symbols, final boolean wait) throws Exception {
         // create the client
-        HistoryClient client = new HistoryClient("samples", "0");
+        HistoryClient client = new HistoryClient("samples", "0", dataset);
 
         // start the download
         String status = startDownload(client, frequency, date, symbols);
@@ -160,6 +157,7 @@ public class StartOHLCDownload {
         final CmdLineParser.Option symbolsOption = parser.addStringOption('s', "symbols");
         final CmdLineParser.Option frequencyOption = parser.addStringOption('c', "frequency");
         final CmdLineParser.Option waitOption = parser.addBooleanOption('w', "wait");
+        final CmdLineParser.Option datasetOption = parser.addStringOption('D', "dataset");
         final CmdLineParser.Option helpOption = parser.addBooleanOption('h', "help");
 
         parser.parse(args);
@@ -173,9 +171,12 @@ public class StartOHLCDownload {
             final String frequency = (String)parser.getOptionValue(frequencyOption, "Minute");
             final boolean wait = (Boolean)parser.getOptionValue(waitOption, false);
 
+            // ...dataset
+            final String dataset = (String)parser.getOptionValue(datasetOption, "Synthetic");
+
             // dump parameters
             System.out.println("Parameters {");
-            System.out.println("...Dataset: Synthetic");
+            System.out.println("...Dataset: " + dataset);
             System.out.println("...Date: " + dateStr);
             System.out.println("...Symbols: " + (symbolsStr != null ? symbolsStr : "(all)"));
             System.out.println("...Frequency: " + frequency);
@@ -183,7 +184,7 @@ public class StartOHLCDownload {
             System.out.println("}");
 
             // execute
-            run(frequency, date, symbols, wait);
+            run(dataset, frequency, date, symbols, wait);
         }
         else {
             printUsage();

@@ -24,23 +24,20 @@ package com.datafye.samples.java.live.ticks;
 import jargs.gnu.CmdLineParser;
 
 import com.datafye.roe.*;
-import com.datafye.client.synthetic.FeedClient;
+import com.datafye.samples.client.FeedClient;
 
 public class GetLiveLastTrade {
-    static {
-        System.setProperty("datafye-synthetic-feed.client.samples.connectionDescriptor",
-            "solace://solace.rumi.local:55555&client_name=samples-synthetic-feed");
-    }
 
     final private static void printUsage() {
         System.err.println("    [{-s, --symbols the symbols (comma separated) to fetch the last trade for (required)]");
+        System.err.println("    [{-D, --dataset the dataset (Synthetic, SIP) (default=Synthetic)]");
         System.err.println("    [{-h, --help} print this help string]");
         System.exit(-1);
     }
 
-    final private static void run(final String commaSeparatedSymbols) {
+    final private static void run(final String dataset, final String commaSeparatedSymbols) {
         // create the client
-        FeedClient client = new FeedClient("samples", "0");
+        FeedClient client = new FeedClient("samples", "0", dataset);
 
         // split into individual symbols
         final String[] symbols = commaSeparatedSymbols.split(",");
@@ -76,6 +73,7 @@ public class GetLiveLastTrade {
         // parse command line
         final CmdLineParser parser = new CmdLineParser();
         final CmdLineParser.Option symbolsOption = parser.addStringOption('s', "symbols");
+        final CmdLineParser.Option datasetOption = parser.addStringOption('D', "dataset");
         final CmdLineParser.Option helpOption = parser.addBooleanOption('h', "help");
 
         parser.parse(args);
@@ -85,13 +83,17 @@ public class GetLiveLastTrade {
             final String symbols = (String)parser.getOptionValue(symbolsOption, null);
             if (symbols == null) printUsage();
 
+            // ...dataset
+            final String dataset = (String)parser.getOptionValue(datasetOption, "Synthetic");
+
             // dump parameters
             System.out.println("Parameters {");
+            System.out.println("...Dataset: " + dataset);
             System.out.println("...Symbols: " + symbols);
             System.out.println("}");
 
             // execute
-            run(symbols);
+            run(dataset, symbols);
         }
         else {
             printUsage();
