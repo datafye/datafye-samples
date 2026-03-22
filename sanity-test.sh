@@ -242,7 +242,7 @@ if [ "$DISTRO" = "macos" ]; then
 elif [ -f /proc/meminfo ]; then
     MEM_TOTAL_MB=$(awk '/MemTotal/ { printf "%d", $2 / 1024 }' /proc/meminfo)
 fi
-MEM_TOTAL_GB=$(( MEM_TOTAL_MB / 1024 ))
+MEM_TOTAL_GB=$(( (MEM_TOTAL_MB + 512) / 1024 ))  # round to nearest GB
 
 # macOS and WSL need 12GB (Docker Desktop overhead); native Linux needs 8GB
 if [ "$DISTRO" = "macos" ] || [ "$IS_WSL" = true ]; then
