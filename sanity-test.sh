@@ -396,16 +396,6 @@ else
     fi
 fi
 
-# --- Git ---
-if ! command -v git &>/dev/null; then
-    setup_msg "Installing git..."
-    if [ "$PKG_MGR" = "apt" ]; then
-        sudo apt-get update -qq &>/dev/null
-    fi
-    pkg_install git || fail_setup "git installation failed"
-    setup_ok "git"
-fi
-
 # --- Java 17 ---
 if java -version 2>&1 | grep -q '"17\.'; then
     if [ "$DISTRO" = "macos" ]; then
