@@ -182,6 +182,9 @@ banner
 
 section "Setup"
 
+# Create log directory early so install steps can log to it
+mkdir -p "$WORK_DIR" "$LOG_DIR"
+
 # --- Detect platform ---
 DISTRO=""
 PKG_MGR=""
@@ -457,8 +460,9 @@ setup_ok "Maven $(mvn --version 2>/dev/null | head -1 | sed 's/Apache Maven \([^
 # --- Datafye CLI ---
 if ! command -v datafye &>/dev/null; then
     setup_msg "Installing Datafye CLI..."
-    curl -fsSL https://downloads.n5corp.com/datafye/cli/latest/install.sh | sudo bash &>/dev/null \
-        || fail_setup "Datafye CLI installation failed"
+    curl -fsSL https://downloads.n5corp.com/datafye/cli/latest/install.sh \
+        | sudo JAVA_HOME="$JAVA_HOME" PATH="$PATH" bash &>"${LOG_DIR}/datafye-cli-install.log" \
+        || fail_setup "Datafye CLI installation failed (see ${LOG_DIR}/datafye-cli-install.log)"
 fi
 setup_ok "Datafye CLI $(datafye --version 2>/dev/null | head -1)"
 
@@ -466,8 +470,6 @@ setup_ok "Datafye CLI $(datafye --version 2>/dev/null | head -1)"
 # Setup: build
 # ---------------------------------------------------------------------------
 section "Build"
-
-mkdir -p "$WORK_DIR" "$LOG_DIR"
 
 setup_msg "Building samples..."
 export MAVEN_OPTS="-Xmx2g --add-exports=java.base/sun.nio.ch=ALL-UNNAMED --add-opens=java.base/java.nio=ALL-UNNAMED --add-opens=java.base/jdk.internal.ref=ALL-UNNAMED"
