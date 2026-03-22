@@ -19,10 +19,15 @@
 #   - Ubuntu/Debian (including WSL on Windows)
 #   - macOS (Homebrew)
 #
-# Prerequisites: sudo access (Linux), Homebrew (macOS).
+# Prerequisites: root/sudo access (Linux), Homebrew (macOS).
 # The script installs Java 17, Maven, and the Datafye CLI if not present.
 # =============================================================================
 set -uo pipefail
+
+if [ "$(id -u)" -ne 0 ]; then
+    echo "This script requires root privileges. Re-run with: sudo bash sanity-test.sh" >&2
+    exit 1
+fi
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -288,14 +293,11 @@ if [ -n "${CWD_AVAIL_GB:-}" ] && [ -n "${BEST_AVAIL_GB:-}" ]; then
 fi
 
 # --- Helpers ---
-IS_ROOT=false
-[ "$(id -u)" -eq 0 ] && IS_ROOT=true
-
 pkg_install() {
     case "$PKG_MGR" in
-        apt)  sudo apt-get install -y -qq "$@" &>/dev/null ;;
-        dnf)  sudo dnf install -y "$@" &>/dev/null ;;
-        yum)  sudo yum install -y "$@" &>/dev/null ;;
+        apt)  apt-get install -y -qq "$@" &>/dev/null ;;
+        dnf)  dnf install -y "$@" &>/dev/null ;;
+        yum)  yum install -y "$@" &>/dev/null ;;
         brew) brew install "$@" &>/dev/null ;;
     esac
 }
@@ -314,10 +316,10 @@ install_docker_compose() {
         *)       fail_setup "Unsupported architecture for Docker Compose: $arch" ;;
     esac
     local plugin_dir="/usr/local/lib/docker/cli-plugins"
-    sudo mkdir -p "$plugin_dir"
-    sudo curl -fsSL "https://github.com/docker/compose/releases/download/${compose_version}/docker-compose-linux-${arch}" \
+    mkdir -p "$plugin_dir"
+    curl -fsSL "https://github.com/docker/compose/releases/download/${compose_version}/docker-compose-linux-${arch}" \
         -o "$plugin_dir/docker-compose"
-    sudo chmod +x "$plugin_dir/docker-compose"
+    chmod +x "$plugin_dir/docker-compose"
 }
 
 # --- Docker ---
@@ -328,28 +330,16 @@ if [ "$DISTRO" = "macos" ]; then
     fi
     setup_ok "Docker Desktop $(docker version --format '{{.Server.Version}}' 2>/dev/null)"
 else
-    # Linux: check, install if root, or fail with guidance
     if command -v docker &>/dev/null; then
         if docker info &>/dev/null 2>&1; then
             setup_ok "Docker $(docker version --format '{{.Server.Version}}' 2>/dev/null)"
-        elif [ "$IS_ROOT" = false ]; then
-            fail_setup "Docker is installed but not accessible. Add your user to the docker group:
-      sudo usermod -aG docker \$USER
-    Then log out and back in, or run: newgrp docker"
         else
-            # root but daemon not running — try to start it
+            # daemon not running — try to start it
             setup_msg "Starting Docker daemon..."
-            sudo systemctl start docker &>/dev/null && sudo systemctl enable docker &>/dev/null \
+            systemctl start docker &>/dev/null && systemctl enable docker &>/dev/null \
                 || fail_setup "Docker daemon failed to start"
             setup_ok "Docker $(docker version --format '{{.Server.Version}}' 2>/dev/null)"
         fi
-    elif [ "$IS_ROOT" = false ]; then
-        fail_setup "Docker is not installed. Install it and add your user to the docker group:
-      sudo yum install -y docker        # Amazon Linux
-      sudo systemctl start docker
-      sudo systemctl enable docker
-      sudo usermod -aG docker \$USER
-    Then log out and back in, and re-run this script."
     else
         setup_msg "Installing Docker..."
         case "$DISTRO" in
@@ -357,28 +347,28 @@ else
                 pkg_install docker || fail_setup "Docker installation failed"
                 ;;
             ubuntu|debian)
-                sudo apt-get update -qq &>/dev/null
-                sudo apt-get install -y -qq ca-certificates curl gnupg lsb-release &>/dev/null
-                sudo install -m 0755 -d /etc/apt/keyrings
-                curl -fsSL "https://download.docker.com/linux/$DISTRO/gpg" | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg 2>/dev/null
-                sudo chmod a+r /etc/apt/keyrings/docker.gpg
+                apt-get update -qq &>/dev/null
+                apt-get install -y -qq ca-certificates curl gnupg lsb-release &>/dev/null
+                install -m 0755 -d /etc/apt/keyrings
+                curl -fsSL "https://download.docker.com/linux/$DISTRO/gpg" | gpg --dearmor -o /etc/apt/keyrings/docker.gpg 2>/dev/null
+                chmod a+r /etc/apt/keyrings/docker.gpg
                 echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/$DISTRO \
-                    $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
-                sudo apt-get update -qq &>/dev/null
-                sudo apt-get install -y -qq docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin &>/dev/null \
+                    $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list >/dev/null
+                apt-get update -qq &>/dev/null
+                apt-get install -y -qq docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin &>/dev/null \
                     || fail_setup "Docker installation failed"
                 ;;
             centos|rhel|fedora|rocky|almalinux)
-                sudo yum install -y yum-utils &>/dev/null
-                sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo &>/dev/null
-                sudo yum install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin &>/dev/null \
+                yum install -y yum-utils &>/dev/null
+                yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo &>/dev/null
+                yum install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin &>/dev/null \
                     || fail_setup "Docker installation failed"
                 ;;
             *)
                 fail_setup "Cannot install Docker automatically on ${DISTRO}. Please install Docker manually."
                 ;;
         esac
-        sudo systemctl start docker &>/dev/null && sudo systemctl enable docker &>/dev/null \
+        systemctl start docker &>/dev/null && systemctl enable docker &>/dev/null \
             || fail_setup "Docker installed but daemon failed to start"
         if docker info &>/dev/null 2>&1; then
             setup_ok "Docker $(docker version --format '{{.Server.Version}}' 2>/dev/null) (installed)"
@@ -390,12 +380,10 @@ else
     # --- Docker Compose ---
     if has_docker_compose; then
         setup_ok "Docker Compose $(docker compose version --short 2>/dev/null || docker-compose version --short 2>/dev/null)"
-    elif [ "$IS_ROOT" = true ]; then
+    else
         setup_msg "Installing Docker Compose..."
         install_docker_compose || fail_setup "Docker Compose installation failed"
         setup_ok "Docker Compose $(docker compose version --short 2>/dev/null)"
-    else
-        fail_setup "Docker Compose is not installed. Re-run as root to install it, or install manually."
     fi
 fi
 
@@ -410,7 +398,7 @@ else
     setup_msg "Installing Java 17..."
     case "$PKG_MGR" in
         apt)
-            sudo apt-get update -qq &>/dev/null
+            apt-get update -qq &>/dev/null
             pkg_install openjdk-17-jdk || fail_setup "Java 17 installation failed"
             ;;
         dnf)
@@ -424,8 +412,8 @@ else
             if [ "$DISTRO" = "amzn" ]; then
                 pkg_install java-17-amazon-corretto-devel || fail_setup "Java 17 installation failed"
             else
-                sudo rpm --import https://yum.corretto.aws/corretto.key 2>/dev/null || true
-                sudo curl -sLo /etc/yum.repos.d/corretto.repo https://yum.corretto.aws/corretto.repo
+                rpm --import https://yum.corretto.aws/corretto.key 2>/dev/null || true
+                curl -sLo /etc/yum.repos.d/corretto.repo https://yum.corretto.aws/corretto.repo
                 pkg_install java-17-amazon-corretto-devel || fail_setup "Java 17 installation failed"
             fi
             ;;
@@ -451,8 +439,8 @@ if ! command -v mvn &>/dev/null; then
     else
         MAVEN_VERSION="3.9.6"
         curl -fsSL "https://archive.apache.org/dist/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz" \
-            | sudo tar -xz -C /opt || fail_setup "Maven installation failed"
-        sudo ln -sf "/opt/apache-maven-${MAVEN_VERSION}/bin/mvn" /usr/local/bin/mvn
+            | tar -xz -C /opt || fail_setup "Maven installation failed"
+        ln -sf "/opt/apache-maven-${MAVEN_VERSION}/bin/mvn" /usr/local/bin/mvn
     fi
 fi
 setup_ok "Maven $(mvn --version 2>/dev/null | head -1 | sed 's/Apache Maven \([^ ]*\).*/\1/')"
@@ -461,7 +449,7 @@ setup_ok "Maven $(mvn --version 2>/dev/null | head -1 | sed 's/Apache Maven \([^
 if ! command -v datafye &>/dev/null; then
     setup_msg "Installing Datafye CLI..."
     curl -fsSL https://downloads.n5corp.com/datafye/cli/latest/install.sh \
-        | sudo JAVA_HOME="$JAVA_HOME" PATH="$PATH" bash &>"${LOG_DIR}/datafye-cli-install.log" \
+        | bash &>"${LOG_DIR}/datafye-cli-install.log" \
         || fail_setup "Datafye CLI installation failed (see ${LOG_DIR}/datafye-cli-install.log)"
 fi
 setup_ok "Datafye CLI $(datafye --version 2>/dev/null | head -1)"
@@ -502,6 +490,37 @@ if datafye foundry local provision --descriptor "${WORK_DIR}/quickstart.yaml" &>
     setup_ok "Foundry provisioned"
 else
     fail_setup "Provisioning failed (see ${LOG_DIR}/provision.log)"
+fi
+
+# --- DNS entries ---
+HOSTS_ENTRIES=(
+    "solace.rumi.local"
+    "api.rest.rumi.local"
+    "local-foundry-dev-api.datafye.local"
+    "local-foundry-dev-admin.datafye.local"
+    "local-foundry-dev-monitor.datafye.local"
+)
+HOSTS_MARKER="# -- DNS Entries for the local Datafye Foundry deployment --"
+HOSTS_NEEDED=false
+for host in "${HOSTS_ENTRIES[@]}"; do
+    if ! grep -q "$host" /etc/hosts 2>/dev/null; then
+        HOSTS_NEEDED=true
+        break
+    fi
+done
+
+if [ "$HOSTS_NEEDED" = true ]; then
+    {
+        echo ""
+        echo "$HOSTS_MARKER"
+        for h in "${HOSTS_ENTRIES[@]}"; do
+            echo "127.0.0.1   $h"
+        done
+        echo "$HOSTS_MARKER"
+    } >> /etc/hosts
+    setup_ok "DNS entries added to /etc/hosts"
+else
+    setup_ok "DNS entries already in /etc/hosts"
 fi
 
 # ---------------------------------------------------------------------------
@@ -546,6 +565,14 @@ if datafye foundry local deprovision &>"${LOG_DIR}/deprovision.log"; then
     setup_ok "Foundry deprovisioned"
 else
     printf "\r    ${YELLOW}!${RESET} Deprovision returned an error (see ${LOG_DIR}/deprovision.log)\n"
+fi
+
+# Remove DNS entries added during provisioning
+if grep -q "$HOSTS_MARKER" /etc/hosts 2>/dev/null; then
+    setup_msg "Removing DNS entries from /etc/hosts..."
+    sed -i "/$HOSTS_MARKER/,/$HOSTS_MARKER/d" /etc/hosts 2>/dev/null \
+        && setup_ok "DNS entries removed from /etc/hosts" \
+        || setup_warn "Could not remove DNS entries from /etc/hosts"
 fi
 
 # ---------------------------------------------------------------------------
