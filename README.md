@@ -12,6 +12,7 @@ Sample code for working with [Datafye](https://developer.datafye.io) deployments
   - [Data Cloud API Samples](#data-cloud-api-samples)
   - [Broker Connector API Samples](#broker-connector-api-samples)
   - [Algo Container Samples](#algo-container-samples)
+- [Sanity Test](#sanity-test)
 - [Build](#build)
 - [Running the Samples](#running-the-samples)
 
@@ -237,6 +238,24 @@ For [Trading: Data Cloud + Broker](https://docs.datafye.io/quickstart/trading-da
 For [Foundry: Full Stack](https://docs.datafye.io/quickstart/foundry-full-stack) and [Trading: Full Stack](https://docs.datafye.io/quickstart/trading-full-stack) environments — where you use the Datafye Algo Container and build your algo logic with the Datafye SDK.
 
 > **Work in progress.** Algo container samples are coming soon.
+
+## Sanity Test
+
+The quickest way to verify everything works end to end is the included sanity test. It checks prerequisites, installs anything missing, provisions a local foundry, runs the samples, and cleans up after itself.
+
+```bash
+sudo bash sanity-test.sh
+```
+
+The script is interactive — it shows you what's installed and what's missing, asks before installing anything, and confirms before running. It covers health, reference data, OHLC download, historical aggregate fetch, and historical aggregate stream.
+
+To use real market data instead of synthetic:
+
+```bash
+sudo POLYGON_API_KEY="your-polygon-api-key" bash sanity-test.sh
+```
+
+Supported platforms: Amazon Linux 2/2023, RHEL, CentOS, Fedora, Rocky Linux, AlmaLinux, Ubuntu/Debian (including WSL), and macOS.
 
 ## Build
 
