@@ -27,7 +27,7 @@
     </licenses>
 
     <properties>
-        <datafye.version>2.0-SNAPSHOT</datafye.version>
+        <datafye.version>2.0.6</datafye.version>
     </properties>
 
     <dependencies>
