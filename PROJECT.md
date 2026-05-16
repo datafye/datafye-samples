@@ -40,7 +40,7 @@ The **REST samples** go through the API Gateway. It's an HTTP facade that transl
 
 The **WebSocket samples** go through the Stream Gateway. This is the streaming counterpart to the REST API — it provides subscribe and stream access over WebSocket connections for those who want streaming without using the Java Client.
 
-The **Java Client samples** skip both gateways entirely. They use code-generated client classes (built with the [Rumi](https://developer.rumi.systems) framework) that speak the same protocol the backend services use internally. No HTTP overhead. No JSON parsing. And they support all three patterns — request-reply, streaming, and subscription — through a single client.
+The **Java Client samples** skip both gateways entirely. They use code-generated client classes (built with the [Rumi](https://www.rumi.systems) framework) that speak the same protocol the backend services use internally. No HTTP overhead. No JSON parsing. And they support all three patterns — request-reply, streaming, and subscription — through a single client.
 
 ### Codebase Structure
 
