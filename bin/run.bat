@@ -66,6 +66,12 @@ if "%SAMPLE_NAME%"=="is-tick-replay-running-rest" set CLASS=com.datafye.samples.
 if "%SAMPLE_NAME%"=="is-tick-replay-running-java" set CLASS=com.datafye.samples.java.backtest.IsTickReplayRunning
 if "%SAMPLE_NAME%"=="stop-tick-replay-rest" set CLASS=com.datafye.samples.rest.backtest.StopTickReplay
 if "%SAMPLE_NAME%"=="stop-tick-replay-java" set CLASS=com.datafye.samples.java.backtest.StopTickReplay
+if "%SAMPLE_NAME%"=="subscribe-live-trades-ws" set CLASS=com.datafye.samples.ws.SubscribeLiveTrades
+if "%SAMPLE_NAME%"=="subscribe-live-top-of-book-ws" set CLASS=com.datafye.samples.ws.SubscribeLiveTopOfBook
+if "%SAMPLE_NAME%"=="subscribe-live-ohlc-ws" set CLASS=com.datafye.samples.ws.SubscribeLiveOHLC
+if "%SAMPLE_NAME%"=="subscribe-live-sma-ws" set CLASS=com.datafye.samples.ws.SubscribeLiveSMA
+if "%SAMPLE_NAME%"=="subscribe-live-ema-ws" set CLASS=com.datafye.samples.ws.SubscribeLiveEMA
+if "%SAMPLE_NAME%"=="stream-historical-ohlc-ws" set CLASS=com.datafye.samples.ws.StreamHistoricalOHLC
 
 if not defined CLASS (
     echo Error: Unknown sample '%SAMPLE_NAME%' >&2
@@ -114,6 +120,14 @@ echo     get-historical-top-gainers-java         Fetch historical top gainers
 echo     stream-historical-ohlc-java            Stream historical OHLC bars
 echo     stream-historical-ohlc-concurrently-java
 echo                                            Stream historical OHLC bars concurrently
+echo.
+echo   WebSocket Streaming:
+echo     subscribe-live-trades-ws               Stream live trades over a WebSocket
+echo     subscribe-live-top-of-book-ws          Stream live top-of-book quotes over a WebSocket
+echo     subscribe-live-ohlc-ws                 Stream live OHLC bars over a WebSocket
+echo     subscribe-live-sma-ws                  Stream live SMA values over a WebSocket
+echo     subscribe-live-ema-ws                  Stream live EMA values over a WebSocket
+echo     stream-historical-ohlc-ws              Stream a historical OHLC range over a WebSocket
 echo.
 echo   Backtesting (REST):
 echo     start-tick-download-rest                Start tick history download
@@ -197,6 +211,12 @@ echo stop-tick-replay-java
 echo stop-tick-replay-rest
 echo stream-historical-ohlc-concurrently-java
 echo stream-historical-ohlc-java
+echo stream-historical-ohlc-ws
+echo subscribe-live-ema-ws
+echo subscribe-live-ohlc-ws
+echo subscribe-live-sma-ws
 echo subscribe-live-top-of-book-java
+echo subscribe-live-top-of-book-ws
 echo subscribe-live-trades-java
+echo subscribe-live-trades-ws
 exit /b 0

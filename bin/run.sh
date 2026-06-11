@@ -64,6 +64,12 @@ resolve_class() {
         is-tick-replay-running-java)                echo "com.datafye.samples.java.backtest.IsTickReplayRunning" ;;
         stop-tick-replay-rest)                      echo "com.datafye.samples.rest.backtest.StopTickReplay" ;;
         stop-tick-replay-java)                      echo "com.datafye.samples.java.backtest.StopTickReplay" ;;
+        subscribe-live-trades-ws)                   echo "com.datafye.samples.ws.SubscribeLiveTrades" ;;
+        subscribe-live-top-of-book-ws)              echo "com.datafye.samples.ws.SubscribeLiveTopOfBook" ;;
+        subscribe-live-ohlc-ws)                     echo "com.datafye.samples.ws.SubscribeLiveOHLC" ;;
+        subscribe-live-sma-ws)                      echo "com.datafye.samples.ws.SubscribeLiveSMA" ;;
+        subscribe-live-ema-ws)                      echo "com.datafye.samples.ws.SubscribeLiveEMA" ;;
+        stream-historical-ohlc-ws)                  echo "com.datafye.samples.ws.StreamHistoricalOHLC" ;;
         *) return 1 ;;
     esac
 }
@@ -104,6 +110,14 @@ usage() {
     echo "    stream-historical-ohlc-java            Stream historical OHLC bars"
     echo "    stream-historical-ohlc-concurrently-java"
     echo "                                           Stream historical OHLC bars concurrently"
+    echo ""
+    echo "  WebSocket Streaming:"
+    echo "    subscribe-live-trades-ws               Stream live trades over a WebSocket"
+    echo "    subscribe-live-top-of-book-ws          Stream live top-of-book quotes over a WebSocket"
+    echo "    subscribe-live-ohlc-ws                 Stream live OHLC bars over a WebSocket"
+    echo "    subscribe-live-sma-ws                  Stream live SMA values over a WebSocket"
+    echo "    subscribe-live-ema-ws                  Stream live EMA values over a WebSocket"
+    echo "    stream-historical-ohlc-ws              Stream a historical OHLC range over a WebSocket"
     echo ""
     echo "  Backtesting (REST):"
     echo "    start-tick-download-rest                Start tick history download"
@@ -198,8 +212,14 @@ if [ "$1" = "--list" ]; then
     echo "stop-tick-replay-rest"
     echo "stream-historical-ohlc-concurrently-java"
     echo "stream-historical-ohlc-java"
+    echo "stream-historical-ohlc-ws"
+    echo "subscribe-live-ema-ws"
+    echo "subscribe-live-ohlc-ws"
+    echo "subscribe-live-sma-ws"
     echo "subscribe-live-top-of-book-java"
+    echo "subscribe-live-top-of-book-ws"
     echo "subscribe-live-trades-java"
+    echo "subscribe-live-trades-ws"
     exit 0
 fi
 
