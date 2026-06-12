@@ -67,6 +67,15 @@ src/main/java/com/datafye/samples/
 │   ├── SubscribeLiveTopOfBook.java
 │   └── SubscribeLiveTrades.java
 │
+├── ws/                            # WebSocket (OkHttp) streaming approach
+│   ├── StreamClient.java          # Shared OkHttp WebSocket helper
+│   ├── SubscribeLiveTrades.java   # /ticks
+│   ├── SubscribeLiveTopOfBook.java # /quotes
+│   ├── SubscribeLiveOHLC.java     # /aggs
+│   ├── SubscribeLiveSMA.java      # /sma
+│   ├── SubscribeLiveEMA.java      # /ema
+│   └── StreamHistoricalOHLC.java  # /history
+│
 bin/
 │   ├── run.sh                     # Master run script (Linux/macOS)
 │   └── run.bat                    # Master run script (Windows)
@@ -78,7 +87,7 @@ pom.xml                            # Maven build with assembly plugin
 distribution.xml                   # Packages everything into a deployable tar.gz
 ```
 
-Notice how `rest/` has 4 samples and `java/` has 7. The extra 3 are the streaming and subscription samples — `StreamHistoricalOHLC`, `SubscribeLiveTopOfBook`, and `SubscribeLiveTrades`. REST is request-response only; streaming and subscription require either the WebSocket API or the Java Client. As the WebSocket samples are built out, a `ws/` package will appear alongside these two.
+Notice how `rest/` has 4 samples and `java/` has 7. The extra 3 are the streaming and subscription samples — `StreamHistoricalOHLC`, `SubscribeLiveTopOfBook`, and `SubscribeLiveTrades`. REST is request-response only; streaming and subscription require either the WebSocket API or the Java Client. The `ws/` package mirrors these streaming/subscription patterns over WebSocket via a `StreamClient` (OkHttp) helper: `SubscribeLiveTrades` (/ticks), `SubscribeLiveTopOfBook` (/quotes), `SubscribeLiveOHLC` (/aggs), `SubscribeLiveSMA` (/sma), `SubscribeLiveEMA` (/ema), and `StreamHistoricalOHLC` (/history). Their run-names follow the `*-ws` convention (e.g. `subscribe-live-sma-ws`). The WS endpoint host:port is read from `datafye-samples.ws.endpoint` (default `api.stream.rumi.local:7775`).
 
 ### How the Parts Connect
 
@@ -365,7 +374,7 @@ The old `GetHistoricalOHLCsRequestMessage` became `GetHistoricalStocksOHLCsReque
 |------|-------|
 | Run scripts | `bin/run.sh` (Linux/macOS), `bin/run.bat` (Windows) |
 | REST samples | `src/main/java/com/datafye/samples/rest/` |
-| WebSocket samples | `src/main/java/com/datafye/samples/ws/` (planned) |
+| WebSocket samples | `src/main/java/com/datafye/samples/ws/` |
 | Java Client samples | `src/main/java/com/datafye/samples/java/` |
 | REST response POJOs | `src/main/java/com/datafye/samples/rest/domain/` |
 | Connection config | Embedded in each sample's `static {}` block |
