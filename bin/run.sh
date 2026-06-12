@@ -14,56 +14,104 @@ JAVA_OPTS="--add-opens=java.base/jdk.internal.ref=ALL-UNNAMED \
 resolve_class() {
     case "$1" in
         ping-rest)                                  echo "com.datafye.samples.rest.health.Ping" ;;
-        get-securities-rest)                        echo "com.datafye.samples.rest.reference.GetSecurities" ;;
-        get-securities-java)                        echo "com.datafye.samples.java.reference.GetSecurities" ;;
-        get-live-top-of-book-rest)                  echo "com.datafye.samples.rest.live.ticks.GetLiveTopOfBook" ;;
-        get-live-top-of-book-java)                  echo "com.datafye.samples.java.live.ticks.GetLiveTopOfBook" ;;
-        get-live-last-trade-rest)                   echo "com.datafye.samples.rest.live.ticks.GetLiveLastTrade" ;;
-        get-live-last-trade-java)                   echo "com.datafye.samples.java.live.ticks.GetLiveLastTrade" ;;
-        subscribe-live-top-of-book-java)            echo "com.datafye.samples.java.live.ticks.SubscribeLiveTopOfBook" ;;
-        subscribe-live-trades-java)                 echo "com.datafye.samples.java.live.ticks.SubscribeLiveTrades" ;;
-        get-live-ohlc-rest)                         echo "com.datafye.samples.rest.live.aggregates.GetLiveOHLC" ;;
-        get-live-ohlc-java)                         echo "com.datafye.samples.java.live.aggregates.GetLiveOHLC" ;;
-        get-live-sma-rest)                          echo "com.datafye.samples.rest.live.aggregates.GetLiveSMA" ;;
-        get-live-sma-java)                          echo "com.datafye.samples.java.live.aggregates.GetLiveSMA" ;;
-        get-live-ema-rest)                          echo "com.datafye.samples.rest.live.aggregates.GetLiveEMA" ;;
-        get-live-ema-java)                          echo "com.datafye.samples.java.live.aggregates.GetLiveEMA" ;;
-        get-historical-ohlc-rest)                   echo "com.datafye.samples.rest.history.GetHistoricalOHLC" ;;
-        get-historical-ohlc-java)                   echo "com.datafye.samples.java.history.GetHistoricalOHLC" ;;
-        get-historical-top-gainers-rest)            echo "com.datafye.samples.rest.history.GetHistoricalTopGainers" ;;
-        get-historical-top-gainers-java)            echo "com.datafye.samples.java.history.GetHistoricalTopGainers" ;;
-        stream-historical-ohlc-java)                echo "com.datafye.samples.java.history.StreamHistoricalOHLC" ;;
-        stream-historical-ohlc-concurrently-java)   echo "com.datafye.samples.java.history.StreamHistoricalOHLCConcurrently" ;;
-        start-tick-download-rest)                  echo "com.datafye.samples.rest.backtest.StartTickDownload" ;;
-        start-tick-download-java)                  echo "com.datafye.samples.java.backtest.StartTickDownload" ;;
-        is-tick-download-running-rest)              echo "com.datafye.samples.rest.backtest.IsTickDownloadRunning" ;;
-        is-tick-download-running-java)              echo "com.datafye.samples.java.backtest.IsTickDownloadRunning" ;;
-        cancel-tick-download-rest)                  echo "com.datafye.samples.rest.backtest.CancelTickDownload" ;;
-        cancel-tick-download-java)                  echo "com.datafye.samples.java.backtest.CancelTickDownload" ;;
-        start-trade-download-rest)                  echo "com.datafye.samples.rest.backtest.StartTradeDownload" ;;
-        start-trade-download-java)                  echo "com.datafye.samples.java.backtest.StartTradeDownload" ;;
-        is-trade-download-running-rest)             echo "com.datafye.samples.rest.backtest.IsTradeDownloadRunning" ;;
-        is-trade-download-running-java)             echo "com.datafye.samples.java.backtest.IsTradeDownloadRunning" ;;
-        cancel-trade-download-rest)                 echo "com.datafye.samples.rest.backtest.CancelTradeDownload" ;;
-        cancel-trade-download-java)                 echo "com.datafye.samples.java.backtest.CancelTradeDownload" ;;
-        start-quote-download-rest)                  echo "com.datafye.samples.rest.backtest.StartQuoteDownload" ;;
-        start-quote-download-java)                  echo "com.datafye.samples.java.backtest.StartQuoteDownload" ;;
-        is-quote-download-running-rest)             echo "com.datafye.samples.rest.backtest.IsQuoteDownloadRunning" ;;
-        is-quote-download-running-java)             echo "com.datafye.samples.java.backtest.IsQuoteDownloadRunning" ;;
-        cancel-quote-download-rest)                 echo "com.datafye.samples.rest.backtest.CancelQuoteDownload" ;;
-        cancel-quote-download-java)                 echo "com.datafye.samples.java.backtest.CancelQuoteDownload" ;;
-        start-ohlc-download-rest)                   echo "com.datafye.samples.rest.backtest.StartOHLCDownload" ;;
-        start-ohlc-download-java)                   echo "com.datafye.samples.java.backtest.StartOHLCDownload" ;;
-        is-ohlc-download-running-rest)              echo "com.datafye.samples.rest.backtest.IsOHLCDownloadRunning" ;;
-        is-ohlc-download-running-java)              echo "com.datafye.samples.java.backtest.IsOHLCDownloadRunning" ;;
-        cancel-ohlc-download-rest)                  echo "com.datafye.samples.rest.backtest.CancelOHLCDownload" ;;
-        cancel-ohlc-download-java)                  echo "com.datafye.samples.java.backtest.CancelOHLCDownload" ;;
-        start-tick-replay-rest)                     echo "com.datafye.samples.rest.backtest.StartTickReplay" ;;
-        start-tick-replay-java)                     echo "com.datafye.samples.java.backtest.StartTickReplay" ;;
-        is-tick-replay-running-rest)                echo "com.datafye.samples.rest.backtest.IsTickReplayRunning" ;;
-        is-tick-replay-running-java)                echo "com.datafye.samples.java.backtest.IsTickReplayRunning" ;;
-        stop-tick-replay-rest)                      echo "com.datafye.samples.rest.backtest.StopTickReplay" ;;
-        stop-tick-replay-java)                      echo "com.datafye.samples.java.backtest.StopTickReplay" ;;
+        get-securities-rest)                        echo "com.datafye.samples.rest.stocks.reference.GetSecurities" ;;
+        get-securities-java)                        echo "com.datafye.samples.java.stocks.reference.GetSecurities" ;;
+        get-securities-crypto-rest)                 echo "com.datafye.samples.rest.crypto.reference.GetSecurities" ;;
+        get-securities-crypto-java)                 echo "com.datafye.samples.java.crypto.reference.GetSecurities" ;;
+        get-live-top-of-book-rest)                  echo "com.datafye.samples.rest.stocks.live.ticks.GetLiveTopOfBook" ;;
+        get-live-top-of-book-java)                  echo "com.datafye.samples.java.stocks.live.ticks.GetLiveTopOfBook" ;;
+        get-live-top-of-book-crypto-rest)           echo "com.datafye.samples.rest.crypto.live.ticks.GetLiveTopOfBook" ;;
+        get-live-top-of-book-crypto-java)           echo "com.datafye.samples.java.crypto.live.ticks.GetLiveTopOfBook" ;;
+        get-live-last-trade-rest)                   echo "com.datafye.samples.rest.stocks.live.ticks.GetLiveLastTrade" ;;
+        get-live-last-trade-java)                   echo "com.datafye.samples.java.stocks.live.ticks.GetLiveLastTrade" ;;
+        get-live-last-trade-crypto-rest)            echo "com.datafye.samples.rest.crypto.live.ticks.GetLiveLastTrade" ;;
+        get-live-last-trade-crypto-java)            echo "com.datafye.samples.java.crypto.live.ticks.GetLiveLastTrade" ;;
+        subscribe-live-top-of-book-java)            echo "com.datafye.samples.java.stocks.live.ticks.SubscribeLiveTopOfBook" ;;
+        subscribe-live-trades-java)                 echo "com.datafye.samples.java.stocks.live.ticks.SubscribeLiveTrades" ;;
+        get-live-ohlc-rest)                         echo "com.datafye.samples.rest.stocks.live.aggregates.GetLiveOHLC" ;;
+        get-live-ohlc-java)                         echo "com.datafye.samples.java.stocks.live.aggregates.GetLiveOHLC" ;;
+        get-live-ohlc-crypto-rest)                  echo "com.datafye.samples.rest.crypto.live.aggregates.GetLiveOHLC" ;;
+        get-live-ohlc-crypto-java)                  echo "com.datafye.samples.java.crypto.live.aggregates.GetLiveOHLC" ;;
+        get-live-sma-rest)                          echo "com.datafye.samples.rest.stocks.live.aggregates.GetLiveSMA" ;;
+        get-live-sma-java)                          echo "com.datafye.samples.java.stocks.live.aggregates.GetLiveSMA" ;;
+        get-live-sma-crypto-rest)                   echo "com.datafye.samples.rest.crypto.live.aggregates.GetLiveSMA" ;;
+        get-live-sma-crypto-java)                   echo "com.datafye.samples.java.crypto.live.aggregates.GetLiveSMA" ;;
+        get-live-ema-rest)                          echo "com.datafye.samples.rest.stocks.live.aggregates.GetLiveEMA" ;;
+        get-live-ema-java)                          echo "com.datafye.samples.java.stocks.live.aggregates.GetLiveEMA" ;;
+        get-live-ema-crypto-rest)                   echo "com.datafye.samples.rest.crypto.live.aggregates.GetLiveEMA" ;;
+        get-live-ema-crypto-java)                   echo "com.datafye.samples.java.crypto.live.aggregates.GetLiveEMA" ;;
+        get-historical-ohlc-rest)                   echo "com.datafye.samples.rest.stocks.history.GetHistoricalOHLC" ;;
+        get-historical-ohlc-java)                   echo "com.datafye.samples.java.stocks.history.GetHistoricalOHLC" ;;
+        get-historical-ohlc-crypto-rest)            echo "com.datafye.samples.rest.crypto.history.GetHistoricalOHLC" ;;
+        get-historical-ohlc-crypto-java)            echo "com.datafye.samples.java.crypto.history.GetHistoricalOHLC" ;;
+        get-historical-top-gainers-rest)            echo "com.datafye.samples.rest.stocks.history.GetHistoricalTopGainers" ;;
+        get-historical-top-gainers-java)            echo "com.datafye.samples.java.stocks.history.GetHistoricalTopGainers" ;;
+        get-historical-top-gainers-crypto-rest)     echo "com.datafye.samples.rest.crypto.history.GetHistoricalTopGainers" ;;
+        get-historical-top-gainers-crypto-java)     echo "com.datafye.samples.java.crypto.history.GetHistoricalTopGainers" ;;
+        stream-historical-ohlc-java)                echo "com.datafye.samples.java.stocks.history.StreamHistoricalOHLC" ;;
+        stream-historical-ohlc-crypto-java)         echo "com.datafye.samples.java.crypto.history.StreamHistoricalOHLC" ;;
+        stream-historical-ohlc-concurrently-java)   echo "com.datafye.samples.java.stocks.history.StreamHistoricalOHLCConcurrently" ;;
+        stream-historical-ohlc-concurrently-crypto-java) echo "com.datafye.samples.java.crypto.history.StreamHistoricalOHLCConcurrently" ;;
+        start-tick-download-rest)                  echo "com.datafye.samples.rest.stocks.backtest.StartTickDownload" ;;
+        start-tick-download-java)                  echo "com.datafye.samples.java.stocks.backtest.StartTickDownload" ;;
+        start-tick-download-crypto-rest)            echo "com.datafye.samples.rest.crypto.backtest.StartTickDownload" ;;
+        start-tick-download-crypto-java)            echo "com.datafye.samples.java.crypto.backtest.StartTickDownload" ;;
+        is-tick-download-running-rest)              echo "com.datafye.samples.rest.stocks.backtest.IsTickDownloadRunning" ;;
+        is-tick-download-running-java)              echo "com.datafye.samples.java.stocks.backtest.IsTickDownloadRunning" ;;
+        is-tick-download-running-crypto-rest)       echo "com.datafye.samples.rest.crypto.backtest.IsTickDownloadRunning" ;;
+        is-tick-download-running-crypto-java)       echo "com.datafye.samples.java.crypto.backtest.IsTickDownloadRunning" ;;
+        cancel-tick-download-rest)                  echo "com.datafye.samples.rest.stocks.backtest.CancelTickDownload" ;;
+        cancel-tick-download-java)                  echo "com.datafye.samples.java.stocks.backtest.CancelTickDownload" ;;
+        cancel-tick-download-crypto-rest)           echo "com.datafye.samples.rest.crypto.backtest.CancelTickDownload" ;;
+        cancel-tick-download-crypto-java)           echo "com.datafye.samples.java.crypto.backtest.CancelTickDownload" ;;
+        start-trade-download-rest)                  echo "com.datafye.samples.rest.stocks.backtest.StartTradeDownload" ;;
+        start-trade-download-java)                  echo "com.datafye.samples.java.stocks.backtest.StartTradeDownload" ;;
+        start-trade-download-crypto-rest)           echo "com.datafye.samples.rest.crypto.backtest.StartTradeDownload" ;;
+        start-trade-download-crypto-java)           echo "com.datafye.samples.java.crypto.backtest.StartTradeDownload" ;;
+        is-trade-download-running-rest)             echo "com.datafye.samples.rest.stocks.backtest.IsTradeDownloadRunning" ;;
+        is-trade-download-running-java)             echo "com.datafye.samples.java.stocks.backtest.IsTradeDownloadRunning" ;;
+        is-trade-download-running-crypto-rest)      echo "com.datafye.samples.rest.crypto.backtest.IsTradeDownloadRunning" ;;
+        is-trade-download-running-crypto-java)      echo "com.datafye.samples.java.crypto.backtest.IsTradeDownloadRunning" ;;
+        cancel-trade-download-rest)                 echo "com.datafye.samples.rest.stocks.backtest.CancelTradeDownload" ;;
+        cancel-trade-download-java)                 echo "com.datafye.samples.java.stocks.backtest.CancelTradeDownload" ;;
+        cancel-trade-download-crypto-rest)          echo "com.datafye.samples.rest.crypto.backtest.CancelTradeDownload" ;;
+        cancel-trade-download-crypto-java)          echo "com.datafye.samples.java.crypto.backtest.CancelTradeDownload" ;;
+        start-quote-download-rest)                  echo "com.datafye.samples.rest.stocks.backtest.StartQuoteDownload" ;;
+        start-quote-download-java)                  echo "com.datafye.samples.java.stocks.backtest.StartQuoteDownload" ;;
+        start-quote-download-crypto-rest)           echo "com.datafye.samples.rest.crypto.backtest.StartQuoteDownload" ;;
+        start-quote-download-crypto-java)           echo "com.datafye.samples.java.crypto.backtest.StartQuoteDownload" ;;
+        is-quote-download-running-rest)             echo "com.datafye.samples.rest.stocks.backtest.IsQuoteDownloadRunning" ;;
+        is-quote-download-running-java)             echo "com.datafye.samples.java.stocks.backtest.IsQuoteDownloadRunning" ;;
+        is-quote-download-running-crypto-rest)      echo "com.datafye.samples.rest.crypto.backtest.IsQuoteDownloadRunning" ;;
+        is-quote-download-running-crypto-java)      echo "com.datafye.samples.java.crypto.backtest.IsQuoteDownloadRunning" ;;
+        cancel-quote-download-rest)                 echo "com.datafye.samples.rest.stocks.backtest.CancelQuoteDownload" ;;
+        cancel-quote-download-java)                 echo "com.datafye.samples.java.stocks.backtest.CancelQuoteDownload" ;;
+        cancel-quote-download-crypto-rest)          echo "com.datafye.samples.rest.crypto.backtest.CancelQuoteDownload" ;;
+        cancel-quote-download-crypto-java)          echo "com.datafye.samples.java.crypto.backtest.CancelQuoteDownload" ;;
+        start-ohlc-download-rest)                   echo "com.datafye.samples.rest.stocks.backtest.StartOHLCDownload" ;;
+        start-ohlc-download-java)                   echo "com.datafye.samples.java.stocks.backtest.StartOHLCDownload" ;;
+        start-ohlc-download-crypto-rest)            echo "com.datafye.samples.rest.crypto.backtest.StartOHLCDownload" ;;
+        start-ohlc-download-crypto-java)            echo "com.datafye.samples.java.crypto.backtest.StartOHLCDownload" ;;
+        is-ohlc-download-running-rest)              echo "com.datafye.samples.rest.stocks.backtest.IsOHLCDownloadRunning" ;;
+        is-ohlc-download-running-java)              echo "com.datafye.samples.java.stocks.backtest.IsOHLCDownloadRunning" ;;
+        is-ohlc-download-running-crypto-rest)       echo "com.datafye.samples.rest.crypto.backtest.IsOHLCDownloadRunning" ;;
+        is-ohlc-download-running-crypto-java)       echo "com.datafye.samples.java.crypto.backtest.IsOHLCDownloadRunning" ;;
+        cancel-ohlc-download-rest)                  echo "com.datafye.samples.rest.stocks.backtest.CancelOHLCDownload" ;;
+        cancel-ohlc-download-java)                  echo "com.datafye.samples.java.stocks.backtest.CancelOHLCDownload" ;;
+        cancel-ohlc-download-crypto-rest)           echo "com.datafye.samples.rest.crypto.backtest.CancelOHLCDownload" ;;
+        cancel-ohlc-download-crypto-java)           echo "com.datafye.samples.java.crypto.backtest.CancelOHLCDownload" ;;
+        start-tick-replay-rest)                     echo "com.datafye.samples.rest.stocks.backtest.StartTickReplay" ;;
+        start-tick-replay-java)                     echo "com.datafye.samples.java.stocks.backtest.StartTickReplay" ;;
+        start-tick-replay-crypto-rest)              echo "com.datafye.samples.rest.crypto.backtest.StartTickReplay" ;;
+        start-tick-replay-crypto-java)              echo "com.datafye.samples.java.crypto.backtest.StartTickReplay" ;;
+        is-tick-replay-running-rest)                echo "com.datafye.samples.rest.stocks.backtest.IsTickReplayRunning" ;;
+        is-tick-replay-running-java)                echo "com.datafye.samples.java.stocks.backtest.IsTickReplayRunning" ;;
+        is-tick-replay-running-crypto-rest)         echo "com.datafye.samples.rest.crypto.backtest.IsTickReplayRunning" ;;
+        is-tick-replay-running-crypto-java)         echo "com.datafye.samples.java.crypto.backtest.IsTickReplayRunning" ;;
+        stop-tick-replay-rest)                      echo "com.datafye.samples.rest.stocks.backtest.StopTickReplay" ;;
+        stop-tick-replay-java)                      echo "com.datafye.samples.java.stocks.backtest.StopTickReplay" ;;
+        stop-tick-replay-crypto-rest)               echo "com.datafye.samples.rest.crypto.backtest.StopTickReplay" ;;
+        stop-tick-replay-crypto-java)               echo "com.datafye.samples.java.crypto.backtest.StopTickReplay" ;;
         subscribe-live-trades-ws)                   echo "com.datafye.samples.ws.SubscribeLiveTrades" ;;
         subscribe-live-top-of-book-ws)              echo "com.datafye.samples.ws.SubscribeLiveTopOfBook" ;;
         subscribe-live-ohlc-ws)                     echo "com.datafye.samples.ws.SubscribeLiveOHLC" ;;
@@ -85,31 +133,50 @@ usage() {
     echo "  Reference:"
     echo "    get-securities-rest                    Fetch securities reference data"
     echo "    get-securities-java                    Fetch securities reference data"
+    echo "    get-securities-crypto-rest             Fetch securities reference data (crypto)"
+    echo "    get-securities-crypto-java             Fetch securities reference data (crypto)"
     echo ""
     echo "  Live - Ticks:"
     echo "    get-live-top-of-book-rest              Fetch live top-of-book quotes"
     echo "    get-live-top-of-book-java              Fetch live top-of-book quotes"
+    echo "    get-live-top-of-book-crypto-rest       Fetch live top-of-book quotes (crypto)"
+    echo "    get-live-top-of-book-crypto-java       Fetch live top-of-book quotes (crypto)"
     echo "    get-live-last-trade-rest               Fetch last trade for symbols"
     echo "    get-live-last-trade-java               Fetch last trade for symbols"
+    echo "    get-live-last-trade-crypto-rest        Fetch last trade for symbols (crypto)"
+    echo "    get-live-last-trade-crypto-java        Fetch last trade for symbols (crypto)"
     echo "    subscribe-live-top-of-book-java        Subscribe to live top-of-book quotes"
     echo "    subscribe-live-trades-java             Subscribe to live trades"
     echo ""
     echo "  Live - Aggregates:"
     echo "    get-live-ohlc-rest                     Fetch current trading day OHLC bars"
     echo "    get-live-ohlc-java                     Fetch current trading day OHLC bars"
+    echo "    get-live-ohlc-crypto-rest              Fetch current trading day OHLC bars (crypto)"
+    echo "    get-live-ohlc-crypto-java              Fetch current trading day OHLC bars (crypto)"
     echo "    get-live-sma-rest                      Fetch live SMA values"
     echo "    get-live-sma-java                      Fetch live SMA values"
+    echo "    get-live-sma-crypto-rest               Fetch live SMA values (crypto)"
+    echo "    get-live-sma-crypto-java               Fetch live SMA values (crypto)"
     echo "    get-live-ema-rest                      Fetch live EMA values"
     echo "    get-live-ema-java                      Fetch live EMA values"
+    echo "    get-live-ema-crypto-rest               Fetch live EMA values (crypto)"
+    echo "    get-live-ema-crypto-java               Fetch live EMA values (crypto)"
     echo ""
     echo "  History:"
     echo "    get-historical-ohlc-rest               Fetch historical OHLC bars"
     echo "    get-historical-ohlc-java               Fetch historical OHLC bars"
+    echo "    get-historical-ohlc-crypto-rest        Fetch historical OHLC bars (crypto)"
+    echo "    get-historical-ohlc-crypto-java        Fetch historical OHLC bars (crypto)"
     echo "    get-historical-top-gainers-rest         Fetch historical top gainers"
     echo "    get-historical-top-gainers-java         Fetch historical top gainers"
+    echo "    get-historical-top-gainers-crypto-rest  Fetch historical top gainers (crypto)"
+    echo "    get-historical-top-gainers-crypto-java  Fetch historical top gainers (crypto)"
     echo "    stream-historical-ohlc-java            Stream historical OHLC bars"
+    echo "    stream-historical-ohlc-crypto-java     Stream historical OHLC bars (crypto)"
     echo "    stream-historical-ohlc-concurrently-java"
     echo "                                           Stream historical OHLC bars concurrently"
+    echo "    stream-historical-ohlc-concurrently-crypto-java"
+    echo "                                           Stream historical OHLC bars concurrently (crypto)"
     echo ""
     echo "  WebSocket Streaming:"
     echo "    subscribe-live-trades-ws               Stream live trades over a WebSocket"
@@ -129,9 +196,29 @@ usage() {
     echo "    start-quote-download-rest               Start quote history download"
     echo "    is-quote-download-running-rest          Check if quote download is running"
     echo "    cancel-quote-download-rest              Cancel quote history download"
+    echo "    start-ohlc-download-rest                Start OHLC history download"
+    echo "    is-ohlc-download-running-rest           Check if OHLC download is running"
+    echo "    cancel-ohlc-download-rest               Cancel OHLC history download"
     echo "    start-tick-replay-rest                  Start tick replay"
     echo "    is-tick-replay-running-rest             Check if tick replay is running"
     echo "    stop-tick-replay-rest                   Stop tick replay"
+    echo ""
+    echo "  Backtesting (REST, Crypto):"
+    echo "    start-tick-download-crypto-rest         Start tick history download (crypto)"
+    echo "    is-tick-download-running-crypto-rest    Check if tick download is running (crypto)"
+    echo "    cancel-tick-download-crypto-rest        Cancel tick history download (crypto)"
+    echo "    start-trade-download-crypto-rest        Start trade history download (crypto)"
+    echo "    is-trade-download-running-crypto-rest   Check if trade download is running (crypto)"
+    echo "    cancel-trade-download-crypto-rest       Cancel trade history download (crypto)"
+    echo "    start-quote-download-crypto-rest        Start quote history download (crypto)"
+    echo "    is-quote-download-running-crypto-rest   Check if quote download is running (crypto)"
+    echo "    cancel-quote-download-crypto-rest       Cancel quote history download (crypto)"
+    echo "    start-ohlc-download-crypto-rest         Start OHLC history download (crypto)"
+    echo "    is-ohlc-download-running-crypto-rest    Check if OHLC download is running (crypto)"
+    echo "    cancel-ohlc-download-crypto-rest        Cancel OHLC history download (crypto)"
+    echo "    start-tick-replay-crypto-rest           Start tick replay (crypto)"
+    echo "    is-tick-replay-running-crypto-rest      Check if tick replay is running (crypto)"
+    echo "    stop-tick-replay-crypto-rest            Stop tick replay (crypto)"
     echo ""
     echo "  Backtesting (Java Client):"
     echo "    start-tick-download-java                Start tick history download"
@@ -143,15 +230,29 @@ usage() {
     echo "    start-quote-download-java               Start quote history download"
     echo "    is-quote-download-running-java          Check if quote download is running"
     echo "    cancel-quote-download-java              Cancel quote history download"
-    echo "    start-ohlc-download-rest                Start OHLC history download"
     echo "    start-ohlc-download-java                Start OHLC history download"
-    echo "    is-ohlc-download-running-rest           Check if OHLC download is running"
     echo "    is-ohlc-download-running-java           Check if OHLC download is running"
-    echo "    cancel-ohlc-download-rest               Cancel OHLC history download"
     echo "    cancel-ohlc-download-java               Cancel OHLC history download"
     echo "    start-tick-replay-java                  Start tick replay"
     echo "    is-tick-replay-running-java             Check if tick replay is running"
     echo "    stop-tick-replay-java                   Stop tick replay"
+    echo ""
+    echo "  Backtesting (Java Client, Crypto):"
+    echo "    start-tick-download-crypto-java         Start tick history download (crypto)"
+    echo "    is-tick-download-running-crypto-java    Check if tick download is running (crypto)"
+    echo "    cancel-tick-download-crypto-java        Cancel tick history download (crypto)"
+    echo "    start-trade-download-crypto-java        Start trade history download (crypto)"
+    echo "    is-trade-download-running-crypto-java   Check if trade download is running (crypto)"
+    echo "    cancel-trade-download-crypto-java       Cancel trade history download (crypto)"
+    echo "    start-quote-download-crypto-java        Start quote history download (crypto)"
+    echo "    is-quote-download-running-crypto-java   Check if quote download is running (crypto)"
+    echo "    cancel-quote-download-crypto-java       Cancel quote history download (crypto)"
+    echo "    start-ohlc-download-crypto-java         Start OHLC history download (crypto)"
+    echo "    is-ohlc-download-running-crypto-java    Check if OHLC download is running (crypto)"
+    echo "    cancel-ohlc-download-crypto-java        Cancel OHLC history download (crypto)"
+    echo "    start-tick-replay-crypto-java           Start tick replay (crypto)"
+    echo "    is-tick-replay-running-crypto-java      Check if tick replay is running (crypto)"
+    echo "    stop-tick-replay-crypto-java            Stop tick replay (crypto)"
     echo ""
     echo "Example:"
     echo "  $(basename "$0") get-historical-ohlc-rest -s AAPL -f 2024-01-15T09:00:00 -t 2024-01-15T18:00:00"
@@ -163,54 +264,102 @@ if [ $# -eq 0 ] || [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
 fi
 
 if [ "$1" = "--list" ]; then
+    echo "cancel-ohlc-download-crypto-java"
+    echo "cancel-ohlc-download-crypto-rest"
     echo "cancel-ohlc-download-java"
     echo "cancel-ohlc-download-rest"
+    echo "cancel-quote-download-crypto-java"
+    echo "cancel-quote-download-crypto-rest"
     echo "cancel-quote-download-java"
     echo "cancel-quote-download-rest"
+    echo "cancel-tick-download-crypto-java"
+    echo "cancel-tick-download-crypto-rest"
     echo "cancel-tick-download-java"
     echo "cancel-tick-download-rest"
+    echo "cancel-trade-download-crypto-java"
+    echo "cancel-trade-download-crypto-rest"
     echo "cancel-trade-download-java"
     echo "cancel-trade-download-rest"
+    echo "get-historical-ohlc-crypto-java"
+    echo "get-historical-ohlc-crypto-rest"
     echo "get-historical-ohlc-java"
     echo "get-historical-ohlc-rest"
+    echo "get-historical-top-gainers-crypto-java"
+    echo "get-historical-top-gainers-crypto-rest"
     echo "get-historical-top-gainers-java"
     echo "get-historical-top-gainers-rest"
+    echo "get-live-ema-crypto-java"
+    echo "get-live-ema-crypto-rest"
     echo "get-live-ema-java"
     echo "get-live-ema-rest"
+    echo "get-live-last-trade-crypto-java"
+    echo "get-live-last-trade-crypto-rest"
     echo "get-live-last-trade-java"
     echo "get-live-last-trade-rest"
+    echo "get-live-ohlc-crypto-java"
+    echo "get-live-ohlc-crypto-rest"
     echo "get-live-ohlc-java"
     echo "get-live-ohlc-rest"
+    echo "get-live-sma-crypto-java"
+    echo "get-live-sma-crypto-rest"
     echo "get-live-sma-java"
     echo "get-live-sma-rest"
+    echo "get-live-top-of-book-crypto-java"
+    echo "get-live-top-of-book-crypto-rest"
     echo "get-live-top-of-book-java"
     echo "get-live-top-of-book-rest"
+    echo "get-securities-crypto-java"
+    echo "get-securities-crypto-rest"
     echo "get-securities-java"
     echo "get-securities-rest"
+    echo "is-ohlc-download-running-crypto-java"
+    echo "is-ohlc-download-running-crypto-rest"
     echo "is-ohlc-download-running-java"
     echo "is-ohlc-download-running-rest"
+    echo "is-quote-download-running-crypto-java"
+    echo "is-quote-download-running-crypto-rest"
     echo "is-quote-download-running-java"
     echo "is-quote-download-running-rest"
+    echo "is-tick-download-running-crypto-java"
+    echo "is-tick-download-running-crypto-rest"
     echo "is-tick-download-running-java"
     echo "is-tick-download-running-rest"
+    echo "is-tick-replay-running-crypto-java"
+    echo "is-tick-replay-running-crypto-rest"
     echo "is-tick-replay-running-java"
     echo "is-tick-replay-running-rest"
+    echo "is-trade-download-running-crypto-java"
+    echo "is-trade-download-running-crypto-rest"
     echo "is-trade-download-running-java"
     echo "is-trade-download-running-rest"
     echo "ping-rest"
+    echo "start-ohlc-download-crypto-java"
+    echo "start-ohlc-download-crypto-rest"
     echo "start-ohlc-download-java"
     echo "start-ohlc-download-rest"
+    echo "start-quote-download-crypto-java"
+    echo "start-quote-download-crypto-rest"
     echo "start-quote-download-java"
     echo "start-quote-download-rest"
+    echo "start-tick-download-crypto-java"
+    echo "start-tick-download-crypto-rest"
     echo "start-tick-download-java"
     echo "start-tick-download-rest"
+    echo "start-tick-replay-crypto-java"
+    echo "start-tick-replay-crypto-rest"
     echo "start-tick-replay-java"
     echo "start-tick-replay-rest"
+    echo "start-trade-download-crypto-java"
+    echo "start-trade-download-crypto-rest"
     echo "start-trade-download-java"
     echo "start-trade-download-rest"
+    echo "stop-tick-replay-crypto-java"
+    echo "stop-tick-replay-crypto-rest"
     echo "stop-tick-replay-java"
     echo "stop-tick-replay-rest"
+    echo "stream-historical-ohlc-concurrently-crypto-java"
     echo "stream-historical-ohlc-concurrently-java"
+    echo "stream-historical-ohlc-crypto-java"
     echo "stream-historical-ohlc-java"
     echo "stream-historical-ohlc-ws"
     echo "subscribe-live-ema-ws"

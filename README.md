@@ -115,11 +115,13 @@ These samples demonstrate three access modes:
 
 | API | Package | Source |
 |-----|---------|--------|
-| REST | `com.datafye.samples.rest.*` | [src/.../rest](src/main/java/com/datafye/samples/rest) |
+| REST | `com.datafye.samples.rest.{stocks,crypto}.*` | [src/.../rest](src/main/java/com/datafye/samples/rest) |
 | WebSocket | `com.datafye.samples.ws` | [src/.../ws](src/main/java/com/datafye/samples/ws) |
-| Java Client | `com.datafye.samples.java.*` | [src/.../java](src/main/java/com/datafye/samples/java) |
+| Java Client | `com.datafye.samples.java.{stocks,crypto}.*` | [src/.../java](src/main/java/com/datafye/samples/java) |
 
-The tables below cover stocks. Equivalent crypto samples are planned.
+**Datasets.** REST and Java samples are organized by asset class. The **stocks** samples cover the `SIP` and `Synthetic` datasets — pass `-D SIP` or `-D Synthetic` (default `Synthetic`). The **crypto** samples are launched with the `-crypto` sample keys (e.g. `get-live-sma-crypto-rest`, `get-live-ohlc-crypto-java`). The **WebSocket** samples are a single dataset-aware set covering all three datasets via `-d SIP|Synthetic|Crypto`. The tables below name the stocks sample for each operation; an equivalent crypto sample exists under `…rest.crypto.*` / `…java.crypto.*` and is registered with a `-crypto` key.
+
+> **Note:** Java-client *subscription* to live **OHLC/SMA/EMA** (the rows marked _WIP_ below) is not yet available — live aggregate streaming is delivered over the **WebSocket** API (Available for all datasets) and over the Java client for **trades/quotes**. Java-client aggregate subscription is in progress.
 
 #### Health
 
