@@ -33,10 +33,14 @@ public class CryptoFeedClient {
     private final com.datafye.client.crypto.FeedClient cryptoClient;
 
     public CryptoFeedClient(String name, String id) {
-        System.setProperty("datafye-crypto-feed.client." + name + ".connectionDescriptor",
-            "solace://solace.rumi.local:55554&client_name=" + name + "-feed");
-        System.setProperty("datafye-crypto-feed.stream." + name + ".connectionDescriptor",
-            "solace://solace.rumi.local:55554&client_name=" + name + "-feed-stream");
+        // request-reply over the messaging backbone (host port 55554 -> container 55555); overridable via -D
+        if (System.getProperty("datafye-crypto-feed.client." + name + ".connectionDescriptor") == null)
+            System.setProperty("datafye-crypto-feed.client." + name + ".connectionDescriptor",
+                "solace://solace.rumi.local:55554&client_name=" + name + "-feed");
+        // live tick/quote stream over the crypto feed-stream ether bus; overridable via -D
+        if (System.getProperty("datafye-crypto-feed.stream." + name + ".connectionDescriptor") == null)
+            System.setProperty("datafye-crypto-feed.stream." + name + ".connectionDescriptor",
+                "ether://.&ifaddr=crypto.feed.rumi.local&port=44447&client_name=" + name + "-feed-stream");
 
         cryptoClient = new com.datafye.client.crypto.FeedClient(name, id);
     }

@@ -131,7 +131,7 @@ public class SubscribeLiveTrades {
     final public void onLiveTradeDataMessage(final LiveStocksTradeDataMessage message) {
         // print the message
         StringBuilder sb = new StringBuilder("<-- LiveStocksTradeDataMessage {");
-        sb.append(message.getMarket()).append(",");
+        sb.append(message.getDataset()).append(",");
         sb.append(message.getSymbol()).append(",");
         sb.append(message.getExchangeTimestamp()).append(",");
         sb.append(message.getExchangeID()).append(",");

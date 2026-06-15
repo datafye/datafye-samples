@@ -33,6 +33,12 @@ if "%SAMPLE_NAME%"=="get-live-last-trade-crypto-rest" set CLASS=com.datafye.samp
 if "%SAMPLE_NAME%"=="get-live-last-trade-crypto-java" set CLASS=com.datafye.samples.java.crypto.live.ticks.GetLiveLastTrade
 if "%SAMPLE_NAME%"=="subscribe-live-top-of-book-java" set CLASS=com.datafye.samples.java.stocks.live.ticks.SubscribeLiveTopOfBook
 if "%SAMPLE_NAME%"=="subscribe-live-trades-java" set CLASS=com.datafye.samples.java.stocks.live.ticks.SubscribeLiveTrades
+if "%SAMPLE_NAME%"=="subscribe-live-ohlc-java" set CLASS=com.datafye.samples.java.stocks.live.aggregates.SubscribeLiveOHLC
+if "%SAMPLE_NAME%"=="subscribe-live-ohlc-crypto-java" set CLASS=com.datafye.samples.java.crypto.live.aggregates.SubscribeLiveOHLC
+if "%SAMPLE_NAME%"=="subscribe-live-sma-java" set CLASS=com.datafye.samples.java.stocks.live.aggregates.SubscribeLiveSMA
+if "%SAMPLE_NAME%"=="subscribe-live-sma-crypto-java" set CLASS=com.datafye.samples.java.crypto.live.aggregates.SubscribeLiveSMA
+if "%SAMPLE_NAME%"=="subscribe-live-ema-java" set CLASS=com.datafye.samples.java.stocks.live.aggregates.SubscribeLiveEMA
+if "%SAMPLE_NAME%"=="subscribe-live-ema-crypto-java" set CLASS=com.datafye.samples.java.crypto.live.aggregates.SubscribeLiveEMA
 if "%SAMPLE_NAME%"=="get-live-ohlc-rest" set CLASS=com.datafye.samples.rest.stocks.live.aggregates.GetLiveOHLC
 if "%SAMPLE_NAME%"=="get-live-ohlc-java" set CLASS=com.datafye.samples.java.stocks.live.aggregates.GetLiveOHLC
 if "%SAMPLE_NAME%"=="get-live-ohlc-crypto-rest" set CLASS=com.datafye.samples.rest.crypto.live.aggregates.GetLiveOHLC
@@ -171,6 +177,12 @@ echo     get-live-ema-rest                      Fetch live EMA values
 echo     get-live-ema-java                      Fetch live EMA values
 echo     get-live-ema-crypto-rest               Fetch live EMA values (crypto)
 echo     get-live-ema-crypto-java               Fetch live EMA values (crypto)
+echo     subscribe-live-ohlc-java               Subscribe to live OHLC bars
+echo     subscribe-live-ohlc-crypto-java        Subscribe to live OHLC bars (crypto)
+echo     subscribe-live-sma-java                Subscribe to live SMA values
+echo     subscribe-live-sma-crypto-java         Subscribe to live SMA values (crypto)
+echo     subscribe-live-ema-java                Subscribe to live EMA values
+echo     subscribe-live-ema-crypto-java         Subscribe to live EMA values (crypto)
 echo.
 echo   History:
 echo     get-historical-ohlc-rest               Fetch historical OHLC bars
@@ -361,8 +373,14 @@ echo stream-historical-ohlc-concurrently-java
 echo stream-historical-ohlc-crypto-java
 echo stream-historical-ohlc-java
 echo stream-historical-ohlc-ws
+echo subscribe-live-ema-crypto-java
+echo subscribe-live-ema-java
 echo subscribe-live-ema-ws
+echo subscribe-live-ohlc-crypto-java
+echo subscribe-live-ohlc-java
 echo subscribe-live-ohlc-ws
+echo subscribe-live-sma-crypto-java
+echo subscribe-live-sma-java
 echo subscribe-live-sma-ws
 echo subscribe-live-top-of-book-java
 echo subscribe-live-top-of-book-ws

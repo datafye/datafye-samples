@@ -131,7 +131,7 @@ public class SubscribeLiveTopOfBook {
     final public void onLiveTopOfBookQuoteDataMessage(final LiveTopOfBookStocksQuoteDataMessage message) {
         // print the message
         StringBuilder sb = new StringBuilder("<-- LiveTopOfBookStocksQuoteDataMessage {");
-        sb.append(message.getMarket()).append(",");
+        sb.append(message.getDataset()).append(",");
         sb.append(message.getSymbol()).append(",");
         sb.append(message.getExchangeTimestamp()).append(",");
         sb.append(message.getBidExchangeID()).append(",");

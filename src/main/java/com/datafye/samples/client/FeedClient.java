@@ -35,11 +35,18 @@ public class FeedClient {
     private final com.datafye.client.sip.FeedClient sipClient;
 
     public FeedClient(String name, String id, String dataset) {
-        String prefix = "SIP".equalsIgnoreCase(dataset) ? "datafye-sip" : "datafye-synthetic";
-        System.setProperty(prefix + "-feed.client." + name + ".connectionDescriptor",
-            "solace://solace.rumi.local:55554&client_name=" + name + "-feed");
-        System.setProperty(prefix + "-feed.stream." + name + ".connectionDescriptor",
-            "solace://solace.rumi.local:55554&client_name=" + name + "-feed-stream");
+        final boolean sip = "SIP".equalsIgnoreCase(dataset);
+        final String prefix = sip ? "datafye-sip" : "datafye-synthetic";
+        final String etherHost = sip ? "sip" : "synthetic";
+        final int feedStreamPort = sip ? 44445 : 44455;
+        // request-reply over the messaging backbone (host port 55554 -> container 55555); overridable via -D
+        if (System.getProperty(prefix + "-feed.client." + name + ".connectionDescriptor") == null)
+            System.setProperty(prefix + "-feed.client." + name + ".connectionDescriptor",
+                "solace://solace.rumi.local:55554&client_name=" + name + "-feed");
+        // live tick/quote stream over the feed-stream ether bus; overridable via -D
+        if (System.getProperty(prefix + "-feed.stream." + name + ".connectionDescriptor") == null)
+            System.setProperty(prefix + "-feed.stream." + name + ".connectionDescriptor",
+                "ether://.&ifaddr=" + etherHost + ".feed.rumi.local&port=" + feedStreamPort + "&client_name=" + name + "-feed-stream");
 
         if ("SIP".equalsIgnoreCase(dataset)) {
             sipClient = new com.datafye.client.sip.FeedClient(name, id);

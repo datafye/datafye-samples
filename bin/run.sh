@@ -4,7 +4,7 @@ set -eo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 BASE_DIR="$(dirname "$SCRIPT_DIR")"
 
-JAVA_OPTS="--add-opens=java.base/jdk.internal.ref=ALL-UNNAMED \
+JAVA_OPTS="${JAVA_OPTS:-} --add-opens=java.base/jdk.internal.ref=ALL-UNNAMED \
 --add-opens=java.base/sun.nio.ch=ALL-UNNAMED \
 --add-opens=java.base/java.lang=ALL-UNNAMED \
 --add-opens=java.base/java.nio=ALL-UNNAMED \
@@ -28,6 +28,12 @@ resolve_class() {
         get-live-last-trade-crypto-java)            echo "com.datafye.samples.java.crypto.live.ticks.GetLiveLastTrade" ;;
         subscribe-live-top-of-book-java)            echo "com.datafye.samples.java.stocks.live.ticks.SubscribeLiveTopOfBook" ;;
         subscribe-live-trades-java)                 echo "com.datafye.samples.java.stocks.live.ticks.SubscribeLiveTrades" ;;
+        subscribe-live-ohlc-java)                   echo "com.datafye.samples.java.stocks.live.aggregates.SubscribeLiveOHLC" ;;
+        subscribe-live-ohlc-crypto-java)            echo "com.datafye.samples.java.crypto.live.aggregates.SubscribeLiveOHLC" ;;
+        subscribe-live-sma-java)                    echo "com.datafye.samples.java.stocks.live.aggregates.SubscribeLiveSMA" ;;
+        subscribe-live-sma-crypto-java)             echo "com.datafye.samples.java.crypto.live.aggregates.SubscribeLiveSMA" ;;
+        subscribe-live-ema-java)                    echo "com.datafye.samples.java.stocks.live.aggregates.SubscribeLiveEMA" ;;
+        subscribe-live-ema-crypto-java)             echo "com.datafye.samples.java.crypto.live.aggregates.SubscribeLiveEMA" ;;
         get-live-ohlc-rest)                         echo "com.datafye.samples.rest.stocks.live.aggregates.GetLiveOHLC" ;;
         get-live-ohlc-java)                         echo "com.datafye.samples.java.stocks.live.aggregates.GetLiveOHLC" ;;
         get-live-ohlc-crypto-rest)                  echo "com.datafye.samples.rest.crypto.live.aggregates.GetLiveOHLC" ;;
@@ -161,6 +167,12 @@ usage() {
     echo "    get-live-ema-java                      Fetch live EMA values"
     echo "    get-live-ema-crypto-rest               Fetch live EMA values (crypto)"
     echo "    get-live-ema-crypto-java               Fetch live EMA values (crypto)"
+    echo "    subscribe-live-ohlc-java               Subscribe to live OHLC bars"
+    echo "    subscribe-live-ohlc-crypto-java        Subscribe to live OHLC bars (crypto)"
+    echo "    subscribe-live-sma-java                Subscribe to live SMA values"
+    echo "    subscribe-live-sma-crypto-java         Subscribe to live SMA values (crypto)"
+    echo "    subscribe-live-ema-java                Subscribe to live EMA values"
+    echo "    subscribe-live-ema-crypto-java         Subscribe to live EMA values (crypto)"
     echo ""
     echo "  History:"
     echo "    get-historical-ohlc-rest               Fetch historical OHLC bars"
@@ -362,8 +374,14 @@ if [ "$1" = "--list" ]; then
     echo "stream-historical-ohlc-crypto-java"
     echo "stream-historical-ohlc-java"
     echo "stream-historical-ohlc-ws"
+    echo "subscribe-live-ema-crypto-java"
+    echo "subscribe-live-ema-java"
     echo "subscribe-live-ema-ws"
+    echo "subscribe-live-ohlc-crypto-java"
+    echo "subscribe-live-ohlc-java"
     echo "subscribe-live-ohlc-ws"
+    echo "subscribe-live-sma-crypto-java"
+    echo "subscribe-live-sma-java"
     echo "subscribe-live-sma-ws"
     echo "subscribe-live-top-of-book-java"
     echo "subscribe-live-top-of-book-ws"
