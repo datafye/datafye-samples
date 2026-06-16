@@ -2,22 +2,26 @@
 # =============================================================================
 # sanity-test.sh
 #
-# End-to-end sanity test for a Datafye Data Cloud Only Foundry.
+# Shipping CERTIFICATION for the Datafye Data Cloud samples.
 #
-# Provisions a local foundry, exercises the Data Cloud API samples across
-# health, reference data, backtest tick download, historical aggregate fetch
-# and streaming, live data (fetch, Java subscribe, and WebSocket streaming
-# driven by a tick replay), then deprovisions the environment. With --crypto
-# and a crypto-entitled POLYGON_API_KEY, it also provisions a Crypto dataset
-# and runs the equivalent crypto samples.
+# Exercises EVERY sample — every combination of asset class x dataset x schema x
+# access mode (fetch / subscribe / stream / backtest download + replay, incl. the
+# is-running/cancel/stop lifecycle ops) x protocol (REST / WebSocket / Java). It
+# provisions a local foundry on Synthetic, runs the full sample suite, then cycles
+# to the next dataset with `datafye foundry local apply` (Synthetic -> SIP ->
+# Crypto), and finally asserts that every sample id registered in bin/run.sh was
+# exercised. SIP + Crypto require a crypto-entitled POLYGON_API_KEY; without it the
+# run certifies Synthetic only and reports SIP/Crypto as NOT CERTIFIED.
 #
 # Run from the root of the datafye-samples repo:
 #
-#   sudo bash sanity-test.sh                                  # Synthetic data
-#   sudo -E bash sanity-test.sh                               # SIP (if POLYGON_API_KEY is exported)
-#   sudo POLYGON_API_KEY="key" bash sanity-test.sh            # SIP (inline)
-#   sudo -E bash sanity-test.sh --crypto                      # SIP + Crypto (requires POLYGON_API_KEY)
+#   sudo bash sanity-test.sh                                  # Synthetic only (no key)
+#   sudo -E bash sanity-test.sh                               # full cert: Synthetic -> SIP -> Crypto (POLYGON_API_KEY)
+#   sudo POLYGON_API_KEY="key" bash sanity-test.sh            # full cert (inline key)
 #   sudo bash sanity-test.sh -v                               # Verbose (show sample output)
+#
+# Requires the rumi CLI (for single-service recycling + config) in addition to the
+# datafye CLI; without it the Java live-subscribe samples are skipped.
 #
 # Supported platforms:
 #   - Amazon Linux 2 or 2023
@@ -51,6 +55,7 @@ REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
 WORK_DIR="${WORK_DIR:-/tmp/datafye-sanity-test}"
 LOG_DIR="${WORK_DIR}/logs"
 SYMBOL="AAPL"
+STOCK_SYMBOL="$SYMBOL"
 CRYPTO_SYMBOL="BTCUSD"
 
 # Live subscribe / WebSocket samples stream for a bounded window. STREAM_SECS is
@@ -62,31 +67,32 @@ BOUNDED_TIMEOUT=$((STREAM_SECS + 15))
 # seconds suffices); we stop the sample as soon as the threshold is reached.
 MIN_STREAM_RECORDS="${MIN_STREAM_RECORDS:-1}"
 
+# The certification always starts on Synthetic (no credentials) and cycles to the
+# other datasets via `datafye foundry local apply`. SIP + Crypto need a
+# crypto-entitled POLYGON_API_KEY: with one, the full cert runs Synthetic → SIP →
+# Crypto; without one it certifies Synthetic only and reports SIP/Crypto as NOT
+# CERTIFIED. (--crypto is accepted but the key is what gates the full run.)
+DATASET="Synthetic"
+DESCRIPTOR_URL="https://downloads.n5corp.com/datafye/quickstarts/latest/foundry-data-cloud-only-with-synthetic.yaml"
 if [ -n "${POLYGON_API_KEY:-}" ]; then
-    DATASET="SIP"
-    DESCRIPTOR_URL="https://downloads.n5corp.com/datafye/quickstarts/latest/foundry-data-cloud-only-with-sip.yaml"
+    RUN_CRYPTO=true
 else
-    DATASET="Synthetic"
-    DESCRIPTOR_URL="https://downloads.n5corp.com/datafye/quickstarts/latest/foundry-data-cloud-only-with-synthetic.yaml"
+    [ "$RUN_CRYPTO" = true ] && echo "Full certification (SIP + Crypto) needs a crypto-entitled POLYGON_API_KEY; certifying Synthetic only." >&2
+    RUN_CRYPTO=false
 fi
-# lowercase dataset → service-instance name suffix (datafye-synthetic-agg / -sip-agg)
 DS_LOWER=$(printf '%s' "$DATASET" | tr '[:upper:]' '[:lower:]')
 # Versioned Rumi system names (e.g. datafye-api-system-2.0-SNAPSHOT) are resolved from
-# the deployment API after provisioning — the controller registers systems by their
-# full versioned name, which run-admin-script requires.
+# the deployment API after each provision/apply — the controller registers systems by
+# their full versioned name, which run-admin-script requires.
 DS_SYSTEM=""
 API_SYSTEM=""
 API_HOST="api.rest.rumi.local:7776"
-# rumi CLI drives single-service lifecycle (shutdown-single / launch-single) via the
-# Rumi deployment scripts; overridable, defaults to PATH then ~/.local/bin/rumi.
+# rumi CLI drives single-service lifecycle (shutdown-single / launch-single) + config
+# (configure) via the Rumi deployment scripts; defaults to PATH then ~/.local/bin/rumi.
 RUMI_CLI="${RUMI_CLI:-$(command -v rumi 2>/dev/null || echo "${HOME}/.local/bin/rumi")}"
-
-# The crypto phase needs a crypto-entitled Polygon key. Without one we cannot
-# provision a Crypto dataset, so disable the phase rather than fail later.
-if [ "$RUN_CRYPTO" = true ] && [ -z "${POLYGON_API_KEY:-}" ]; then
-    echo "--crypto requires POLYGON_API_KEY (crypto-entitled); skipping the crypto phase." >&2
-    RUN_CRYPTO=false
-fi
+# certification bookkeeping
+CERT_UNCERTIFIED=()
+COVERED_FILE="${WORK_DIR}/covered-ids.txt"
 
 # Test date: ~30 days ago (within the 90-day window the quickstart provisions),
 # rolled back to a weekday. Stocks datasets (SIP, Synthetic) have no weekend
@@ -169,6 +175,7 @@ setup_missing() {
 run_test() {
     local label="$1"; shift
     local sample="$1"; shift
+    printf '%s\n' "$sample" >> "$COVERED_FILE" 2>/dev/null || true
     TOTAL=$((TOTAL + 1))
 
     local index_str
@@ -236,6 +243,7 @@ format_ms() {
 run_stream_test() {
     local label="$1"; shift
     local sample="$1"; shift
+    printf '%s\n' "$sample" >> "$COVERED_FILE" 2>/dev/null || true
     TOTAL=$((TOTAL + 1))
 
     local index_str
@@ -791,59 +799,11 @@ setup_ok "Distribution ready"
 # ===========================================================================
 section "Provision"
 
-if [ "$RUN_CRYPTO" = true ]; then
-    # The installed CLI has no runtime `dataset add`, so to run stocks and crypto
-    # against one foundry we provision a combined descriptor (SIP + a lean Crypto
-    # dataset). ${POLYGON_API_KEY} is left literal for the CLI to substitute, so
-    # the heredoc delimiter is quoted to prevent the shell from expanding it.
-    setup_msg "Writing combined SIP + Crypto descriptor..."
-    cat > "${WORK_DIR}/quickstart.yaml" <<'EOF'
-apiVersion: datafye.io/v1
-metadata:
-  name: foundry-sanity-sip-crypto
-  description: Data Cloud with SIP + Crypto for the sanity test
-mode: backtest
-datasets:
-  - dataset: SIP
-    provider: Polygon
-    symbols:
-      tickers:
-        - AAPL
-        - MSFT
-        - GOOGL
-        - AMZN
-        - TSLA
-        - NVDA
-        - META
-        - NFLX
-        - AMD
-        - INTC
-    history:
-      ticks:
-        - { schema: trades, duration: 90d }
-        - { schema: quotes, duration: 90d }
-      aggregates:
-        - { schema: ohlc-1m, duration: 90d }
-  - dataset: Crypto
-    provider: Polygon
-    symbols:
-      tickers:
-        - BTCUSD
-    history:
-      ticks:
-        - { schema: trades, duration: 90d }
-        - { schema: quotes, duration: 90d }
-      aggregates:
-        - { schema: ohlc-1m, duration: 90d }
-credentials:
-  polygon_api_key: ${POLYGON_API_KEY}
-EOF
-    setup_ok "Combined descriptor written (SIP + Crypto)"
-else
-    setup_msg "Downloading quickstart descriptor..."
-    curl -fsSL -o "${WORK_DIR}/quickstart.yaml" "$DESCRIPTOR_URL" || fail_setup "Descriptor download failed"
-    setup_ok "Descriptor downloaded (${DATASET})"
-fi
+# The certification always provisions Synthetic first, then cycles to SIP/Crypto
+# via `apply` (see the certification section). One dataset is deployed at a time.
+setup_msg "Downloading Synthetic quickstart descriptor..."
+curl -fsSL -o "${WORK_DIR}/quickstart.yaml" "$DESCRIPTOR_URL" || fail_setup "Descriptor download failed"
+setup_ok "Descriptor downloaded (Synthetic)"
 
 setup_msg "Provisioning foundry (this may take a few minutes)..."
 if [ "$VERBOSE" = true ]; then
@@ -901,192 +861,310 @@ else
 fi
 
 # ===========================================================================
-# Tests
+# Certification
 # ===========================================================================
-# Java + WebSocket samples take an explicit dataset; REST samples accept -D too
-# (the dataset is sent as a query parameter). Pass the dataset everywhere so the
-# same flow works for both SIP and Synthetic. Live aggregate subscribe/stream use
-# Second bars so a bar finalises within the bounded streaming window.
+# Exercise EVERY sample (every asset class x dataset x schema x access mode x
+# protocol). Datasets are certified one at a time and cycled with
+# `datafye foundry local apply` (Synthetic -> SIP -> Crypto). SIP and Crypto
+# require a crypto-entitled POLYGON_API_KEY; without it only Synthetic is
+# certified and SIP/Crypto are reported NOT CERTIFIED. run_test/run_stream_test
+# record every invoked sample id; a coverage assertion at the end diffs that
+# against every id registered in bin/run.sh.
+
 LIVE_FREQ="${LIVE_FREQ:-Second}"
+# Live OHLC/SMA/EMA bar finalizes are sparse (~1 / few sec) and SMA/EMA need
+# warmup, so indicator/agg stream windows are generous.
+STREAM_SECS="${STREAM_SECS:-20}"
+INDICATOR_SECS="${INDICATOR_SECS:-50}"
 
-# Resolve the versioned Rumi system names (e.g. datafye-api-system-2.0-SNAPSHOT) for
-# single-service recycling — the controller registers systems by full versioned name,
-# which run-admin-script requires. The deployment API reports the full names.
-if [ "$HAS_RUMI_CLI" = true ]; then
-    DEPLOYED_SYSTEMS=$(curl -fsS "http://${API_HOST}/datafye-api/v1/deployment/systems" 2>/dev/null)
-    API_SYSTEM=$(printf '%s' "$DEPLOYED_SYSTEMS" | grep -oE "datafye-api-system[A-Za-z0-9._-]*" | head -1)
-    DS_SYSTEM=$(printf '%s' "$DEPLOYED_SYSTEMS" | grep -oE "datafye-${DS_LOWER}-system[A-Za-z0-9._-]*" | head -1)
-    if [ -z "$API_SYSTEM" ] || [ -z "$DS_SYSTEM" ]; then
-        setup_warn "Could not resolve versioned system names; live Java-subscribe tests will be skipped"
-        HAS_RUMI_CLI=false
+# --- coverage tracking: which run.sh ids are registered, and which we invoked ---
+ALL_IDS_FILE="${WORK_DIR}/all-run-ids.txt"
+grep -oE '^[[:space:]]+[a-z0-9][a-z0-9-]+\)' "${DIST_DIR}/bin/run.sh" 2>/dev/null \
+    | tr -d ' )' | grep -vE '^\*$' | sort -u > "$ALL_IDS_FILE"
+: > "$COVERED_FILE"   # fresh coverage tally for this run
+
+# Enable live SMA/EMA processing in the agent's controller.conf (once). Each
+# dataset's agg localizes against it on provision/apply, so SMA/EMA compute and
+# stream. Needs the rumi CLI; without it indicator subscribe is skipped.
+enable_indicators() {
+    [ "$HAS_RUMI_CLI" = true ] || { setup_warn "rumi CLI absent — live SMA/EMA processing not enabled"; return 1; }
+    section "Enabling Live SMA/EMA Processing"
+    local k
+    for k in LIVE_SECOND_SMA_PROCESS LIVE_SECOND_EMA_PROCESS LIVE_SECOND_OHLC_PUBLISH; do
+        if "$RUMI_CLI" cloud local configure -s LiveAnalytics -k "$k" -v true >"${LOG_DIR}/configure-$k.log" 2>&1; then
+            setup_ok "Set $k=true"
+        else
+            setup_warn "Could not set $k (see ${LOG_DIR}/configure-$k.log)"
+        fi
+    done
+    return 0
+}
+
+# Resolve the versioned Rumi system names for the currently-deployed dataset.
+resolve_systems() {   # <ds-lower>
+    local ds="$1" sys
+    sys=$(curl -fsS "http://${API_HOST}/datafye-api/v1/deployment/systems" 2>/dev/null)
+    API_SYSTEM=$(printf '%s' "$sys" | grep -oE "datafye-api-system[A-Za-z0-9._-]*" | head -1)
+    DS_SYSTEM=$(printf '%s' "$sys" | grep -oE "datafye-${ds}-system[A-Za-z0-9._-]*" | head -1)
+}
+
+# Re-localize an agg so it picks up the SMA/EMA config (needed only for the first
+# dataset; a later `apply` re-localizes the swapped-in agg from controller.conf).
+recycle_agg_for_indicators() {   # <ds-lower>
+    [ "$HAS_RUMI_CLI" = true ] || return 0
+    [ -n "$DS_SYSTEM" ] || return 0
+    setup_msg "Re-localizing $1 agg to enable SMA/EMA..."
+    shutdown_single "$DS_SYSTEM" "datafye-$1-agg"
+    "$RUMI_CLI" cloud local run-admin-script -s "$DS_SYSTEM" -i upgrade-single -a "serviceInstanceName=datafye-$1-agg" >"${LOG_DIR}/upgrade-$1-agg.log" 2>&1 \
+        && setup_ok "Upgraded $1 agg" || setup_warn "Could not upgrade $1 agg"
+    launch_single "$DS_SYSTEM" "datafye-$1-agg"
+}
+
+# Swap the deployed dataset via apply (downloads the dataset's quickstart descriptor).
+apply_dataset() {   # <Dataset>
+    local ds="$1" url
+    case "$ds" in
+        SIP)    url="https://downloads.n5corp.com/datafye/quickstarts/latest/foundry-data-cloud-only-with-sip.yaml" ;;
+        Crypto) url="https://downloads.n5corp.com/datafye/quickstarts/latest/foundry-data-cloud-only-with-crypto.yaml" ;;
+        *)      setup_warn "no descriptor for $ds"; return 1 ;;
+    esac
+    section "Apply → $ds"
+    curl -fsSL -o "${WORK_DIR}/apply-${ds}.yaml" "$url" || { setup_warn "descriptor download failed ($ds)"; return 1; }
+    if datafye foundry local apply --descriptor "${WORK_DIR}/apply-${ds}.yaml" &>"${LOG_DIR}/apply-${ds}.log"; then
+        setup_ok "Applied $ds"
+        return 0
     fi
-fi
+    setup_warn "Apply $ds failed (see ${LOG_DIR}/apply-${ds}.log)"
+    return 1
+}
 
-section "Health"
-run_test "Ping (REST)" \
-    ping-rest -d "$DATASET"
+# Backtest download lifecycle for one schema: start (no wait) -> is-running ->
+# cancel, on REST and Java, then a start --wait to actually land data. Args differ
+# by asset class: stocks pass -D <DS>, crypto take no dataset flag.
+backtest_download() {   # <schema> <pfx> <sym> <ddash-or-empty...>
+    local schema="$1" pfx="$2" sym="$3"; shift 3; local D=("$@")
+    local proto
+    for proto in rest java; do
+        run_test "Start ${schema} download (${pfx}/${proto})" \
+            "start-${schema}-download-${pfx}-${proto}" -d "$TEST_DATE" -s "$sym" "${D[@]}"
+        run_test "Is ${schema} download running (${pfx}/${proto})" \
+            "is-${schema}-download-running-${pfx}-${proto}" "${D[@]}"
+        run_test "Cancel ${schema} download (${pfx}/${proto})" \
+            "cancel-${schema}-download-${pfx}-${proto}" "${D[@]}"
+    done
+    run_test "Download ${schema} (${pfx}, --wait)" \
+        "start-${schema}-download-${pfx}-rest" -d "$TEST_DATE" -s "$sym" -w "${D[@]}"
+}
 
-section "Reference Data"
-run_test "Get Securities (REST)" \
-    get-securities-stocks-rest -D "$DATASET"
-run_test "Get Securities (Java)" \
-    get-securities-stocks-java -D "$DATASET"
+# Full sample suite for one stocks dataset (Synthetic or SIP). pfx=stocks, -D <DS>.
+run_stocks_phase() {   # <Dataset>
+    local DS="$1" dl pfx=stocks sym="$STOCK_SYMBOL"
+    dl=$(printf '%s' "$DS" | tr '[:upper:]' '[:lower:]')
+    local D=(-D "$DS")
+    resolve_systems "$dl"
 
-section "Backtesting — Download OHLC"
-run_test "Download Minute OHLC (REST, --wait)" \
-    start-ohlc-download-stocks-rest -D "$DATASET" -d "$TEST_DATE" -s "$SYMBOL" -c Minute -w
-run_test "Download Minute OHLC (Java, --wait)" \
-    start-ohlc-download-stocks-java -d "$TEST_DATE" -s "$SYMBOL" -c Minute -w -D "$DATASET"
+    section "[$DS] Health & Reference"
+    run_test "Ping (REST)"            ping-rest -d "$DS"
+    run_test "Get Securities (REST)"  "get-securities-${pfx}-rest" "${D[@]}"
+    run_test "Get Securities (Java)"  "get-securities-${pfx}-java" "${D[@]}"
 
-section "Historical Aggregates — Fetch"
-run_test "Fetch Historical OHLC (REST)" \
-    get-historical-ohlc-stocks-rest -D "$DATASET" -s "$SYMBOL" -c Minute -f "$STREAM_FROM" -t "$STREAM_TO"
-run_test "Fetch Historical OHLC (Java)" \
-    get-historical-ohlc-stocks-java -s "$SYMBOL" -c Minute -f "$STREAM_FROM" -t "$STREAM_TO" -D "$DATASET"
-run_test "Fetch Historical Top Gainers (REST)" \
-    get-historical-top-gainers-stocks-rest -D "$DATASET" -d "$TEST_DATE"
-run_test "Fetch Historical Top Gainers (Java)" \
-    get-historical-top-gainers-stocks-java -d "$TEST_DATE" -D "$DATASET"
+    section "[$DS] Backtest — Downloads"
+    backtest_download tick  "$pfx" "$sym" "${D[@]}"
+    backtest_download trade "$pfx" "$sym" "${D[@]}"
+    backtest_download quote "$pfx" "$sym" "${D[@]}"
+    # OHLC download takes a frequency
+    local proto
+    for proto in rest java; do
+        run_test "Start ohlc download (${pfx}/${proto})"        "start-ohlc-download-${pfx}-${proto}" -d "$TEST_DATE" -s "$sym" -c Minute "${D[@]}"
+        run_test "Is ohlc download running (${pfx}/${proto})"   "is-ohlc-download-running-${pfx}-${proto}" "${D[@]}"
+        run_test "Cancel ohlc download (${pfx}/${proto})"       "cancel-ohlc-download-${pfx}-${proto}" "${D[@]}"
+    done
+    run_test "Download Minute OHLC (${pfx}, --wait)"            "start-ohlc-download-${pfx}-rest" -d "$TEST_DATE" -s "$sym" -c Minute -w "${D[@]}"
 
-section "Historical Aggregates — Stream"
-run_test "Stream Historical OHLC (Java)" \
-    stream-historical-ohlc-stocks-java -s "$SYMBOL" -f "$STREAM_FROM" -t "$STREAM_TO" -D "$DATASET"
-run_stream_test "Stream Historical OHLC (WS)" \
-    stream-historical-ohlc-ws -d "$DATASET" -s "$SYMBOL" -f Minute -b "$STREAM_FROM" -e "$STREAM_TO" -t "$STREAM_SECS"
+    section "[$DS] Historical Aggregates"
+    run_test "Fetch Historical OHLC (REST)"          "get-historical-ohlc-${pfx}-rest" -s "$sym" -c Minute -f "$STREAM_FROM" -t "$STREAM_TO" "${D[@]}"
+    run_test "Fetch Historical OHLC (Java)"          "get-historical-ohlc-${pfx}-java" -s "$sym" -c Minute -f "$STREAM_FROM" -t "$STREAM_TO" "${D[@]}"
+    run_test "Fetch Historical Top Gainers (REST)"   "get-historical-top-gainers-${pfx}-rest" -d "$TEST_DATE" "${D[@]}"
+    run_test "Fetch Historical Top Gainers (Java)"   "get-historical-top-gainers-${pfx}-java" -d "$TEST_DATE" "${D[@]}"
+    run_test "Stream Historical OHLC (Java)"         "stream-historical-ohlc-${pfx}-java" -s "$sym" -f "$STREAM_FROM" -t "$STREAM_TO" "${D[@]}"
+    run_test "Stream Historical OHLC Concurrently (Java)" "stream-historical-ohlc-concurrently-${pfx}-java" -f "$TEST_DATE" "${D[@]}"
 
-# Live data only exists while a tick replay is running, so download a day of
-# ticks, start the replay, exercise the live samples, then stop the replay.
-section "Backtesting — Download Ticks"
-run_test "Download Ticks (REST, --wait)" \
-    start-tick-download-stocks-rest -D "$DATASET" -d "$TEST_DATE" -s "$SYMBOL" -w
+    section "[$DS] Backtest — Tick Replay"
+    run_test "Download Ticks (--wait)"  "start-tick-download-${pfx}-rest" -d "$TEST_DATE" -s "$sym" -w "${D[@]}"
+    # exercise the Java replay lifecycle (start/is/stop) on a quick cycle for coverage...
+    run_test "Start Tick Replay (Java)"      "start-tick-replay-${pfx}-java" -d "$TEST_DATE" "${D[@]}"
+    run_test "Is Tick Replay Running (REST)" "is-tick-replay-running-${pfx}-rest" "${D[@]}"
+    run_test "Is Tick Replay Running (Java)" "is-tick-replay-running-${pfx}-java" "${D[@]}"
+    run_test "Stop Tick Replay (Java)"       "stop-tick-replay-${pfx}-java" "${D[@]}"
+    # ...then start via REST and keep it running through the live tests
+    run_test "Start Tick Replay (REST)" "start-tick-replay-${pfx}-rest" -d "$TEST_DATE" "${D[@]}"
+    wait_replay_running "is-tick-replay-running-${pfx}-rest" "${D[@]}" \
+        && setup_ok "Tick replay running" || setup_warn "Tick replay not running; live samples may see no data"
 
-section "Backtesting — Start Replay"
-run_test "Start Tick Replay (REST)" \
-    start-tick-replay-stocks-rest -D "$DATASET" -d "$TEST_DATE"
-if wait_replay_running is-tick-replay-running-stocks-rest -D "$DATASET"; then
-    setup_ok "Tick replay is running"
-else
-    setup_warn "Tick replay did not report running; live samples may see no data"
-fi
+    section "[$DS] Live — Fetch"
+    run_test "Fetch Live OHLC (REST)"         "get-live-ohlc-${pfx}-rest" -s "$sym" "${D[@]}"
+    run_test "Fetch Live OHLC (Java)"         "get-live-ohlc-${pfx}-java" -s "$sym" "${D[@]}"
+    run_test "Fetch Live Top-of-Book (REST)"  "get-live-top-of-book-${pfx}-rest" -s "$sym" "${D[@]}"
+    run_test "Fetch Live Top-of-Book (Java)"  "get-live-top-of-book-${pfx}-java" -s "$sym" "${D[@]}"
+    run_test "Fetch Live Last Trade (REST)"   "get-live-last-trade-${pfx}-rest" -s "$sym" "${D[@]}"
+    run_test "Fetch Live Last Trade (Java)"   "get-live-last-trade-${pfx}-java" -s "$sym" "${D[@]}"
+    run_test "Fetch Live SMA (REST)"          "get-live-sma-${pfx}-rest" -s "$sym" "${D[@]}"
+    run_test "Fetch Live SMA (Java)"          "get-live-sma-${pfx}-java" -s "$sym" "${D[@]}"
+    run_test "Fetch Live EMA (REST)"          "get-live-ema-${pfx}-rest" -s "$sym" "${D[@]}"
+    run_test "Fetch Live EMA (Java)"          "get-live-ema-${pfx}-java" -s "$sym" "${D[@]}"
 
-section "Live — Fetch"
-run_test "Fetch Live OHLC (REST)" \
-    get-live-ohlc-stocks-rest -D "$DATASET" -s "$SYMBOL"
-run_test "Fetch Live OHLC (Java)" \
-    get-live-ohlc-stocks-java -s "$SYMBOL" -D "$DATASET"
-run_test "Fetch Live Top-of-Book (REST)" \
-    get-live-top-of-book-stocks-rest -D "$DATASET" -s "$SYMBOL"
-run_test "Fetch Live Top-of-Book (Java)" \
-    get-live-top-of-book-stocks-java -s "$SYMBOL" -D "$DATASET"
-run_test "Fetch Live Last Trade (REST)" \
-    get-live-last-trade-stocks-rest -D "$DATASET" -s "$SYMBOL"
-run_test "Fetch Live Last Trade (Java)" \
-    get-live-last-trade-stocks-java -s "$SYMBOL" -D "$DATASET"
-run_test "Fetch Live SMA (REST)" \
-    get-live-sma-stocks-rest -D "$DATASET" -s "$SYMBOL"
-run_test "Fetch Live EMA (REST)" \
-    get-live-ema-stocks-rest -D "$DATASET" -s "$SYMBOL"
+    section "[$DS] Live — WebSocket subscribe"
+    run_stream_test "Subscribe Live Trades (WS)"     subscribe-live-trades-ws       -d "$DS" -s "$sym" -t "$STREAM_SECS"
+    run_stream_test "Subscribe Live Quotes (WS)"     subscribe-live-top-of-book-ws  -d "$DS" -s "$sym" -t "$STREAM_SECS"
+    run_stream_test "Subscribe Live OHLC (WS)"       subscribe-live-ohlc-ws         -d "$DS" -s "$sym" -f "$LIVE_FREQ" -t "$INDICATOR_SECS"
+    run_stream_test "Subscribe Live SMA (WS)"        subscribe-live-sma-ws          -d "$DS" -s "$sym" -f "$LIVE_FREQ" -t "$INDICATOR_SECS"
+    run_stream_test "Subscribe Live EMA (WS)"        subscribe-live-ema-ws          -d "$DS" -s "$sym" -f "$LIVE_FREQ" -t "$INDICATOR_SECS"
+    run_stream_test "Stream Historical OHLC (WS)"    stream-historical-ohlc-ws      -d "$DS" -s "$sym" -f Minute -b "$STREAM_FROM" -e "$STREAM_TO" -t "$STREAM_SECS"
 
-section "WebSocket Streaming"
-run_stream_test "Subscribe Live Trades (WS)" \
-    subscribe-live-trades-ws -d "$DATASET" -s "$SYMBOL" -t "$STREAM_SECS"
-run_stream_test "Subscribe Live Quotes (WS)" \
-    subscribe-live-top-of-book-ws -d "$DATASET" -s "$SYMBOL" -t "$STREAM_SECS"
-run_stream_test "Subscribe Live OHLC (WS)" \
-    subscribe-live-ohlc-ws -d "$DATASET" -s "$SYMBOL" -f "$LIVE_FREQ" -t "$STREAM_SECS"
-# NOTE: live SMA/EMA subscribe (WS and Java) is intentionally not exercised here.
-# Enabling the indicator process flags makes SMA/EMA compute and fetch (verified),
-# but they do not stream over a live subscription even with publish + process on and
-# a subscriber — a separate indicator-streaming issue to resolve before adding these.
+    if [ "$HAS_RUMI_CLI" = true ]; then
+        section "[$DS] Live — Java subscribe (agg-stream slot freed)"
+        shutdown_single "$API_SYSTEM" datafye-api-stream
+        run_stream_test "Subscribe Live OHLC (Java)" "subscribe-live-ohlc-${pfx}-java" -s "$sym" -c "$LIVE_FREQ" "${D[@]}"
+        run_stream_test "Subscribe Live SMA (Java)"  "subscribe-live-sma-${pfx}-java"  -s "$sym" -c "$LIVE_FREQ" "${D[@]}"
+        run_stream_test "Subscribe Live EMA (Java)"  "subscribe-live-ema-${pfx}-java"  -s "$sym" -c "$LIVE_FREQ" "${D[@]}"
 
-# ---------------------------------------------------------------------------
-# Crypto: all-services-up tests (reference, backtest, live fetch, WebSocket).
-# Crypto's Java subscribe is deferred to the recycled Java section below (it needs
-# the agg-stream slot freed). Crypto samples are dataset-fixed (no -D); WebSocket
-# samples select Crypto via -d.
-# ---------------------------------------------------------------------------
-if [ "$RUN_CRYPTO" = true ]; then
-    section "Crypto — Reference & Backtest"
-    run_test "Get Crypto Securities (REST)" \
-        get-securities-crypto-rest
-    run_test "Download Crypto Ticks (REST, --wait)" \
-        start-tick-download-crypto-rest -d "$TEST_DATE" -s "$CRYPTO_SYMBOL" -w
-    run_test "Start Crypto Tick Replay (REST)" \
-        start-tick-replay-crypto-rest -d "$TEST_DATE"
-    if wait_replay_running is-tick-replay-running-crypto-rest; then
-        setup_ok "Crypto tick replay is running"
+        section "[$DS] Live — Java subscribe (feed slot freed)"
+        shutdown_single "$DS_SYSTEM" "datafye-${dl}-agg"
+        run_stream_test "Subscribe Live Top-of-Book (Java)" "subscribe-live-top-of-book-${pfx}-java" -s "$sym" "${D[@]}"
+        run_stream_test "Subscribe Live Trades (Java)"      "subscribe-live-trades-${pfx}-java"      -s "$sym" "${D[@]}"
+
+        section "[$DS] Restoring recycled services"
+        launch_single "$DS_SYSTEM" "datafye-${dl}-agg"
+        launch_single "$API_SYSTEM" datafye-api-stream
     else
-        setup_warn "Crypto tick replay did not report running; live crypto samples may see no data"
+        setup_warn "[$DS] Java subscribe skipped — rumi CLI required to free an Ether slot"
     fi
 
-    section "Crypto — Live Fetch"
-    run_test "Fetch Live Crypto OHLC (REST)" \
-        get-live-ohlc-crypto-rest -s "$CRYPTO_SYMBOL"
-    run_test "Fetch Live Crypto OHLC (Java)" \
-        get-live-ohlc-crypto-java -s "$CRYPTO_SYMBOL"
-    run_test "Fetch Live Crypto Top-of-Book (REST)" \
-        get-live-top-of-book-crypto-rest -s "$CRYPTO_SYMBOL"
+    section "[$DS] Backtest — Stop Replay"
+    run_test "Stop Tick Replay (REST)" "stop-tick-replay-${pfx}-rest" "${D[@]}"
+}
 
-    section "Crypto — WebSocket"
-    run_stream_test "Subscribe Live Crypto Trades (WS)" \
-        subscribe-live-trades-ws -d Crypto -s "$CRYPTO_SYMBOL" -t "$STREAM_SECS"
-    run_stream_test "Subscribe Live Crypto OHLC (WS)" \
-        subscribe-live-ohlc-ws -d Crypto -s "$CRYPTO_SYMBOL" -f "$LIVE_FREQ" -t "$STREAM_SECS"
-fi
+# Full sample suite for the Crypto dataset. pfx=crypto, dataset-fixed (no -D).
+# Crypto has no Java tick-subscribe samples (only agg subscribe + WS).
+run_crypto_phase() {
+    local DS=Crypto dl=crypto pfx=crypto sym="$CRYPTO_SYMBOL"
+    resolve_systems "$dl"
 
-# ---------------------------------------------------------------------------
-# Live — Subscribe (Java). Java clients stream over Ether buses, and an Ether bus
-# allows only ONE subscriber slot. With the full stack up, api-stream holds the
-# agg-stream + feed top-of-book slots and the agg holds the feed live-trades slot,
-# so a Java client would get nothing. We free the needed slot by shutting down those
-# service instances through the Rumi lifecycle (shutdown-single via the rumi CLI —
-# never 'docker stop'), then re-launch them afterwards. The replay keeps running in
-# the feed throughout (api-rest also stays up).
-# ---------------------------------------------------------------------------
-if [ "$HAS_RUMI_CLI" = true ]; then
-section "Live — Subscribe (Java, aggregates)"
-# Free the agg-stream slot by shutting down api-stream; the agg stays up and keeps
-# producing aggregates, so Java clients can subscribe to live OHLC. (Live SMA/EMA
-# subscribe is omitted for the same indicator-streaming reason noted in the WebSocket
-# section — they compute and fetch but do not stream yet.)
-shutdown_single "$API_SYSTEM" datafye-api-stream
-run_stream_test "Subscribe Live OHLC (Java)" \
-    subscribe-live-ohlc-stocks-java -D "$DATASET" -s "$SYMBOL" -c "$LIVE_FREQ"
+    section "[Crypto] Health & Reference"
+    run_test "Ping (REST)"           ping-rest -d "$DS"
+    run_test "Get Securities (REST)" "get-securities-${pfx}-rest"
+    run_test "Get Securities (Java)" "get-securities-${pfx}-java"
+
+    section "[Crypto] Backtest — Downloads"
+    backtest_download tick  "$pfx" "$sym"
+    backtest_download trade "$pfx" "$sym"
+    backtest_download quote "$pfx" "$sym"
+    local proto
+    for proto in rest java; do
+        run_test "Start ohlc download (crypto/${proto})"      "start-ohlc-download-${pfx}-${proto}" -d "$TEST_DATE" -s "$sym" -c Minute
+        run_test "Is ohlc download running (crypto/${proto})" "is-ohlc-download-running-${pfx}-${proto}"
+        run_test "Cancel ohlc download (crypto/${proto})"     "cancel-ohlc-download-${pfx}-${proto}"
+    done
+    run_test "Download Minute OHLC (crypto, --wait)"          "start-ohlc-download-${pfx}-rest" -d "$TEST_DATE" -s "$sym" -c Minute -w
+
+    section "[Crypto] Historical Aggregates"
+    run_test "Fetch Historical OHLC (REST)"        "get-historical-ohlc-${pfx}-rest" -s "$sym" -c Minute -f "$STREAM_FROM" -t "$STREAM_TO"
+    run_test "Fetch Historical OHLC (Java)"        "get-historical-ohlc-${pfx}-java" -s "$sym" -c Minute -f "$STREAM_FROM" -t "$STREAM_TO"
+    run_test "Fetch Historical Top Gainers (REST)" "get-historical-top-gainers-${pfx}-rest" -d "$TEST_DATE"
+    run_test "Fetch Historical Top Gainers (Java)" "get-historical-top-gainers-${pfx}-java" -d "$TEST_DATE"
+    run_test "Stream Historical OHLC (Java)"       "stream-historical-ohlc-${pfx}-java" -s "$sym" -f "$STREAM_FROM" -t "$STREAM_TO"
+    run_test "Stream Historical OHLC Concurrently (Java)" "stream-historical-ohlc-concurrently-${pfx}-java" -f "$TEST_DATE"
+
+    section "[Crypto] Backtest — Tick Replay"
+    run_test "Download Ticks (--wait)"  "start-tick-download-${pfx}-rest" -d "$TEST_DATE" -s "$sym" -w
+    # exercise the Java replay lifecycle (start/is/stop) for coverage...
+    run_test "Start Tick Replay (Java)"      "start-tick-replay-${pfx}-java" -d "$TEST_DATE"
+    run_test "Is Tick Replay Running (REST)" "is-tick-replay-running-${pfx}-rest"
+    run_test "Is Tick Replay Running (Java)" "is-tick-replay-running-${pfx}-java"
+    run_test "Stop Tick Replay (Java)"       "stop-tick-replay-${pfx}-java"
+    # ...then start via REST and keep it running through the live tests
+    run_test "Start Tick Replay (REST)" "start-tick-replay-${pfx}-rest" -d "$TEST_DATE"
+    wait_replay_running "is-tick-replay-running-${pfx}-rest" \
+        && setup_ok "Crypto tick replay running" || setup_warn "Crypto tick replay not running"
+
+    section "[Crypto] Live — Fetch"
+    run_test "Fetch Live OHLC (REST)"        "get-live-ohlc-${pfx}-rest" -s "$sym"
+    run_test "Fetch Live OHLC (Java)"        "get-live-ohlc-${pfx}-java" -s "$sym"
+    run_test "Fetch Live Top-of-Book (REST)" "get-live-top-of-book-${pfx}-rest" -s "$sym"
+    run_test "Fetch Live Top-of-Book (Java)" "get-live-top-of-book-${pfx}-java" -s "$sym"
+    run_test "Fetch Live Last Trade (REST)"  "get-live-last-trade-${pfx}-rest" -s "$sym"
+    run_test "Fetch Live Last Trade (Java)"  "get-live-last-trade-${pfx}-java" -s "$sym"
+    run_test "Fetch Live SMA (REST)"         "get-live-sma-${pfx}-rest" -s "$sym"
+    run_test "Fetch Live SMA (Java)"         "get-live-sma-${pfx}-java" -s "$sym"
+    run_test "Fetch Live EMA (REST)"         "get-live-ema-${pfx}-rest" -s "$sym"
+    run_test "Fetch Live EMA (Java)"         "get-live-ema-${pfx}-java" -s "$sym"
+
+    section "[Crypto] Live — WebSocket subscribe"
+    run_stream_test "Subscribe Live Trades (WS)"  subscribe-live-trades-ws      -d "$DS" -s "$sym" -t "$STREAM_SECS"
+    run_stream_test "Subscribe Live Quotes (WS)"  subscribe-live-top-of-book-ws -d "$DS" -s "$sym" -t "$STREAM_SECS"
+    run_stream_test "Subscribe Live OHLC (WS)"    subscribe-live-ohlc-ws        -d "$DS" -s "$sym" -f "$LIVE_FREQ" -t "$INDICATOR_SECS"
+    run_stream_test "Subscribe Live SMA (WS)"     subscribe-live-sma-ws         -d "$DS" -s "$sym" -f "$LIVE_FREQ" -t "$INDICATOR_SECS"
+    run_stream_test "Subscribe Live EMA (WS)"     subscribe-live-ema-ws         -d "$DS" -s "$sym" -f "$LIVE_FREQ" -t "$INDICATOR_SECS"
+    run_stream_test "Stream Historical OHLC (WS)" stream-historical-ohlc-ws     -d "$DS" -s "$sym" -f Minute -b "$STREAM_FROM" -e "$STREAM_TO" -t "$STREAM_SECS"
+
+    if [ "$HAS_RUMI_CLI" = true ]; then
+        section "[Crypto] Live — Java subscribe (agg-stream slot freed)"
+        shutdown_single "$API_SYSTEM" datafye-api-stream
+        run_stream_test "Subscribe Live OHLC (Java)" "subscribe-live-ohlc-${pfx}-java" -s "$sym" -c "$LIVE_FREQ"
+        run_stream_test "Subscribe Live SMA (Java)"  "subscribe-live-sma-${pfx}-java"  -s "$sym" -c "$LIVE_FREQ"
+        run_stream_test "Subscribe Live EMA (Java)"  "subscribe-live-ema-${pfx}-java"  -s "$sym" -c "$LIVE_FREQ"
+        section "[Crypto] Restoring recycled services"
+        launch_single "$API_SYSTEM" datafye-api-stream
+    else
+        setup_warn "[Crypto] Java subscribe skipped — rumi CLI required to free an Ether slot"
+    fi
+
+    section "[Crypto] Backtest — Stop Replay"
+    run_test "Stop Tick Replay (REST)" "stop-tick-replay-${pfx}-rest"
+}
+
+# --- driver: first dataset is already provisioned (Synthetic); enable indicators,
+#     run it, then apply + run each remaining certifiable dataset. ---
+enable_indicators
+resolve_systems synthetic
+recycle_agg_for_indicators synthetic
+
+run_stocks_phase Synthetic
+
 if [ "$RUN_CRYPTO" = true ]; then
-    run_stream_test "Subscribe Live Crypto OHLC (Java)" \
-        subscribe-live-ohlc-crypto-java -s "$CRYPTO_SYMBOL" -c "$LIVE_FREQ"
-fi
-
-section "Live — Subscribe (Java, ticks)"
-# Free the feed live-trades slot by shutting down the dataset's agg (it held that
-# slot); the feed top-of-book slot is already free (api-stream shut down above). Java
-# clients can now subscribe to live trades and top-of-book quotes.
-shutdown_single "$DS_SYSTEM" "datafye-${DS_LOWER}-agg"
-run_stream_test "Subscribe Live Top-of-Book (Java)" \
-    subscribe-live-top-of-book-stocks-java -D "$DATASET" -s "$SYMBOL"
-run_stream_test "Subscribe Live Trades (Java)" \
-    subscribe-live-trades-stocks-java -D "$DATASET" -s "$SYMBOL"
-
-# Restore the recycled services through the Rumi lifecycle so the deployment is whole
-# again before teardown (and for any follow-on phases).
-section "Restoring Recycled Services"
-launch_single "$DS_SYSTEM" "datafye-${DS_LOWER}-agg"
-launch_single "$API_SYSTEM" datafye-api-stream
+    if apply_dataset SIP;    then run_stocks_phase SIP;   else CERT_UNCERTIFIED+=("SIP"); fi
+    if apply_dataset Crypto; then run_crypto_phase;       else CERT_UNCERTIFIED+=("Crypto"); fi
 else
-    section "Live — Subscribe (Java)"
-    printf "    ${YELLOW}!${RESET} Skipped — the Rumi CLI is needed to recycle a service and free an Ether subscription slot.\n"
-    printf "      ${DIM}Install the rumi CLI (or set RUMI_CLI to its path) and re-run. WebSocket subscribe above already validated live streaming.${RESET}\n"
+    CERT_UNCERTIFIED+=("SIP" "Crypto")
 fi
 
-# Replay is stopped after the live subscribe phases (it must run throughout them).
-section "Backtesting — Stop Replay"
-run_test "Stop Tick Replay (REST)" \
-    stop-tick-replay-stocks-rest -D "$DATASET"
-if [ "$RUN_CRYPTO" = true ]; then
-    run_test "Stop Crypto Tick Replay (REST)" \
-        stop-tick-replay-crypto-rest
+# ===========================================================================
+# Coverage assertion
+# ===========================================================================
+section "Coverage"
+COVERED_FILE="${COVERED_FILE:-${WORK_DIR}/covered-ids.txt}"
+[ -f "$COVERED_FILE" ] && sort -u "$COVERED_FILE" -o "$COVERED_FILE" || : > "$COVERED_FILE"
+# Expected ids = everything in run.sh, minus the SIP/Crypto-only ids if those
+# datasets were not certified (Synthetic-only run). Crypto-only ids contain
+# "-crypto"; the WS + ping ids are dataset-agnostic and always expected.
+EXPECTED_FILE="${WORK_DIR}/expected-ids.txt"
+cp "$ALL_IDS_FILE" "$EXPECTED_FILE"
+if printf '%s\n' "${CERT_UNCERTIFIED[@]}" | grep -q '^Crypto$'; then
+    grep -v -- '-crypto-' "$EXPECTED_FILE" > "${EXPECTED_FILE}.tmp" && mv "${EXPECTED_FILE}.tmp" "$EXPECTED_FILE"
 fi
-
+MISSED=$(comm -23 "$EXPECTED_FILE" "$COVERED_FILE")
+COVN=$(wc -l < "$COVERED_FILE" | tr -d ' '); EXPN=$(wc -l < "$EXPECTED_FILE" | tr -d ' '); ALLN=$(wc -l < "$ALL_IDS_FILE" | tr -d ' ')
+printf "    ${DIM}covered %s / %s expected (of %s registered)${RESET}\n" "$COVN" "$EXPN" "$ALLN"
+if [ -n "$MISSED" ]; then
+    FAILED=$((FAILED + 1))
+    FAILURES="${FAILURES}\n    ${RED}✗${RESET} Coverage: samples never exercised:\n$(printf '        %s\n' $MISSED)"
+    printf "    ${RED}✗ %s registered samples not exercised${RESET}\n" "$(printf '%s\n' "$MISSED" | grep -c .)"
+else
+    printf "    ${GREEN}✓ every expected sample was exercised${RESET}\n"
+fi
+if [ "${#CERT_UNCERTIFIED[@]}" -gt 0 ]; then
+    printf "    ${YELLOW}! NOT CERTIFIED (no crypto-entitled POLYGON_API_KEY): %s${RESET}\n" "${CERT_UNCERTIFIED[*]}"
+fi
 # ===========================================================================
 # Teardown
 # ===========================================================================
