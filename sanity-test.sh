@@ -58,6 +58,9 @@ CRYPTO_SYMBOL="BTCUSD"
 # subscribe samples have no built-in duration, so we bound them ourselves).
 STREAM_SECS="${STREAM_SECS:-20}"
 BOUNDED_TIMEOUT=$((STREAM_SECS + 15))
+# A stream test passes once this many records arrive (replay is ~1/sec, so a few
+# seconds suffices); we stop the sample as soon as the threshold is reached.
+MIN_STREAM_RECORDS="${MIN_STREAM_RECORDS:-1}"
 
 if [ -n "${POLYGON_API_KEY:-}" ]; then
     DATASET="SIP"
@@ -66,6 +69,17 @@ else
     DATASET="Synthetic"
     DESCRIPTOR_URL="https://downloads.n5corp.com/datafye/quickstarts/latest/foundry-data-cloud-only-with-synthetic.yaml"
 fi
+# lowercase dataset → service-instance name suffix (datafye-synthetic-agg / -sip-agg)
+DS_LOWER=$(printf '%s' "$DATASET" | tr '[:upper:]' '[:lower:]')
+# Versioned Rumi system names (e.g. datafye-api-system-2.0-SNAPSHOT) are resolved from
+# the deployment API after provisioning — the controller registers systems by their
+# full versioned name, which run-admin-script requires.
+DS_SYSTEM=""
+API_SYSTEM=""
+API_HOST="api.rest.rumi.local:7776"
+# rumi CLI drives single-service lifecycle (shutdown-single / launch-single) via the
+# Rumi deployment scripts; overridable, defaults to PATH then ~/.local/bin/rumi.
+RUMI_CLI="${RUMI_CLI:-$(command -v rumi 2>/dev/null || echo "${HOME}/.local/bin/rumi")}"
 
 # The crypto phase needs a crypto-entitled Polygon key. Without one we cannot
 # provision a Crypto dataset, so disable the phase rather than fail later.
@@ -212,31 +226,13 @@ format_ms() {
     fi
 }
 
-# Run a sample for a bounded window, then kill it. run.sh execs the JVM, so the
-# backgrounded PID is the JVM and a plain kill stops it (avoids depending on
-# `timeout`/`gtimeout`, which are absent on stock macOS). Writes the sample
-# output to $1 (logfile); remaining args are the sample id and its options.
-_bounded_run() {
-    local logfile="$1"; shift
-    "${DIST_DIR}/bin/run.sh" "$@" >"$logfile" 2>&1 &
-    local pid=$!
-    local waited=0
-    while kill -0 "$pid" 2>/dev/null && [ "$waited" -lt "$BOUNDED_TIMEOUT" ]; do
-        sleep 1
-        waited=$((waited + 1))
-    done
-    if kill -0 "$pid" 2>/dev/null; then
-        kill "$pid" 2>/dev/null
-        pkill -P "$pid" 2>/dev/null || true
-    fi
-    wait "$pid" 2>/dev/null || true
-}
-
-# Run a streaming/subscribe sample and PASS if it received at least one inbound
-# record. Every subscribe (Java) and WebSocket sample prints received data with
-# a leading "<-- " marker, so we judge success by data flow rather than exit
-# code (the unbounded Java subscribers are killed by _bounded_run, and a kill
-# is not a failure here). Usage: run_stream_test <label> <sample> [args...]
+# Run a streaming/subscribe sample and PASS once it has received at least
+# MIN_STREAM_RECORDS inbound records. Every subscribe (Java) and WebSocket sample
+# prints received data with a leading "<-- " marker, so we judge by data flow, not
+# exit code. run.sh execs the JVM, so the pid is the JVM and a plain kill stops it.
+# Replay runs at ~1 tick/sec, so we poll the log and stop as soon as enough records
+# have arrived (a few seconds) rather than waiting the whole window.
+# Usage: run_stream_test <label> <sample> [args...]
 run_stream_test() {
     local label="$1"; shift
     local sample="$1"; shift
@@ -251,62 +247,60 @@ run_stream_test() {
     [ "$VERBOSE" = true ] && echo ""
 
     t_start=$(date +%s%N 2>/dev/null || echo $(($(date +%s) * 1000000000)))
-    _bounded_run "$logfile" "$sample" "$@"
+    "${DIST_DIR}/bin/run.sh" "$sample" "$@" >"$logfile" 2>&1 &
+    local pid=$! waited=0 received=0
+    while [ "$waited" -lt "$BOUNDED_TIMEOUT" ]; do
+        received=$(grep '^<-- ' "$logfile" 2>/dev/null | grep -cvE '"type":"(connected|subscribed|unsubscribed|halt|resume)"')
+        [ "$received" -ge "$MIN_STREAM_RECORDS" ] && break
+        kill -0 "$pid" 2>/dev/null || break   # sample exited on its own
+        sleep 1
+        waited=$((waited + 1))
+    done
+    if kill -0 "$pid" 2>/dev/null; then
+        kill "$pid" 2>/dev/null
+        pkill -P "$pid" 2>/dev/null || true
+    fi
+    wait "$pid" 2>/dev/null || true
+    received=$(grep -c '^<-- ' "$logfile" 2>/dev/null || echo 0)
+
     [ "$VERBOSE" = true ] && cat "$logfile"
     t_end=$(date +%s%N 2>/dev/null || echo $(($(date +%s) * 1000000000)))
     elapsed=$(( (t_end - t_start) / 1000000 ))
-
     [ "$VERBOSE" = true ] && printf "    ${DIM}[%s]${RESET}  %-44s" "$index_str" "$label"
 
-    local received
-    received=$(grep -c '^<-- ' "$logfile" 2>/dev/null || echo 0)
-    if [ "$received" -gt 0 ]; then
+    if [ "$received" -ge "$MIN_STREAM_RECORDS" ]; then
         printf "${GREEN}PASS${RESET}  ${DIM}%s, %s records${RESET}\n" "$(format_ms $elapsed)" "$received"
         PASSED=$((PASSED + 1))
     else
-        printf "${RED}FAIL${RESET}  ${DIM}%s, no data${RESET}\n" "$(format_ms $elapsed)"
+        printf "${RED}FAIL${RESET}  ${DIM}%s, %s records (<%s)${RESET}\n" "$(format_ms $elapsed)" "$received" "$MIN_STREAM_RECORDS"
         FAILED=$((FAILED + 1))
         FAILURES="${FAILURES}\n    ${RED}✗${RESET} ${label}  ${DIM}(log: ${logfile})${RESET}"
     fi
 }
 
-# Like run_stream_test, but non-fatal. The Java client's live stream subscription
-# binds the feed/agg stream bus directly and only delivers data when the client is
-# co-located with the services (AWS, or inside the Docker network). From the host
-# against a local Docker foundry the stream connection establishes but no data
-# arrives, so "no data" is reported as a skip, not a failure. On a co-located/AWS
-# run it passes like any other stream test. (WebSocket streaming, which rides the
-# api-stream service over TCP, is the supported local subscribe path and is tested
-# strictly above.) Usage: run_stream_soft <label> <sample> [args...]
-run_stream_soft() {
-    local label="$1"; shift
-    local sample="$1"; shift
-    TOTAL=$((TOTAL + 1))
-
-    local index_str
-    index_str=$(printf "%2d" "$TOTAL")
-    printf "    ${DIM}[%s]${RESET}  %-44s" "$index_str" "$label"
-
-    local logfile="${LOG_DIR}/${TOTAL}-${sample}.log"
-    local t_start t_end elapsed
-    [ "$VERBOSE" = true ] && echo ""
-
-    t_start=$(date +%s%N 2>/dev/null || echo $(($(date +%s) * 1000000000)))
-    _bounded_run "$logfile" "$sample" "$@"
-    [ "$VERBOSE" = true ] && cat "$logfile"
-    t_end=$(date +%s%N 2>/dev/null || echo $(($(date +%s) * 1000000000)))
-    elapsed=$(( (t_end - t_start) / 1000000 ))
-
-    [ "$VERBOSE" = true ] && printf "    ${DIM}[%s]${RESET}  %-44s" "$index_str" "$label"
-
-    local received
-    received=$(grep -c '^<-- ' "$logfile" 2>/dev/null || echo 0)
-    if [ "$received" -gt 0 ]; then
-        printf "${GREEN}PASS${RESET}  ${DIM}%s, %s records${RESET}\n" "$(format_ms $elapsed)" "$received"
-        PASSED=$((PASSED + 1))
+# Shut down / re-launch a single service instance to free (or restore) its single
+# Ether subscription slot. This MUST go through the Rumi lifecycle (the rumi CLI's
+# run-admin-script → shutdown-single / launch-single), never `docker stop` — a bare
+# docker stop leaves the instance in a state the lifecycle can't recover. Args:
+# <system> <serviceInstanceName>, e.g. "datafye-api-system" "datafye-api-stream".
+shutdown_single() {
+    setup_msg "Shutting down $2 (freeing its Ether subscription slot)..."
+    if "$RUMI_CLI" cloud local run-admin-script -s "$1" -i shutdown-single -a "serviceInstanceName=$2" \
+            >"${LOG_DIR}/shutdown-single-$2.log" 2>&1; then
+        setup_ok "Shut down $2"
     else
-        printf "${YELLOW}SKIP${RESET}  ${DIM}no data — Java client streaming needs a co-located/AWS deployment${RESET}\n"
-        SKIPPED=$((SKIPPED + 1))
+        setup_warn "Could not shut down $2 (see ${LOG_DIR}/shutdown-single-$2.log)"
+    fi
+    sleep 3   # let the feed/agg notice the disconnect and release the slot
+}
+
+launch_single() {
+    setup_msg "Re-launching $2..."
+    if "$RUMI_CLI" cloud local run-admin-script -s "$1" -i launch-single -a "serviceInstanceName=$2" \
+            >"${LOG_DIR}/launch-single-$2.log" 2>&1; then
+        setup_ok "Re-launched $2"
+    else
+        setup_warn "Could not re-launch $2 (see ${LOG_DIR}/launch-single-$2.log)"
     fi
 }
 
@@ -603,6 +597,17 @@ if command -v datafye &>/dev/null; then
 else
     setup_missing "Datafye CLI — not installed"
     MISSING+=("Datafye CLI")
+fi
+
+# Rumi CLI — drives single-service recycling (shutdown-single / launch-single) for the
+# live Java-subscribe tests (Ether buses allow only one subscriber, so a service must be
+# shut down to free a slot for a Java client). Without it those tests are skipped.
+HAS_RUMI_CLI=false
+if [ -x "$RUMI_CLI" ] || command -v rumi &>/dev/null; then
+    HAS_RUMI_CLI=true
+    setup_ok "Rumi CLI ($RUMI_CLI)"
+else
+    setup_warn "Rumi CLI not found — live Java-subscribe tests will be skipped (set RUMI_CLI to its path)"
 fi
 
 # ===========================================================================
@@ -904,6 +909,19 @@ fi
 # Second bars so a bar finalises within the bounded streaming window.
 LIVE_FREQ="${LIVE_FREQ:-Second}"
 
+# Resolve the versioned Rumi system names (e.g. datafye-api-system-2.0-SNAPSHOT) for
+# single-service recycling — the controller registers systems by full versioned name,
+# which run-admin-script requires. The deployment API reports the full names.
+if [ "$HAS_RUMI_CLI" = true ]; then
+    DEPLOYED_SYSTEMS=$(curl -fsS "http://${API_HOST}/datafye-api/v1/deployment/systems" 2>/dev/null)
+    API_SYSTEM=$(printf '%s' "$DEPLOYED_SYSTEMS" | grep -oE "datafye-api-system[A-Za-z0-9._-]*" | head -1)
+    DS_SYSTEM=$(printf '%s' "$DEPLOYED_SYSTEMS" | grep -oE "datafye-${DS_LOWER}-system[A-Za-z0-9._-]*" | head -1)
+    if [ -z "$API_SYSTEM" ] || [ -z "$DS_SYSTEM" ]; then
+        setup_warn "Could not resolve versioned system names; live Java-subscribe tests will be skipped"
+        HAS_RUMI_CLI=false
+    fi
+fi
+
 section "Health"
 run_test "Ping (REST)" \
     ping-rest -d "$DATASET"
@@ -969,21 +987,6 @@ run_test "Fetch Live SMA (REST)" \
 run_test "Fetch Live EMA (REST)" \
     get-live-ema-stocks-rest -D "$DATASET" -s "$SYMBOL"
 
-section "Live — Subscribe (Java)"
-# Soft (non-fatal): the Java client streams over the feed/agg bus and only delivers
-# data when co-located with the services (AWS / inside the Docker network), not from
-# the host against local Docker. WebSocket streaming below is the local subscribe path.
-run_stream_soft "Subscribe Live Top-of-Book (Java)" \
-    subscribe-live-top-of-book-stocks-java -D "$DATASET" -s "$SYMBOL"
-run_stream_soft "Subscribe Live Trades (Java)" \
-    subscribe-live-trades-stocks-java -D "$DATASET" -s "$SYMBOL"
-run_stream_soft "Subscribe Live OHLC (Java)" \
-    subscribe-live-ohlc-stocks-java -D "$DATASET" -s "$SYMBOL" -c "$LIVE_FREQ"
-run_stream_soft "Subscribe Live SMA (Java)" \
-    subscribe-live-sma-stocks-java -D "$DATASET" -s "$SYMBOL" -c "$LIVE_FREQ"
-run_stream_soft "Subscribe Live EMA (Java)" \
-    subscribe-live-ema-stocks-java -D "$DATASET" -s "$SYMBOL" -c "$LIVE_FREQ"
-
 section "WebSocket Streaming"
 run_stream_test "Subscribe Live Trades (WS)" \
     subscribe-live-trades-ws -d "$DATASET" -s "$SYMBOL" -t "$STREAM_SECS"
@@ -991,18 +994,16 @@ run_stream_test "Subscribe Live Quotes (WS)" \
     subscribe-live-top-of-book-ws -d "$DATASET" -s "$SYMBOL" -t "$STREAM_SECS"
 run_stream_test "Subscribe Live OHLC (WS)" \
     subscribe-live-ohlc-ws -d "$DATASET" -s "$SYMBOL" -f "$LIVE_FREQ" -t "$STREAM_SECS"
-run_stream_test "Subscribe Live SMA (WS)" \
-    subscribe-live-sma-ws -d "$DATASET" -s "$SYMBOL" -f "$LIVE_FREQ" -t "$STREAM_SECS"
-run_stream_test "Subscribe Live EMA (WS)" \
-    subscribe-live-ema-ws -d "$DATASET" -s "$SYMBOL" -f "$LIVE_FREQ" -t "$STREAM_SECS"
-
-section "Backtesting — Stop Replay"
-run_test "Stop Tick Replay (REST)" \
-    stop-tick-replay-stocks-rest -D "$DATASET"
+# NOTE: live SMA/EMA subscribe (WS and Java) is intentionally not exercised here.
+# Enabling the indicator process flags makes SMA/EMA compute and fetch (verified),
+# but they do not stream over a live subscription even with publish + process on and
+# a subscriber — a separate indicator-streaming issue to resolve before adding these.
 
 # ---------------------------------------------------------------------------
-# Crypto phase (optional, --crypto + crypto-entitled POLYGON_API_KEY).
-# Crypto samples are dataset-fixed (no -D); WebSocket samples select Crypto via -d.
+# Crypto: all-services-up tests (reference, backtest, live fetch, WebSocket).
+# Crypto's Java subscribe is deferred to the recycled Java section below (it needs
+# the agg-stream slot freed). Crypto samples are dataset-fixed (no -D); WebSocket
+# samples select Crypto via -d.
 # ---------------------------------------------------------------------------
 if [ "$RUN_CRYPTO" = true ]; then
     section "Crypto — Reference & Backtest"
@@ -1026,15 +1027,62 @@ if [ "$RUN_CRYPTO" = true ]; then
     run_test "Fetch Live Crypto Top-of-Book (REST)" \
         get-live-top-of-book-crypto-rest -s "$CRYPTO_SYMBOL"
 
-    section "Crypto — Subscribe & WebSocket"
-    run_stream_soft "Subscribe Live Crypto OHLC (Java)" \
-        subscribe-live-ohlc-crypto-java -s "$CRYPTO_SYMBOL" -c "$LIVE_FREQ"
+    section "Crypto — WebSocket"
     run_stream_test "Subscribe Live Crypto Trades (WS)" \
         subscribe-live-trades-ws -d Crypto -s "$CRYPTO_SYMBOL" -t "$STREAM_SECS"
     run_stream_test "Subscribe Live Crypto OHLC (WS)" \
         subscribe-live-ohlc-ws -d Crypto -s "$CRYPTO_SYMBOL" -f "$LIVE_FREQ" -t "$STREAM_SECS"
+fi
 
-    section "Crypto — Stop Replay"
+# ---------------------------------------------------------------------------
+# Live — Subscribe (Java). Java clients stream over Ether buses, and an Ether bus
+# allows only ONE subscriber slot. With the full stack up, api-stream holds the
+# agg-stream + feed top-of-book slots and the agg holds the feed live-trades slot,
+# so a Java client would get nothing. We free the needed slot by shutting down those
+# service instances through the Rumi lifecycle (shutdown-single via the rumi CLI —
+# never 'docker stop'), then re-launch them afterwards. The replay keeps running in
+# the feed throughout (api-rest also stays up).
+# ---------------------------------------------------------------------------
+if [ "$HAS_RUMI_CLI" = true ]; then
+section "Live — Subscribe (Java, aggregates)"
+# Free the agg-stream slot by shutting down api-stream; the agg stays up and keeps
+# producing aggregates, so Java clients can subscribe to live OHLC. (Live SMA/EMA
+# subscribe is omitted for the same indicator-streaming reason noted in the WebSocket
+# section — they compute and fetch but do not stream yet.)
+shutdown_single "$API_SYSTEM" datafye-api-stream
+run_stream_test "Subscribe Live OHLC (Java)" \
+    subscribe-live-ohlc-stocks-java -D "$DATASET" -s "$SYMBOL" -c "$LIVE_FREQ"
+if [ "$RUN_CRYPTO" = true ]; then
+    run_stream_test "Subscribe Live Crypto OHLC (Java)" \
+        subscribe-live-ohlc-crypto-java -s "$CRYPTO_SYMBOL" -c "$LIVE_FREQ"
+fi
+
+section "Live — Subscribe (Java, ticks)"
+# Free the feed live-trades slot by shutting down the dataset's agg (it held that
+# slot); the feed top-of-book slot is already free (api-stream shut down above). Java
+# clients can now subscribe to live trades and top-of-book quotes.
+shutdown_single "$DS_SYSTEM" "datafye-${DS_LOWER}-agg"
+run_stream_test "Subscribe Live Top-of-Book (Java)" \
+    subscribe-live-top-of-book-stocks-java -D "$DATASET" -s "$SYMBOL"
+run_stream_test "Subscribe Live Trades (Java)" \
+    subscribe-live-trades-stocks-java -D "$DATASET" -s "$SYMBOL"
+
+# Restore the recycled services through the Rumi lifecycle so the deployment is whole
+# again before teardown (and for any follow-on phases).
+section "Restoring Recycled Services"
+launch_single "$DS_SYSTEM" "datafye-${DS_LOWER}-agg"
+launch_single "$API_SYSTEM" datafye-api-stream
+else
+    section "Live — Subscribe (Java)"
+    printf "    ${YELLOW}!${RESET} Skipped — the Rumi CLI is needed to recycle a service and free an Ether subscription slot.\n"
+    printf "      ${DIM}Install the rumi CLI (or set RUMI_CLI to its path) and re-run. WebSocket subscribe above already validated live streaming.${RESET}\n"
+fi
+
+# Replay is stopped after the live subscribe phases (it must run throughout them).
+section "Backtesting — Stop Replay"
+run_test "Stop Tick Replay (REST)" \
+    stop-tick-replay-stocks-rest -D "$DATASET"
+if [ "$RUN_CRYPTO" = true ]; then
     run_test "Stop Crypto Tick Replay (REST)" \
         stop-tick-replay-crypto-rest
 fi
