@@ -90,6 +90,10 @@ API_HOST="api.rest.rumi.local:7776"
 # rumi CLI drives single-service lifecycle (shutdown-single / launch-single) + config
 # (configure) via the Rumi deployment scripts; defaults to PATH then ~/.local/bin/rumi.
 RUMI_CLI="${RUMI_CLI:-$(command -v rumi 2>/dev/null || echo "${HOME}/.local/bin/rumi")}"
+# datafye CLI for provision/apply/deprovision. The dataset cycling needs `apply`,
+# which only exists in 2.0+ CLIs; override DATAFYE_CLI to point at a built 2.0 dist
+# if the installed `datafye` predates it.
+DATAFYE_CLI="${DATAFYE_CLI:-datafye}"
 # certification bookkeeping
 CERT_UNCERTIFIED=()
 COVERED_FILE="${WORK_DIR}/covered-ids.txt"
@@ -808,13 +812,13 @@ setup_ok "Descriptor downloaded (Synthetic)"
 setup_msg "Provisioning foundry (this may take a few minutes)..."
 if [ "$VERBOSE" = true ]; then
     echo ""
-    if datafye foundry local provision --descriptor "${WORK_DIR}/quickstart.yaml" 2>&1 | tee "${LOG_DIR}/provision.log"; then
+    if "$DATAFYE_CLI" foundry local provision --descriptor "${WORK_DIR}/quickstart.yaml" 2>&1 | tee "${LOG_DIR}/provision.log"; then
         setup_ok "Foundry provisioned"
     else
         fail_setup "Provisioning failed (see ${LOG_DIR}/provision.log)"
     fi
 else
-    if datafye foundry local provision --descriptor "${WORK_DIR}/quickstart.yaml" &>"${LOG_DIR}/provision.log"; then
+    if "$DATAFYE_CLI" foundry local provision --descriptor "${WORK_DIR}/quickstart.yaml" &>"${LOG_DIR}/provision.log"; then
         setup_ok "Foundry provisioned"
     else
         fail_setup "Provisioning failed (see ${LOG_DIR}/provision.log)"
@@ -930,7 +934,7 @@ apply_dataset() {   # <Dataset>
     esac
     section "Apply → $ds"
     curl -fsSL -o "${WORK_DIR}/apply-${ds}.yaml" "$url" || { setup_warn "descriptor download failed ($ds)"; return 1; }
-    if datafye foundry local apply --descriptor "${WORK_DIR}/apply-${ds}.yaml" &>"${LOG_DIR}/apply-${ds}.log"; then
+    if "$DATAFYE_CLI" foundry local apply -x "${WORK_DIR}/apply-${ds}.yaml" &>"${LOG_DIR}/apply-${ds}.log"; then
         setup_ok "Applied $ds"
         return 0
     fi
@@ -1173,13 +1177,13 @@ section "Teardown"
 setup_msg "Deprovisioning foundry..."
 if [ "$VERBOSE" = true ]; then
     echo ""
-    if datafye foundry local deprovision 2>&1 | tee "${LOG_DIR}/deprovision.log"; then
+    if "$DATAFYE_CLI" foundry local deprovision 2>&1 | tee "${LOG_DIR}/deprovision.log"; then
         setup_ok "Foundry deprovisioned"
     else
         printf "    ${YELLOW}!${RESET} Deprovision returned an error (see ${LOG_DIR}/deprovision.log)\n"
     fi
 else
-    if datafye foundry local deprovision &>"${LOG_DIR}/deprovision.log"; then
+    if "$DATAFYE_CLI" foundry local deprovision &>"${LOG_DIR}/deprovision.log"; then
         setup_ok "Foundry deprovisioned"
     else
         printf "\r    ${YELLOW}!${RESET} Deprovision returned an error (see ${LOG_DIR}/deprovision.log)\n"
