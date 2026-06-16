@@ -118,6 +118,10 @@ The naming convention in the property keys is important: `{service}.{type}.{inst
 
 The `bin/run.sh` (and `run.bat` for Windows) is a single master script that maps friendly sample names to fully-qualified Java class names. Instead of typing `java --add-opens=java.base/jdk.internal.ref=ALL-UNNAMED ... -cp "libs/*" com.datafye.samples.rest.GetHistoricalOHLC`, you type `bin/run.sh get-historical-ohlc-rest`. JVM options, classpath, and class resolution are all handled in one place. This is a deliberate design choice: 22 per-sample scripts would be 95% identical boilerplate, and if the JVM options ever change, you'd have to update all of them. One script, one place to maintain.
 
+**Sample-ID naming convention.** Run IDs follow `<operation>-<stocks|crypto>-<rest|java|ws>`, so the asset class is visible in the id itself (e.g. `get-live-ohlc-stocks-java` is symmetric with `get-live-ohlc-crypto-java`). The asset-class token is omitted only for dataset-agnostic samples: `ping-rest` and the six `*-ws` WebSocket samples, which select their dataset at runtime via a `-d` flag. Note this is a run.sh/run.bat (and README/sanity-test) concern only — the Java classes/packages were always `.stocks.`/`.crypto.`-qualified, and the dispatch FQNs are unchanged.
+
+**`--help` is a guide, `--list` is the index.** `run.sh --help` is a curated GUIDE grouped by sample FAMILY (Health, Reference, Live ticks, Live aggregates, History, WebSocket streaming, Backtesting), each with a one-line purpose plus the id naming patterns. The exhaustive flat id index lives behind `run.sh --list`. This keeps the first thing a newcomer sees readable instead of a wall of 20+ ids.
+
 ## The Communication Patterns
 
 This is the architectural heart of the project. Every sample falls into one of three patterns, and understanding these three patterns is understanding how Datafye data access works. The REST API supports only Pattern 1. The WebSocket API supports Patterns 2 and 3. The Java Client supports all three.
