@@ -5,14 +5,18 @@
 # End-to-end sanity test for a Datafye Data Cloud Only Foundry.
 #
 # Provisions a local foundry, exercises the Data Cloud API samples across
-# health, reference data, OHLC download, historical aggregate fetch, and
-# historical aggregate streaming, then deprovisions the environment.
+# health, reference data, backtest tick download, historical aggregate fetch
+# and streaming, live data (fetch, Java subscribe, and WebSocket streaming
+# driven by a tick replay), then deprovisions the environment. With --crypto
+# and a crypto-entitled POLYGON_API_KEY, it also provisions a Crypto dataset
+# and runs the equivalent crypto samples.
 #
 # Run from the root of the datafye-samples repo:
 #
 #   sudo bash sanity-test.sh                                  # Synthetic data
 #   sudo -E bash sanity-test.sh                               # SIP (if POLYGON_API_KEY is exported)
 #   sudo POLYGON_API_KEY="key" bash sanity-test.sh            # SIP (inline)
+#   sudo -E bash sanity-test.sh --crypto                      # SIP + Crypto (requires POLYGON_API_KEY)
 #   sudo bash sanity-test.sh -v                               # Verbose (show sample output)
 #
 # Supported platforms:
@@ -32,9 +36,11 @@ if [ "$(id -u)" -ne 0 ]; then
 fi
 
 VERBOSE=false
+RUN_CRYPTO=false
 for arg in "$@"; do
     case "$arg" in
         -v|--verbose) VERBOSE=true ;;
+        --crypto) RUN_CRYPTO=true ;;
     esac
 done
 
@@ -45,6 +51,13 @@ REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
 WORK_DIR="${WORK_DIR:-/tmp/datafye-sanity-test}"
 LOG_DIR="${WORK_DIR}/logs"
 SYMBOL="AAPL"
+CRYPTO_SYMBOL="BTCUSD"
+
+# Live subscribe / WebSocket samples stream for a bounded window. STREAM_SECS is
+# how long each streams; BOUNDED_TIMEOUT is the outer kill switch (the Java
+# subscribe samples have no built-in duration, so we bound them ourselves).
+STREAM_SECS="${STREAM_SECS:-20}"
+BOUNDED_TIMEOUT=$((STREAM_SECS + 15))
 
 if [ -n "${POLYGON_API_KEY:-}" ]; then
     DATASET="SIP"
@@ -52,6 +65,13 @@ if [ -n "${POLYGON_API_KEY:-}" ]; then
 else
     DATASET="Synthetic"
     DESCRIPTOR_URL="https://downloads.n5corp.com/datafye/quickstarts/latest/foundry-data-cloud-only-with-synthetic.yaml"
+fi
+
+# The crypto phase needs a crypto-entitled Polygon key. Without one we cannot
+# provision a Crypto dataset, so disable the phase rather than fail later.
+if [ "$RUN_CRYPTO" = true ] && [ -z "${POLYGON_API_KEY:-}" ]; then
+    echo "--crypto requires POLYGON_API_KEY (crypto-entitled); skipping the crypto phase." >&2
+    RUN_CRYPTO=false
 fi
 
 # Test date: 30 days ago (within the 90-day window the quickstart provisions)
@@ -179,6 +199,81 @@ format_ms() {
     else
         printf "%dms" "$ms"
     fi
+}
+
+# Run a sample for a bounded window, then kill it. run.sh execs the JVM, so the
+# backgrounded PID is the JVM and a plain kill stops it (avoids depending on
+# `timeout`/`gtimeout`, which are absent on stock macOS). Writes the sample
+# output to $1 (logfile); remaining args are the sample id and its options.
+_bounded_run() {
+    local logfile="$1"; shift
+    "${DIST_DIR}/bin/run.sh" "$@" >"$logfile" 2>&1 &
+    local pid=$!
+    local waited=0
+    while kill -0 "$pid" 2>/dev/null && [ "$waited" -lt "$BOUNDED_TIMEOUT" ]; do
+        sleep 1
+        waited=$((waited + 1))
+    done
+    if kill -0 "$pid" 2>/dev/null; then
+        kill "$pid" 2>/dev/null
+        pkill -P "$pid" 2>/dev/null || true
+    fi
+    wait "$pid" 2>/dev/null || true
+}
+
+# Run a streaming/subscribe sample and PASS if it received at least one inbound
+# record. Every subscribe (Java) and WebSocket sample prints received data with
+# a leading "<-- " marker, so we judge success by data flow rather than exit
+# code (the unbounded Java subscribers are killed by _bounded_run, and a kill
+# is not a failure here). Usage: run_stream_test <label> <sample> [args...]
+run_stream_test() {
+    local label="$1"; shift
+    local sample="$1"; shift
+    TOTAL=$((TOTAL + 1))
+
+    local index_str
+    index_str=$(printf "%2d" "$TOTAL")
+    printf "    ${DIM}[%s]${RESET}  %-44s" "$index_str" "$label"
+
+    local logfile="${LOG_DIR}/${TOTAL}-${sample}.log"
+    local t_start t_end elapsed
+    [ "$VERBOSE" = true ] && echo ""
+
+    t_start=$(date +%s%N 2>/dev/null || echo $(($(date +%s) * 1000000000)))
+    _bounded_run "$logfile" "$sample" "$@"
+    [ "$VERBOSE" = true ] && cat "$logfile"
+    t_end=$(date +%s%N 2>/dev/null || echo $(($(date +%s) * 1000000000)))
+    elapsed=$(( (t_end - t_start) / 1000000 ))
+
+    [ "$VERBOSE" = true ] && printf "    ${DIM}[%s]${RESET}  %-44s" "$index_str" "$label"
+
+    local received
+    received=$(grep -c '^<-- ' "$logfile" 2>/dev/null || echo 0)
+    if [ "$received" -gt 0 ]; then
+        printf "${GREEN}PASS${RESET}  ${DIM}%s, %s records${RESET}\n" "$(format_ms $elapsed)" "$received"
+        PASSED=$((PASSED + 1))
+    else
+        printf "${RED}FAIL${RESET}  ${DIM}%s, no data${RESET}\n" "$(format_ms $elapsed)"
+        FAILED=$((FAILED + 1))
+        FAILURES="${FAILURES}\n    ${RED}✗${RESET} ${label}  ${DIM}(log: ${logfile})${RESET}"
+    fi
+}
+
+# Poll until a tick replay reports running (so live data is flowing) before we
+# exercise the live samples. Best-effort: returns after a bounded number of
+# tries. Usage: wait_replay_running <is-tick-replay-running-sample> [extra args]
+# (stocks samples need -D "$DATASET"; crypto samples take no dataset flag).
+wait_replay_running() {
+    local sample="$1"; shift
+    local tries=0
+    while [ "$tries" -lt 15 ]; do
+        if "${DIST_DIR}/bin/run.sh" "$sample" "$@" 2>/dev/null | grep -qi "true"; then
+            return 0
+        fi
+        sleep 1
+        tries=$((tries + 1))
+    done
+    return 1
 }
 
 summary() {
@@ -583,11 +678,13 @@ export PATH="${JAVA_HOME}/bin:${PATH}"
 echo ""
 printf "  ${GREEN}All prerequisites are in place.${RESET}\n"
 echo ""
+DATASET_LABEL="$DATASET"
+[ "$RUN_CRYPTO" = true ] && DATASET_LABEL="SIP + Crypto"
 printf "  ${DIM}The sanity test will:${RESET}\n"
 printf "  ${DIM}  1. Build the samples from source${RESET}\n"
-printf "  ${DIM}  2. Provision a local Data Cloud Only Foundry (${DATASET} dataset)${RESET}\n"
+printf "  ${DIM}  2. Provision a local Data Cloud Only Foundry (${DATASET_LABEL} dataset)${RESET}\n"
 printf "  ${DIM}  3. Add DNS entries to /etc/hosts${RESET}\n"
-printf "  ${DIM}  4. Run tests (health, reference, download, fetch, stream)${RESET}\n"
+printf "  ${DIM}  4. Run tests (health, reference, download, fetch, stream, live, subscribe, WebSocket)${RESET}\n"
 printf "  ${DIM}  5. Remove DNS entries from /etc/hosts${RESET}\n"
 printf "  ${DIM}  6. Deprovision the foundry${RESET}\n"
 
@@ -635,9 +732,59 @@ setup_ok "Distribution ready"
 # ===========================================================================
 section "Provision"
 
-setup_msg "Downloading quickstart descriptor..."
-curl -fsSL -o "${WORK_DIR}/quickstart.yaml" "$DESCRIPTOR_URL" || fail_setup "Descriptor download failed"
-setup_ok "Descriptor downloaded (${DATASET})"
+if [ "$RUN_CRYPTO" = true ]; then
+    # The installed CLI has no runtime `dataset add`, so to run stocks and crypto
+    # against one foundry we provision a combined descriptor (SIP + a lean Crypto
+    # dataset). ${POLYGON_API_KEY} is left literal for the CLI to substitute, so
+    # the heredoc delimiter is quoted to prevent the shell from expanding it.
+    setup_msg "Writing combined SIP + Crypto descriptor..."
+    cat > "${WORK_DIR}/quickstart.yaml" <<'EOF'
+apiVersion: datafye.io/v1
+metadata:
+  name: foundry-sanity-sip-crypto
+  description: Data Cloud with SIP + Crypto for the sanity test
+mode: backtest
+datasets:
+  - dataset: SIP
+    provider: Polygon
+    symbols:
+      tickers:
+        - AAPL
+        - MSFT
+        - GOOGL
+        - AMZN
+        - TSLA
+        - NVDA
+        - META
+        - NFLX
+        - AMD
+        - INTC
+    history:
+      ticks:
+        - { schema: trades, duration: 90d }
+        - { schema: quotes, duration: 90d }
+      aggregates:
+        - { schema: ohlc-1m, duration: 90d }
+  - dataset: Crypto
+    provider: Polygon
+    symbols:
+      tickers:
+        - BTCUSD
+    history:
+      ticks:
+        - { schema: trades, duration: 90d }
+        - { schema: quotes, duration: 90d }
+      aggregates:
+        - { schema: ohlc-1m, duration: 90d }
+credentials:
+  polygon_api_key: ${POLYGON_API_KEY}
+EOF
+    setup_ok "Combined descriptor written (SIP + Crypto)"
+else
+    setup_msg "Downloading quickstart descriptor..."
+    curl -fsSL -o "${WORK_DIR}/quickstart.yaml" "$DESCRIPTOR_URL" || fail_setup "Descriptor download failed"
+    setup_ok "Descriptor downloaded (${DATASET})"
+fi
 
 setup_msg "Provisioning foundry (this may take a few minutes)..."
 if [ "$VERBOSE" = true ]; then
@@ -659,6 +806,7 @@ fi
 HOSTS_ENTRIES=(
     "solace.rumi.local"
     "api.rest.rumi.local"
+    "api.stream.rumi.local"
     "sip.feed.rumi.local"
     "sip.history.rumi.local"
     "synthetic.feed.rumi.local"
@@ -667,6 +815,9 @@ HOSTS_ENTRIES=(
     "local-foundry-dev-admin.datafye.local"
     "local-foundry-dev-monitor.datafye.local"
 )
+if [ "$RUN_CRYPTO" = true ]; then
+    HOSTS_ENTRIES+=("crypto.feed.rumi.local" "crypto.history.rumi.local")
+fi
 HOSTS_MARKER="# -- DNS Entries for the local Datafye Foundry deployment --"
 HOSTS_NEEDED=false
 for host in "${HOSTS_ENTRIES[@]}"; do
@@ -693,38 +844,143 @@ fi
 # ===========================================================================
 # Tests
 # ===========================================================================
-# Java samples accept -D to select the dataset (Synthetic or SIP).
-# REST samples pass dataset as a query parameter automatically.
+# Java + WebSocket samples take an explicit dataset; REST samples accept -D too
+# (the dataset is sent as a query parameter). Pass the dataset everywhere so the
+# same flow works for both SIP and Synthetic. Live aggregate subscribe/stream use
+# Second bars so a bar finalises within the bounded streaming window.
+LIVE_FREQ="${LIVE_FREQ:-Second}"
 
 section "Health"
 run_test "Ping (REST)" \
-    ping-rest
+    ping-rest -d "$DATASET"
 
 section "Reference Data"
 run_test "Get Securities (REST)" \
-    get-securities-stocks-rest
+    get-securities-stocks-rest -D "$DATASET"
 run_test "Get Securities (Java)" \
     get-securities-stocks-java -D "$DATASET"
 
 section "Backtesting — Download OHLC"
 run_test "Download Minute OHLC (REST, --wait)" \
-    start-ohlc-download-stocks-rest -d "$TEST_DATE" -s "$SYMBOL" -c Minute -w
+    start-ohlc-download-stocks-rest -D "$DATASET" -d "$TEST_DATE" -s "$SYMBOL" -c Minute -w
 run_test "Download Minute OHLC (Java, --wait)" \
     start-ohlc-download-stocks-java -d "$TEST_DATE" -s "$SYMBOL" -c Minute -w -D "$DATASET"
 
 section "Historical Aggregates — Fetch"
 run_test "Fetch Historical OHLC (REST)" \
-    get-historical-ohlc-stocks-rest -s "$SYMBOL" -c Minute -f "$STREAM_FROM" -t "$STREAM_TO"
+    get-historical-ohlc-stocks-rest -D "$DATASET" -s "$SYMBOL" -c Minute -f "$STREAM_FROM" -t "$STREAM_TO"
 run_test "Fetch Historical OHLC (Java)" \
     get-historical-ohlc-stocks-java -s "$SYMBOL" -c Minute -f "$STREAM_FROM" -t "$STREAM_TO" -D "$DATASET"
 run_test "Fetch Historical Top Gainers (REST)" \
-    get-historical-top-gainers-stocks-rest -d "$TEST_DATE"
+    get-historical-top-gainers-stocks-rest -D "$DATASET" -d "$TEST_DATE"
 run_test "Fetch Historical Top Gainers (Java)" \
     get-historical-top-gainers-stocks-java -d "$TEST_DATE" -D "$DATASET"
 
 section "Historical Aggregates — Stream"
 run_test "Stream Historical OHLC (Java)" \
     stream-historical-ohlc-stocks-java -s "$SYMBOL" -f "$STREAM_FROM" -t "$STREAM_TO" -D "$DATASET"
+run_stream_test "Stream Historical OHLC (WS)" \
+    stream-historical-ohlc-ws -d "$DATASET" -s "$SYMBOL" -f Minute -b "$STREAM_FROM" -e "$STREAM_TO" -t "$STREAM_SECS"
+
+# Live data only exists while a tick replay is running, so download a day of
+# ticks, start the replay, exercise the live samples, then stop the replay.
+section "Backtesting — Download Ticks"
+run_test "Download Ticks (REST, --wait)" \
+    start-tick-download-stocks-rest -D "$DATASET" -d "$TEST_DATE" -s "$SYMBOL" -w
+
+section "Backtesting — Start Replay"
+run_test "Start Tick Replay (REST)" \
+    start-tick-replay-stocks-rest -D "$DATASET" -d "$TEST_DATE"
+if wait_replay_running is-tick-replay-running-stocks-rest -D "$DATASET"; then
+    setup_ok "Tick replay is running"
+else
+    setup_warn "Tick replay did not report running; live samples may see no data"
+fi
+
+section "Live — Fetch"
+run_test "Fetch Live OHLC (REST)" \
+    get-live-ohlc-stocks-rest -D "$DATASET" -s "$SYMBOL"
+run_test "Fetch Live OHLC (Java)" \
+    get-live-ohlc-stocks-java -s "$SYMBOL" -D "$DATASET"
+run_test "Fetch Live Top-of-Book (REST)" \
+    get-live-top-of-book-stocks-rest -D "$DATASET" -s "$SYMBOL"
+run_test "Fetch Live Top-of-Book (Java)" \
+    get-live-top-of-book-stocks-java -s "$SYMBOL" -D "$DATASET"
+run_test "Fetch Live Last Trade (REST)" \
+    get-live-last-trade-stocks-rest -D "$DATASET" -s "$SYMBOL"
+run_test "Fetch Live Last Trade (Java)" \
+    get-live-last-trade-stocks-java -s "$SYMBOL" -D "$DATASET"
+run_test "Fetch Live SMA (REST)" \
+    get-live-sma-stocks-rest -D "$DATASET" -s "$SYMBOL"
+run_test "Fetch Live EMA (REST)" \
+    get-live-ema-stocks-rest -D "$DATASET" -s "$SYMBOL"
+
+section "Live — Subscribe (Java)"
+run_stream_test "Subscribe Live Top-of-Book (Java)" \
+    subscribe-live-top-of-book-stocks-java -D "$DATASET" -s "$SYMBOL"
+run_stream_test "Subscribe Live Trades (Java)" \
+    subscribe-live-trades-stocks-java -D "$DATASET" -s "$SYMBOL"
+run_stream_test "Subscribe Live OHLC (Java)" \
+    subscribe-live-ohlc-stocks-java -D "$DATASET" -s "$SYMBOL" -c "$LIVE_FREQ"
+run_stream_test "Subscribe Live SMA (Java)" \
+    subscribe-live-sma-stocks-java -D "$DATASET" -s "$SYMBOL" -c "$LIVE_FREQ"
+run_stream_test "Subscribe Live EMA (Java)" \
+    subscribe-live-ema-stocks-java -D "$DATASET" -s "$SYMBOL" -c "$LIVE_FREQ"
+
+section "WebSocket Streaming"
+run_stream_test "Subscribe Live Trades (WS)" \
+    subscribe-live-trades-ws -d "$DATASET" -s "$SYMBOL" -t "$STREAM_SECS"
+run_stream_test "Subscribe Live Quotes (WS)" \
+    subscribe-live-top-of-book-ws -d "$DATASET" -s "$SYMBOL" -t "$STREAM_SECS"
+run_stream_test "Subscribe Live OHLC (WS)" \
+    subscribe-live-ohlc-ws -d "$DATASET" -s "$SYMBOL" -f "$LIVE_FREQ" -t "$STREAM_SECS"
+run_stream_test "Subscribe Live SMA (WS)" \
+    subscribe-live-sma-ws -d "$DATASET" -s "$SYMBOL" -f "$LIVE_FREQ" -t "$STREAM_SECS"
+run_stream_test "Subscribe Live EMA (WS)" \
+    subscribe-live-ema-ws -d "$DATASET" -s "$SYMBOL" -f "$LIVE_FREQ" -t "$STREAM_SECS"
+
+section "Backtesting — Stop Replay"
+run_test "Stop Tick Replay (REST)" \
+    stop-tick-replay-stocks-rest -D "$DATASET"
+
+# ---------------------------------------------------------------------------
+# Crypto phase (optional, --crypto + crypto-entitled POLYGON_API_KEY).
+# Crypto samples are dataset-fixed (no -D); WebSocket samples select Crypto via -d.
+# ---------------------------------------------------------------------------
+if [ "$RUN_CRYPTO" = true ]; then
+    section "Crypto — Reference & Backtest"
+    run_test "Get Crypto Securities (REST)" \
+        get-securities-crypto-rest
+    run_test "Download Crypto Ticks (REST, --wait)" \
+        start-tick-download-crypto-rest -d "$TEST_DATE" -s "$CRYPTO_SYMBOL" -w
+    run_test "Start Crypto Tick Replay (REST)" \
+        start-tick-replay-crypto-rest -d "$TEST_DATE"
+    if wait_replay_running is-tick-replay-running-crypto-rest; then
+        setup_ok "Crypto tick replay is running"
+    else
+        setup_warn "Crypto tick replay did not report running; live crypto samples may see no data"
+    fi
+
+    section "Crypto — Live Fetch"
+    run_test "Fetch Live Crypto OHLC (REST)" \
+        get-live-ohlc-crypto-rest -s "$CRYPTO_SYMBOL"
+    run_test "Fetch Live Crypto OHLC (Java)" \
+        get-live-ohlc-crypto-java -s "$CRYPTO_SYMBOL"
+    run_test "Fetch Live Crypto Top-of-Book (REST)" \
+        get-live-top-of-book-crypto-rest -s "$CRYPTO_SYMBOL"
+
+    section "Crypto — Subscribe & WebSocket"
+    run_stream_test "Subscribe Live Crypto OHLC (Java)" \
+        subscribe-live-ohlc-crypto-java -s "$CRYPTO_SYMBOL" -c "$LIVE_FREQ"
+    run_stream_test "Subscribe Live Crypto Trades (WS)" \
+        subscribe-live-trades-ws -d Crypto -s "$CRYPTO_SYMBOL" -t "$STREAM_SECS"
+    run_stream_test "Subscribe Live Crypto OHLC (WS)" \
+        subscribe-live-ohlc-ws -d Crypto -s "$CRYPTO_SYMBOL" -f "$LIVE_FREQ" -t "$STREAM_SECS"
+
+    section "Crypto — Stop Replay"
+    run_test "Stop Crypto Tick Replay (REST)" \
+        stop-tick-replay-crypto-rest
+fi
 
 # ===========================================================================
 # Teardown
