@@ -702,29 +702,29 @@ run_test "Ping (REST)" \
 
 section "Reference Data"
 run_test "Get Securities (REST)" \
-    get-securities-rest
+    get-securities-stocks-rest
 run_test "Get Securities (Java)" \
-    get-securities-java -D "$DATASET"
+    get-securities-stocks-java -D "$DATASET"
 
 section "Backtesting — Download OHLC"
 run_test "Download Minute OHLC (REST, --wait)" \
-    start-ohlc-download-rest -d "$TEST_DATE" -s "$SYMBOL" -c Minute -w
+    start-ohlc-download-stocks-rest -d "$TEST_DATE" -s "$SYMBOL" -c Minute -w
 run_test "Download Minute OHLC (Java, --wait)" \
-    start-ohlc-download-java -d "$TEST_DATE" -s "$SYMBOL" -c Minute -w -D "$DATASET"
+    start-ohlc-download-stocks-java -d "$TEST_DATE" -s "$SYMBOL" -c Minute -w -D "$DATASET"
 
 section "Historical Aggregates — Fetch"
 run_test "Fetch Historical OHLC (REST)" \
-    get-historical-ohlc-rest -s "$SYMBOL" -c Minute -f "$STREAM_FROM" -t "$STREAM_TO"
+    get-historical-ohlc-stocks-rest -s "$SYMBOL" -c Minute -f "$STREAM_FROM" -t "$STREAM_TO"
 run_test "Fetch Historical OHLC (Java)" \
-    get-historical-ohlc-java -s "$SYMBOL" -c Minute -f "$STREAM_FROM" -t "$STREAM_TO" -D "$DATASET"
+    get-historical-ohlc-stocks-java -s "$SYMBOL" -c Minute -f "$STREAM_FROM" -t "$STREAM_TO" -D "$DATASET"
 run_test "Fetch Historical Top Gainers (REST)" \
-    get-historical-top-gainers-rest -d "$TEST_DATE"
+    get-historical-top-gainers-stocks-rest -d "$TEST_DATE"
 run_test "Fetch Historical Top Gainers (Java)" \
-    get-historical-top-gainers-java -d "$TEST_DATE" -D "$DATASET"
+    get-historical-top-gainers-stocks-java -d "$TEST_DATE" -D "$DATASET"
 
 section "Historical Aggregates — Stream"
 run_test "Stream Historical OHLC (Java)" \
-    stream-historical-ohlc-java -s "$SYMBOL" -f "$STREAM_FROM" -t "$STREAM_TO" -D "$DATASET"
+    stream-historical-ohlc-stocks-java -s "$SYMBOL" -f "$STREAM_FROM" -t "$STREAM_TO" -D "$DATASET"
 
 # ===========================================================================
 # Teardown

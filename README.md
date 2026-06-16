@@ -336,13 +336,13 @@ Use `--help` to see all available samples, or `--help` after a sample name to se
 
 ```bash
 bin/run.sh --help
-bin/run.sh get-historical-ohlc-rest --help
+bin/run.sh get-historical-ohlc-stocks-rest --help
 ```
 
 **Example:**
 
 ```bash
-bin/run.sh get-historical-ohlc-rest -s AAPL -c Minute -f 2024-01-15T09:00:00 -t 2024-01-15T18:00:00
+bin/run.sh get-historical-ohlc-stocks-rest -s AAPL -c Minute -f 2024-01-15T09:00:00 -t 2024-01-15T18:00:00
 ```
 
 ### Configuration
