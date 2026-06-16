@@ -119,68 +119,87 @@ These samples demonstrate three access modes:
 | WebSocket | `com.datafye.samples.ws` | [src/.../ws](src/main/java/com/datafye/samples/ws) |
 | Java Client | `com.datafye.samples.java.{stocks,crypto}.*` | [src/.../java](src/main/java/com/datafye/samples/java) |
 
-**Datasets.** REST and Java samples are organized by asset class. The **stocks** samples cover the `SIP` and `Synthetic` datasets — pass `-D SIP` or `-D Synthetic` (default `Synthetic`). The **crypto** samples are launched with the `-crypto` sample keys (e.g. `get-live-sma-crypto-rest`, `get-live-ohlc-crypto-java`). The **WebSocket** samples are a single dataset-aware set covering all three datasets via `-d SIP|Synthetic|Crypto`. The tables below name the stocks sample for each operation; an equivalent crypto sample exists under `…rest.crypto.*` / `…java.crypto.*` and is registered with a `-crypto` key.
-
-> **Note:** Java-client *subscription* to live **OHLC/SMA/EMA** (the rows marked _WIP_ below) is not yet available — live aggregate streaming is delivered over the **WebSocket** API (Available for all datasets) and over the Java client for **trades/quotes**. Java-client aggregate subscription is in progress.
+**Reading the tables.** Each row is one runnable sample. The **Datasets** column lists the datasets that sample serves — **stocks** samples cover `SIP` and `Synthetic` (pass `-D SIP` / `-D Synthetic`, default `Synthetic`); **crypto** samples cover `Crypto` (launched with the `-crypto` run keys); the **WebSocket** samples are a single dataset-aware set that picks the dataset at runtime via `-d SIP|Synthetic|Crypto`. The **Sample** column links to the source for that asset class. In the **Foundry** / **Trading** columns, ✓ means supported and ✗ means not applicable in that environment. Run keys add the matching `-stocks` / `-crypto` / `-ws` suffix — see `bin/run.sh --list`.
 
 #### Health
 
 <table>
-<tr><th>Operation</th><th>API</th><th>Sample</th><th>Foundry</th><th>Trading</th><th>Status</th></tr>
-<tr><td>Ping</td><td>REST</td><td><a href="src/main/java/com/datafye/samples/rest/health/Ping.java">Ping</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><th>Operation</th><th>API</th><th>Datasets</th><th>Sample</th><th>Foundry</th><th>Trading</th><th>Status</th></tr>
+<tr><td>Ping</td><td>REST</td><td>SIP, Synthetic, Crypto</td><td><a href="src/main/java/com/datafye/samples/rest/health/Ping.java">Ping</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
 </table>
 
 #### Reference
 
 <table>
-<tr><th>Data Type</th><th>Mode</th><th>API</th><th>Sample</th><th>Foundry</th><th>Trading</th><th>Status</th></tr>
-<tr><td rowspan="2" style="vertical-align:middle">Securities</td><td rowspan="2" style="vertical-align:middle"><a href="#fetch">Fetch</a></td><td>REST</td><td><a href="src/main/java/com/datafye/samples/rest/reference/GetSecurities.java">GetSecurities</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
-<tr><td>Java</td><td><a href="src/main/java/com/datafye/samples/java/reference/GetSecurities.java">GetSecurities</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><th>Data Type</th><th>Mode</th><th>API</th><th>Datasets</th><th>Sample</th><th>Foundry</th><th>Trading</th><th>Status</th></tr>
+<tr><td rowspan="4" style="vertical-align:middle">Securities</td><td rowspan="4" style="vertical-align:middle"><a href="#fetch">Fetch</a></td><td>REST</td><td>SIP, Synthetic</td><td><a href="src/main/java/com/datafye/samples/rest/stocks/reference/GetSecurities.java">GetSecurities</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td>REST</td><td>Crypto</td><td><a href="src/main/java/com/datafye/samples/rest/crypto/reference/GetSecurities.java">GetSecurities</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td>Java</td><td>SIP, Synthetic</td><td><a href="src/main/java/com/datafye/samples/java/stocks/reference/GetSecurities.java">GetSecurities</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td>Java</td><td>Crypto</td><td><a href="src/main/java/com/datafye/samples/java/crypto/reference/GetSecurities.java">GetSecurities</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
 </table>
 
 #### Live — Ticks
 
 <table>
-<tr><th>Data Type</th><th>Mode</th><th>API</th><th>Sample</th><th>Foundry</th><th>Trading</th><th>Status</th></tr>
-<tr><td rowspan="4" style="vertical-align:middle">Top-of-Book Quotes</td><td rowspan="2" style="vertical-align:middle"><a href="#fetch">Fetch</a></td><td>REST</td><td><a href="src/main/java/com/datafye/samples/rest/live/ticks/GetLiveTopOfBook.java">GetLiveTopOfBook</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
-<tr><td>Java</td><td><a href="src/main/java/com/datafye/samples/java/live/ticks/GetLiveTopOfBook.java">GetLiveTopOfBook</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
-<tr><td rowspan="2" style="vertical-align:middle"><a href="#subscribe">Subscribe</a></td><td>WS</td><td><a href="src/main/java/com/datafye/samples/ws/SubscribeLiveTopOfBook.java">SubscribeLiveTopOfBook</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
-<tr><td>Java</td><td><a href="src/main/java/com/datafye/samples/java/live/ticks/SubscribeLiveTopOfBook.java">SubscribeLiveTopOfBook</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
-<tr><td rowspan="4" style="vertical-align:middle">Trades</td><td rowspan="2" style="vertical-align:middle"><a href="#fetch">Fetch</a></td><td>REST</td><td><a href="src/main/java/com/datafye/samples/rest/live/ticks/GetLiveLastTrade.java">GetLiveLastTrade</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
-<tr><td>Java</td><td><a href="src/main/java/com/datafye/samples/java/live/ticks/GetLiveLastTrade.java">GetLiveLastTrade</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
-<tr><td rowspan="2" style="vertical-align:middle"><a href="#subscribe">Subscribe</a></td><td>WS</td><td><a href="src/main/java/com/datafye/samples/ws/SubscribeLiveTrades.java">SubscribeLiveTrades</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
-<tr><td>Java</td><td><a href="src/main/java/com/datafye/samples/java/live/ticks/SubscribeLiveTrades.java">SubscribeLiveTrades</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><th>Data Type</th><th>Mode</th><th>API</th><th>Datasets</th><th>Sample</th><th>Foundry</th><th>Trading</th><th>Status</th></tr>
+<tr><td rowspan="6" style="vertical-align:middle">Top-of-Book Quotes</td><td rowspan="4" style="vertical-align:middle"><a href="#fetch">Fetch</a></td><td>REST</td><td>SIP, Synthetic</td><td><a href="src/main/java/com/datafye/samples/rest/stocks/live/ticks/GetLiveTopOfBook.java">GetLiveTopOfBook</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td>REST</td><td>Crypto</td><td><a href="src/main/java/com/datafye/samples/rest/crypto/live/ticks/GetLiveTopOfBook.java">GetLiveTopOfBook</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td>Java</td><td>SIP, Synthetic</td><td><a href="src/main/java/com/datafye/samples/java/stocks/live/ticks/GetLiveTopOfBook.java">GetLiveTopOfBook</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td>Java</td><td>Crypto</td><td><a href="src/main/java/com/datafye/samples/java/crypto/live/ticks/GetLiveTopOfBook.java">GetLiveTopOfBook</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td rowspan="2" style="vertical-align:middle"><a href="#subscribe">Subscribe</a></td><td>Java</td><td>SIP, Synthetic</td><td><a href="src/main/java/com/datafye/samples/java/stocks/live/ticks/SubscribeLiveTopOfBook.java">SubscribeLiveTopOfBook</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td>WS</td><td>SIP, Synthetic, Crypto</td><td><a href="src/main/java/com/datafye/samples/ws/SubscribeLiveTopOfBook.java">SubscribeLiveTopOfBook</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td rowspan="6" style="vertical-align:middle">Trades</td><td rowspan="4" style="vertical-align:middle"><a href="#fetch">Fetch</a></td><td>REST</td><td>SIP, Synthetic</td><td><a href="src/main/java/com/datafye/samples/rest/stocks/live/ticks/GetLiveLastTrade.java">GetLiveLastTrade</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td>REST</td><td>Crypto</td><td><a href="src/main/java/com/datafye/samples/rest/crypto/live/ticks/GetLiveLastTrade.java">GetLiveLastTrade</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td>Java</td><td>SIP, Synthetic</td><td><a href="src/main/java/com/datafye/samples/java/stocks/live/ticks/GetLiveLastTrade.java">GetLiveLastTrade</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td>Java</td><td>Crypto</td><td><a href="src/main/java/com/datafye/samples/java/crypto/live/ticks/GetLiveLastTrade.java">GetLiveLastTrade</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td rowspan="2" style="vertical-align:middle"><a href="#subscribe">Subscribe</a></td><td>Java</td><td>SIP, Synthetic</td><td><a href="src/main/java/com/datafye/samples/java/stocks/live/ticks/SubscribeLiveTrades.java">SubscribeLiveTrades</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td>WS</td><td>SIP, Synthetic, Crypto</td><td><a href="src/main/java/com/datafye/samples/ws/SubscribeLiveTrades.java">SubscribeLiveTrades</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
 </table>
 
 #### Live — Aggregates
 
 <table>
-<tr><th>Data Type</th><th>Mode</th><th>API</th><th>Sample</th><th>Foundry</th><th>Trading</th><th>Status</th></tr>
-<tr><td rowspan="4" style="vertical-align:middle">OHLC</td><td rowspan="2" style="vertical-align:middle"><a href="#fetch">Fetch</a></td><td>REST</td><td><a href="src/main/java/com/datafye/samples/rest/live/aggregates/GetLiveOHLC.java">GetLiveOHLC</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
-<tr><td>Java</td><td><a href="src/main/java/com/datafye/samples/java/live/aggregates/GetLiveOHLC.java">GetLiveOHLC</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
-<tr><td rowspan="2" style="vertical-align:middle"><a href="#subscribe">Subscribe</a></td><td>WS</td><td><a href="src/main/java/com/datafye/samples/ws/SubscribeLiveOHLC.java">SubscribeLiveOHLC</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
-<tr><td>Java</td><td>SubscribeLiveOHLC</td><td align="center">✓</td><td align="center">✓</td><td><em>WIP</em></td></tr>
-<tr><td rowspan="4" style="vertical-align:middle">SMA</td><td rowspan="2" style="vertical-align:middle"><a href="#fetch">Fetch</a></td><td>REST</td><td><a href="src/main/java/com/datafye/samples/rest/live/aggregates/GetLiveSMA.java">GetLiveSMA</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
-<tr><td>Java</td><td><a href="src/main/java/com/datafye/samples/java/live/aggregates/GetLiveSMA.java">GetLiveSMA</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
-<tr><td rowspan="2" style="vertical-align:middle"><a href="#subscribe">Subscribe</a></td><td>WS</td><td><a href="src/main/java/com/datafye/samples/ws/SubscribeLiveSMA.java">SubscribeLiveSMA</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
-<tr><td>Java</td><td>SubscribeLiveSMA</td><td align="center">✓</td><td align="center">✓</td><td><em>WIP</em></td></tr>
-<tr><td rowspan="4" style="vertical-align:middle">EMA</td><td rowspan="2" style="vertical-align:middle"><a href="#fetch">Fetch</a></td><td>REST</td><td><a href="src/main/java/com/datafye/samples/rest/live/aggregates/GetLiveEMA.java">GetLiveEMA</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
-<tr><td>Java</td><td><a href="src/main/java/com/datafye/samples/java/live/aggregates/GetLiveEMA.java">GetLiveEMA</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
-<tr><td rowspan="2" style="vertical-align:middle"><a href="#subscribe">Subscribe</a></td><td>WS</td><td><a href="src/main/java/com/datafye/samples/ws/SubscribeLiveEMA.java">SubscribeLiveEMA</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
-<tr><td>Java</td><td>SubscribeLiveEMA</td><td align="center">✓</td><td align="center">✓</td><td><em>WIP</em></td></tr>
+<tr><th>Data Type</th><th>Mode</th><th>API</th><th>Datasets</th><th>Sample</th><th>Foundry</th><th>Trading</th><th>Status</th></tr>
+<tr><td rowspan="7" style="vertical-align:middle">OHLC</td><td rowspan="4" style="vertical-align:middle"><a href="#fetch">Fetch</a></td><td>REST</td><td>SIP, Synthetic</td><td><a href="src/main/java/com/datafye/samples/rest/stocks/live/aggregates/GetLiveOHLC.java">GetLiveOHLC</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td>REST</td><td>Crypto</td><td><a href="src/main/java/com/datafye/samples/rest/crypto/live/aggregates/GetLiveOHLC.java">GetLiveOHLC</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td>Java</td><td>SIP, Synthetic</td><td><a href="src/main/java/com/datafye/samples/java/stocks/live/aggregates/GetLiveOHLC.java">GetLiveOHLC</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td>Java</td><td>Crypto</td><td><a href="src/main/java/com/datafye/samples/java/crypto/live/aggregates/GetLiveOHLC.java">GetLiveOHLC</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td rowspan="3" style="vertical-align:middle"><a href="#subscribe">Subscribe</a></td><td>Java</td><td>SIP, Synthetic</td><td><a href="src/main/java/com/datafye/samples/java/stocks/live/aggregates/SubscribeLiveOHLC.java">SubscribeLiveOHLC</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td>Java</td><td>Crypto</td><td><a href="src/main/java/com/datafye/samples/java/crypto/live/aggregates/SubscribeLiveOHLC.java">SubscribeLiveOHLC</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td>WS</td><td>SIP, Synthetic, Crypto</td><td><a href="src/main/java/com/datafye/samples/ws/SubscribeLiveOHLC.java">SubscribeLiveOHLC</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td rowspan="7" style="vertical-align:middle">SMA</td><td rowspan="4" style="vertical-align:middle"><a href="#fetch">Fetch</a></td><td>REST</td><td>SIP, Synthetic</td><td><a href="src/main/java/com/datafye/samples/rest/stocks/live/aggregates/GetLiveSMA.java">GetLiveSMA</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td>REST</td><td>Crypto</td><td><a href="src/main/java/com/datafye/samples/rest/crypto/live/aggregates/GetLiveSMA.java">GetLiveSMA</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td>Java</td><td>SIP, Synthetic</td><td><a href="src/main/java/com/datafye/samples/java/stocks/live/aggregates/GetLiveSMA.java">GetLiveSMA</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td>Java</td><td>Crypto</td><td><a href="src/main/java/com/datafye/samples/java/crypto/live/aggregates/GetLiveSMA.java">GetLiveSMA</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td rowspan="3" style="vertical-align:middle"><a href="#subscribe">Subscribe</a></td><td>Java</td><td>SIP, Synthetic</td><td><a href="src/main/java/com/datafye/samples/java/stocks/live/aggregates/SubscribeLiveSMA.java">SubscribeLiveSMA</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td>Java</td><td>Crypto</td><td><a href="src/main/java/com/datafye/samples/java/crypto/live/aggregates/SubscribeLiveSMA.java">SubscribeLiveSMA</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td>WS</td><td>SIP, Synthetic, Crypto</td><td><a href="src/main/java/com/datafye/samples/ws/SubscribeLiveSMA.java">SubscribeLiveSMA</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td rowspan="7" style="vertical-align:middle">EMA</td><td rowspan="4" style="vertical-align:middle"><a href="#fetch">Fetch</a></td><td>REST</td><td>SIP, Synthetic</td><td><a href="src/main/java/com/datafye/samples/rest/stocks/live/aggregates/GetLiveEMA.java">GetLiveEMA</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td>REST</td><td>Crypto</td><td><a href="src/main/java/com/datafye/samples/rest/crypto/live/aggregates/GetLiveEMA.java">GetLiveEMA</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td>Java</td><td>SIP, Synthetic</td><td><a href="src/main/java/com/datafye/samples/java/stocks/live/aggregates/GetLiveEMA.java">GetLiveEMA</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td>Java</td><td>Crypto</td><td><a href="src/main/java/com/datafye/samples/java/crypto/live/aggregates/GetLiveEMA.java">GetLiveEMA</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td rowspan="3" style="vertical-align:middle"><a href="#subscribe">Subscribe</a></td><td>Java</td><td>SIP, Synthetic</td><td><a href="src/main/java/com/datafye/samples/java/stocks/live/aggregates/SubscribeLiveEMA.java">SubscribeLiveEMA</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td>Java</td><td>Crypto</td><td><a href="src/main/java/com/datafye/samples/java/crypto/live/aggregates/SubscribeLiveEMA.java">SubscribeLiveEMA</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td>WS</td><td>SIP, Synthetic, Crypto</td><td><a href="src/main/java/com/datafye/samples/ws/SubscribeLiveEMA.java">SubscribeLiveEMA</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
 </table>
 
 #### Historical Aggregates
 
 <table>
-<tr><th>Data Type</th><th>Mode</th><th>API</th><th>Sample</th><th>Foundry</th><th>Trading</th><th>Status</th></tr>
-<tr><td rowspan="5" style="vertical-align:middle">OHLC</td><td rowspan="2" style="vertical-align:middle"><a href="#fetch">Fetch</a></td><td>REST</td><td><a href="src/main/java/com/datafye/samples/rest/history/GetHistoricalOHLC.java">GetHistoricalOHLC</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
-<tr><td>Java</td><td><a href="src/main/java/com/datafye/samples/java/history/GetHistoricalOHLC.java">GetHistoricalOHLC</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
-<tr><td rowspan="3" style="vertical-align:middle"><a href="#stream">Stream</a></td><td>WS</td><td><a href="src/main/java/com/datafye/samples/ws/StreamHistoricalOHLC.java">StreamHistoricalOHLC</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
-<tr><td>Java</td><td><a href="src/main/java/com/datafye/samples/java/history/StreamHistoricalOHLC.java">StreamHistoricalOHLC</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
-<tr><td>Java</td><td><a href="src/main/java/com/datafye/samples/java/history/StreamHistoricalOHLCConcurrently.java">StreamHistoricalOHLCConcurrently</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
-<tr><td rowspan="2" style="vertical-align:middle">Top Gainers</td><td rowspan="2" style="vertical-align:middle"><a href="#fetch">Fetch</a></td><td>REST</td><td><a href="src/main/java/com/datafye/samples/rest/history/GetHistoricalTopGainers.java">GetHistoricalTopGainers</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
-<tr><td>Java</td><td><a href="src/main/java/com/datafye/samples/java/history/GetHistoricalTopGainers.java">GetHistoricalTopGainers</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><th>Data Type</th><th>Mode</th><th>API</th><th>Datasets</th><th>Sample</th><th>Foundry</th><th>Trading</th><th>Status</th></tr>
+<tr><td rowspan="9" style="vertical-align:middle">OHLC</td><td rowspan="4" style="vertical-align:middle"><a href="#fetch">Fetch</a></td><td>REST</td><td>SIP, Synthetic</td><td><a href="src/main/java/com/datafye/samples/rest/stocks/history/GetHistoricalOHLC.java">GetHistoricalOHLC</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td>REST</td><td>Crypto</td><td><a href="src/main/java/com/datafye/samples/rest/crypto/history/GetHistoricalOHLC.java">GetHistoricalOHLC</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td>Java</td><td>SIP, Synthetic</td><td><a href="src/main/java/com/datafye/samples/java/stocks/history/GetHistoricalOHLC.java">GetHistoricalOHLC</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td>Java</td><td>Crypto</td><td><a href="src/main/java/com/datafye/samples/java/crypto/history/GetHistoricalOHLC.java">GetHistoricalOHLC</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td rowspan="5" style="vertical-align:middle"><a href="#stream">Stream</a></td><td>Java</td><td>SIP, Synthetic</td><td><a href="src/main/java/com/datafye/samples/java/stocks/history/StreamHistoricalOHLC.java">StreamHistoricalOHLC</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>Java</td><td>Crypto</td><td><a href="src/main/java/com/datafye/samples/java/crypto/history/StreamHistoricalOHLC.java">StreamHistoricalOHLC</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>Java</td><td>SIP, Synthetic</td><td><a href="src/main/java/com/datafye/samples/java/stocks/history/StreamHistoricalOHLCConcurrently.java">StreamHistoricalOHLCConcurrently</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>Java</td><td>Crypto</td><td><a href="src/main/java/com/datafye/samples/java/crypto/history/StreamHistoricalOHLCConcurrently.java">StreamHistoricalOHLCConcurrently</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>WS</td><td>SIP, Synthetic, Crypto</td><td><a href="src/main/java/com/datafye/samples/ws/StreamHistoricalOHLC.java">StreamHistoricalOHLC</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td rowspan="4" style="vertical-align:middle">Top Gainers</td><td rowspan="4" style="vertical-align:middle"><a href="#fetch">Fetch</a></td><td>REST</td><td>SIP, Synthetic</td><td><a href="src/main/java/com/datafye/samples/rest/stocks/history/GetHistoricalTopGainers.java">GetHistoricalTopGainers</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td>REST</td><td>Crypto</td><td><a href="src/main/java/com/datafye/samples/rest/crypto/history/GetHistoricalTopGainers.java">GetHistoricalTopGainers</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td>Java</td><td>SIP, Synthetic</td><td><a href="src/main/java/com/datafye/samples/java/stocks/history/GetHistoricalTopGainers.java">GetHistoricalTopGainers</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
+<tr><td>Java</td><td>Crypto</td><td><a href="src/main/java/com/datafye/samples/java/crypto/history/GetHistoricalTopGainers.java">GetHistoricalTopGainers</a></td><td align="center">✓</td><td align="center">✓</td><td>Available</td></tr>
 </table>
 
 #### Backtesting
@@ -188,54 +207,83 @@ These samples demonstrate three access modes:
 Foundry-only. See [Backtesting under Concepts](#backtesting-concepts) for how download and replay work together.
 
 <table>
-<tr><th>Data Type</th><th>Mode</th><th>API</th><th>Sample</th><th>Foundry</th><th>Trading</th><th>Status</th></tr>
-<tr><td rowspan="12" style="vertical-align:middle">Ticks</td><td rowspan="6" style="vertical-align:middle"><a href="#download">Download</a></td><td rowspan="3" style="vertical-align:middle">REST</td><td><a href="src/main/java/com/datafye/samples/rest/backtest/StartTickDownload.java">StartTickDownload</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
-<tr><td><a href="src/main/java/com/datafye/samples/rest/backtest/IsTickDownloadRunning.java">IsTickDownloadRunning</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
-<tr><td><a href="src/main/java/com/datafye/samples/rest/backtest/CancelTickDownload.java">CancelTickDownload</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
-<tr><td rowspan="3" style="vertical-align:middle">Java</td><td><a href="src/main/java/com/datafye/samples/java/backtest/StartTickDownload.java">StartTickDownload</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
-<tr><td><a href="src/main/java/com/datafye/samples/java/backtest/IsTickDownloadRunning.java">IsTickDownloadRunning</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
-<tr><td><a href="src/main/java/com/datafye/samples/java/backtest/CancelTickDownload.java">CancelTickDownload</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
-<tr><td rowspan="6" style="vertical-align:middle"><a href="#replay">Replay</a></td><td rowspan="3" style="vertical-align:middle">REST</td><td><a href="src/main/java/com/datafye/samples/rest/backtest/StartTickReplay.java">StartTickReplay</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
-<tr><td><a href="src/main/java/com/datafye/samples/rest/backtest/IsTickReplayRunning.java">IsTickReplayRunning</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
-<tr><td><a href="src/main/java/com/datafye/samples/rest/backtest/StopTickReplay.java">StopTickReplay</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
-<tr><td rowspan="3" style="vertical-align:middle">Java</td><td><a href="src/main/java/com/datafye/samples/java/backtest/StartTickReplay.java">StartTickReplay</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
-<tr><td><a href="src/main/java/com/datafye/samples/java/backtest/IsTickReplayRunning.java">IsTickReplayRunning</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
-<tr><td><a href="src/main/java/com/datafye/samples/java/backtest/StopTickReplay.java">StopTickReplay</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
-<tr><td rowspan="6" style="vertical-align:middle">Trades</td><td rowspan="6" style="vertical-align:middle"><a href="#download">Download</a></td><td rowspan="3" style="vertical-align:middle">REST</td><td><a href="src/main/java/com/datafye/samples/rest/backtest/StartTradeDownload.java">StartTradeDownload</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
-<tr><td><a href="src/main/java/com/datafye/samples/rest/backtest/IsTradeDownloadRunning.java">IsTradeDownloadRunning</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
-<tr><td><a href="src/main/java/com/datafye/samples/rest/backtest/CancelTradeDownload.java">CancelTradeDownload</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
-<tr><td rowspan="3" style="vertical-align:middle">Java</td><td><a href="src/main/java/com/datafye/samples/java/backtest/StartTradeDownload.java">StartTradeDownload</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
-<tr><td><a href="src/main/java/com/datafye/samples/java/backtest/IsTradeDownloadRunning.java">IsTradeDownloadRunning</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
-<tr><td><a href="src/main/java/com/datafye/samples/java/backtest/CancelTradeDownload.java">CancelTradeDownload</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
-<tr><td rowspan="6" style="vertical-align:middle">Quotes</td><td rowspan="6" style="vertical-align:middle"><a href="#download">Download</a></td><td rowspan="3" style="vertical-align:middle">REST</td><td><a href="src/main/java/com/datafye/samples/rest/backtest/StartQuoteDownload.java">StartQuoteDownload</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
-<tr><td><a href="src/main/java/com/datafye/samples/rest/backtest/IsQuoteDownloadRunning.java">IsQuoteDownloadRunning</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
-<tr><td><a href="src/main/java/com/datafye/samples/rest/backtest/CancelQuoteDownload.java">CancelQuoteDownload</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
-<tr><td rowspan="3" style="vertical-align:middle">Java</td><td><a href="src/main/java/com/datafye/samples/java/backtest/StartQuoteDownload.java">StartQuoteDownload</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
-<tr><td><a href="src/main/java/com/datafye/samples/java/backtest/IsQuoteDownloadRunning.java">IsQuoteDownloadRunning</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
-<tr><td><a href="src/main/java/com/datafye/samples/java/backtest/CancelQuoteDownload.java">CancelQuoteDownload</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
-<tr><td rowspan="6" style="vertical-align:middle">OHLC</td><td rowspan="6" style="vertical-align:middle"><a href="#download">Download</a></td><td rowspan="3" style="vertical-align:middle">REST</td><td><a href="src/main/java/com/datafye/samples/rest/backtest/StartOHLCDownload.java">StartOHLCDownload</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
-<tr><td><a href="src/main/java/com/datafye/samples/rest/backtest/IsOHLCDownloadRunning.java">IsOHLCDownloadRunning</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
-<tr><td><a href="src/main/java/com/datafye/samples/rest/backtest/CancelOHLCDownload.java">CancelOHLCDownload</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
-<tr><td rowspan="3" style="vertical-align:middle">Java</td><td><a href="src/main/java/com/datafye/samples/java/backtest/StartOHLCDownload.java">StartOHLCDownload</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
-<tr><td><a href="src/main/java/com/datafye/samples/java/backtest/IsOHLCDownloadRunning.java">IsOHLCDownloadRunning</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
-<tr><td><a href="src/main/java/com/datafye/samples/java/backtest/CancelOHLCDownload.java">CancelOHLCDownload</a></td><td align="center">✓</td><td align="center">X</td><td>Available</td></tr>
-<tr><td style="vertical-align:middle">State</td><td style="vertical-align:middle">Clear</td><td>REST</td><td>ClearBacktestState</td><td align="center">✓</td><td align="center">X</td><td><em>WIP</em></td></tr>
+<tr><th>Data Type</th><th>Mode</th><th>API</th><th>Datasets</th><th>Sample</th><th>Foundry</th><th>Trading</th><th>Status</th></tr>
+<tr><td rowspan="24" style="vertical-align:middle">Ticks</td><td rowspan="12" style="vertical-align:middle"><a href="#download">Download</a></td><td>REST</td><td>SIP, Synthetic</td><td><a href="src/main/java/com/datafye/samples/rest/stocks/backtest/StartTickDownload.java">StartTickDownload</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>REST</td><td>SIP, Synthetic</td><td><a href="src/main/java/com/datafye/samples/rest/stocks/backtest/IsTickDownloadRunning.java">IsTickDownloadRunning</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>REST</td><td>SIP, Synthetic</td><td><a href="src/main/java/com/datafye/samples/rest/stocks/backtest/CancelTickDownload.java">CancelTickDownload</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>REST</td><td>Crypto</td><td><a href="src/main/java/com/datafye/samples/rest/crypto/backtest/StartTickDownload.java">StartTickDownload</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>REST</td><td>Crypto</td><td><a href="src/main/java/com/datafye/samples/rest/crypto/backtest/IsTickDownloadRunning.java">IsTickDownloadRunning</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>REST</td><td>Crypto</td><td><a href="src/main/java/com/datafye/samples/rest/crypto/backtest/CancelTickDownload.java">CancelTickDownload</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>Java</td><td>SIP, Synthetic</td><td><a href="src/main/java/com/datafye/samples/java/stocks/backtest/StartTickDownload.java">StartTickDownload</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>Java</td><td>SIP, Synthetic</td><td><a href="src/main/java/com/datafye/samples/java/stocks/backtest/IsTickDownloadRunning.java">IsTickDownloadRunning</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>Java</td><td>SIP, Synthetic</td><td><a href="src/main/java/com/datafye/samples/java/stocks/backtest/CancelTickDownload.java">CancelTickDownload</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>Java</td><td>Crypto</td><td><a href="src/main/java/com/datafye/samples/java/crypto/backtest/StartTickDownload.java">StartTickDownload</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>Java</td><td>Crypto</td><td><a href="src/main/java/com/datafye/samples/java/crypto/backtest/IsTickDownloadRunning.java">IsTickDownloadRunning</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>Java</td><td>Crypto</td><td><a href="src/main/java/com/datafye/samples/java/crypto/backtest/CancelTickDownload.java">CancelTickDownload</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td rowspan="12" style="vertical-align:middle"><a href="#replay">Replay</a></td><td>REST</td><td>SIP, Synthetic</td><td><a href="src/main/java/com/datafye/samples/rest/stocks/backtest/StartTickReplay.java">StartTickReplay</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>REST</td><td>SIP, Synthetic</td><td><a href="src/main/java/com/datafye/samples/rest/stocks/backtest/IsTickReplayRunning.java">IsTickReplayRunning</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>REST</td><td>SIP, Synthetic</td><td><a href="src/main/java/com/datafye/samples/rest/stocks/backtest/StopTickReplay.java">StopTickReplay</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>REST</td><td>Crypto</td><td><a href="src/main/java/com/datafye/samples/rest/crypto/backtest/StartTickReplay.java">StartTickReplay</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>REST</td><td>Crypto</td><td><a href="src/main/java/com/datafye/samples/rest/crypto/backtest/IsTickReplayRunning.java">IsTickReplayRunning</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>REST</td><td>Crypto</td><td><a href="src/main/java/com/datafye/samples/rest/crypto/backtest/StopTickReplay.java">StopTickReplay</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>Java</td><td>SIP, Synthetic</td><td><a href="src/main/java/com/datafye/samples/java/stocks/backtest/StartTickReplay.java">StartTickReplay</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>Java</td><td>SIP, Synthetic</td><td><a href="src/main/java/com/datafye/samples/java/stocks/backtest/IsTickReplayRunning.java">IsTickReplayRunning</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>Java</td><td>SIP, Synthetic</td><td><a href="src/main/java/com/datafye/samples/java/stocks/backtest/StopTickReplay.java">StopTickReplay</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>Java</td><td>Crypto</td><td><a href="src/main/java/com/datafye/samples/java/crypto/backtest/StartTickReplay.java">StartTickReplay</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>Java</td><td>Crypto</td><td><a href="src/main/java/com/datafye/samples/java/crypto/backtest/IsTickReplayRunning.java">IsTickReplayRunning</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>Java</td><td>Crypto</td><td><a href="src/main/java/com/datafye/samples/java/crypto/backtest/StopTickReplay.java">StopTickReplay</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td rowspan="12" style="vertical-align:middle">Trades</td><td rowspan="12" style="vertical-align:middle"><a href="#download">Download</a></td><td>REST</td><td>SIP, Synthetic</td><td><a href="src/main/java/com/datafye/samples/rest/stocks/backtest/StartTradeDownload.java">StartTradeDownload</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>REST</td><td>SIP, Synthetic</td><td><a href="src/main/java/com/datafye/samples/rest/stocks/backtest/IsTradeDownloadRunning.java">IsTradeDownloadRunning</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>REST</td><td>SIP, Synthetic</td><td><a href="src/main/java/com/datafye/samples/rest/stocks/backtest/CancelTradeDownload.java">CancelTradeDownload</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>REST</td><td>Crypto</td><td><a href="src/main/java/com/datafye/samples/rest/crypto/backtest/StartTradeDownload.java">StartTradeDownload</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>REST</td><td>Crypto</td><td><a href="src/main/java/com/datafye/samples/rest/crypto/backtest/IsTradeDownloadRunning.java">IsTradeDownloadRunning</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>REST</td><td>Crypto</td><td><a href="src/main/java/com/datafye/samples/rest/crypto/backtest/CancelTradeDownload.java">CancelTradeDownload</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>Java</td><td>SIP, Synthetic</td><td><a href="src/main/java/com/datafye/samples/java/stocks/backtest/StartTradeDownload.java">StartTradeDownload</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>Java</td><td>SIP, Synthetic</td><td><a href="src/main/java/com/datafye/samples/java/stocks/backtest/IsTradeDownloadRunning.java">IsTradeDownloadRunning</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>Java</td><td>SIP, Synthetic</td><td><a href="src/main/java/com/datafye/samples/java/stocks/backtest/CancelTradeDownload.java">CancelTradeDownload</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>Java</td><td>Crypto</td><td><a href="src/main/java/com/datafye/samples/java/crypto/backtest/StartTradeDownload.java">StartTradeDownload</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>Java</td><td>Crypto</td><td><a href="src/main/java/com/datafye/samples/java/crypto/backtest/IsTradeDownloadRunning.java">IsTradeDownloadRunning</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>Java</td><td>Crypto</td><td><a href="src/main/java/com/datafye/samples/java/crypto/backtest/CancelTradeDownload.java">CancelTradeDownload</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td rowspan="12" style="vertical-align:middle">Quotes</td><td rowspan="12" style="vertical-align:middle"><a href="#download">Download</a></td><td>REST</td><td>SIP, Synthetic</td><td><a href="src/main/java/com/datafye/samples/rest/stocks/backtest/StartQuoteDownload.java">StartQuoteDownload</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>REST</td><td>SIP, Synthetic</td><td><a href="src/main/java/com/datafye/samples/rest/stocks/backtest/IsQuoteDownloadRunning.java">IsQuoteDownloadRunning</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>REST</td><td>SIP, Synthetic</td><td><a href="src/main/java/com/datafye/samples/rest/stocks/backtest/CancelQuoteDownload.java">CancelQuoteDownload</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>REST</td><td>Crypto</td><td><a href="src/main/java/com/datafye/samples/rest/crypto/backtest/StartQuoteDownload.java">StartQuoteDownload</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>REST</td><td>Crypto</td><td><a href="src/main/java/com/datafye/samples/rest/crypto/backtest/IsQuoteDownloadRunning.java">IsQuoteDownloadRunning</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>REST</td><td>Crypto</td><td><a href="src/main/java/com/datafye/samples/rest/crypto/backtest/CancelQuoteDownload.java">CancelQuoteDownload</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>Java</td><td>SIP, Synthetic</td><td><a href="src/main/java/com/datafye/samples/java/stocks/backtest/StartQuoteDownload.java">StartQuoteDownload</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>Java</td><td>SIP, Synthetic</td><td><a href="src/main/java/com/datafye/samples/java/stocks/backtest/IsQuoteDownloadRunning.java">IsQuoteDownloadRunning</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>Java</td><td>SIP, Synthetic</td><td><a href="src/main/java/com/datafye/samples/java/stocks/backtest/CancelQuoteDownload.java">CancelQuoteDownload</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>Java</td><td>Crypto</td><td><a href="src/main/java/com/datafye/samples/java/crypto/backtest/StartQuoteDownload.java">StartQuoteDownload</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>Java</td><td>Crypto</td><td><a href="src/main/java/com/datafye/samples/java/crypto/backtest/IsQuoteDownloadRunning.java">IsQuoteDownloadRunning</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>Java</td><td>Crypto</td><td><a href="src/main/java/com/datafye/samples/java/crypto/backtest/CancelQuoteDownload.java">CancelQuoteDownload</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td rowspan="12" style="vertical-align:middle">OHLC</td><td rowspan="12" style="vertical-align:middle"><a href="#download">Download</a></td><td>REST</td><td>SIP, Synthetic</td><td><a href="src/main/java/com/datafye/samples/rest/stocks/backtest/StartOHLCDownload.java">StartOHLCDownload</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>REST</td><td>SIP, Synthetic</td><td><a href="src/main/java/com/datafye/samples/rest/stocks/backtest/IsOHLCDownloadRunning.java">IsOHLCDownloadRunning</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>REST</td><td>SIP, Synthetic</td><td><a href="src/main/java/com/datafye/samples/rest/stocks/backtest/CancelOHLCDownload.java">CancelOHLCDownload</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>REST</td><td>Crypto</td><td><a href="src/main/java/com/datafye/samples/rest/crypto/backtest/StartOHLCDownload.java">StartOHLCDownload</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>REST</td><td>Crypto</td><td><a href="src/main/java/com/datafye/samples/rest/crypto/backtest/IsOHLCDownloadRunning.java">IsOHLCDownloadRunning</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>REST</td><td>Crypto</td><td><a href="src/main/java/com/datafye/samples/rest/crypto/backtest/CancelOHLCDownload.java">CancelOHLCDownload</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>Java</td><td>SIP, Synthetic</td><td><a href="src/main/java/com/datafye/samples/java/stocks/backtest/StartOHLCDownload.java">StartOHLCDownload</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>Java</td><td>SIP, Synthetic</td><td><a href="src/main/java/com/datafye/samples/java/stocks/backtest/IsOHLCDownloadRunning.java">IsOHLCDownloadRunning</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>Java</td><td>SIP, Synthetic</td><td><a href="src/main/java/com/datafye/samples/java/stocks/backtest/CancelOHLCDownload.java">CancelOHLCDownload</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>Java</td><td>Crypto</td><td><a href="src/main/java/com/datafye/samples/java/crypto/backtest/StartOHLCDownload.java">StartOHLCDownload</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>Java</td><td>Crypto</td><td><a href="src/main/java/com/datafye/samples/java/crypto/backtest/IsOHLCDownloadRunning.java">IsOHLCDownloadRunning</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
+<tr><td>Java</td><td>Crypto</td><td><a href="src/main/java/com/datafye/samples/java/crypto/backtest/CancelOHLCDownload.java">CancelOHLCDownload</a></td><td align="center">✓</td><td align="center">✗</td><td>Available</td></tr>
 </table>
 
 ### Broker Connector API Samples
 
-For [Trading: Data Cloud + Broker](https://docs.datafye.io/quickstart/trading-data-cloud-broker) environments — where you connect to a broker for order management and execution.
+For [Trading: Data Cloud + Broker](https://docs.datafye.io/quickstart/trading-data-cloud-broker) environments — where you connect to a broker for order management and execution. Broker connectivity is **stocks-only**; orders route through the broker connector in a Trading environment (not available in a Foundry).
 
 <table>
-<tr><th>Operation</th><th>API</th><th>Sample</th><th>Status</th></tr>
-<tr><td rowspan="2" style="vertical-align:middle">Place order</td><td>REST</td><td>PlaceOrder</td><td><em>WIP</em></td></tr>
-<tr><td>Java</td><td>PlaceOrder</td><td><em>WIP</em></td></tr>
-<tr><td rowspan="2" style="vertical-align:middle">Get orders</td><td>REST</td><td>GetOrders</td><td><em>WIP</em></td></tr>
-<tr><td>Java</td><td>GetOrders</td><td><em>WIP</em></td></tr>
-<tr><td rowspan="2" style="vertical-align:middle">Get order</td><td>REST</td><td>GetOrder</td><td><em>WIP</em></td></tr>
-<tr><td>Java</td><td>GetOrder</td><td><em>WIP</em></td></tr>
-<tr><td rowspan="2" style="vertical-align:middle">Cancel order</td><td>REST</td><td>CancelOrder</td><td><em>WIP</em></td></tr>
-<tr><td>Java</td><td>CancelOrder</td><td><em>WIP</em></td></tr>
+<tr><th>Operation</th><th>API</th><th>Datasets</th><th>Sample</th><th>Trading</th><th>Status</th></tr>
+<tr><td rowspan="2" style="vertical-align:middle">Place order</td><td>REST</td><td>Stocks</td><td>PlaceOrder</td><td align="center">✓</td><td><em>WIP</em></td></tr>
+<tr><td>Java</td><td>Stocks</td><td>PlaceOrder</td><td align="center">✓</td><td><em>WIP</em></td></tr>
+<tr><td rowspan="2" style="vertical-align:middle">Get orders</td><td>REST</td><td>Stocks</td><td>GetOrders</td><td align="center">✓</td><td><em>WIP</em></td></tr>
+<tr><td>Java</td><td>Stocks</td><td>GetOrders</td><td align="center">✓</td><td><em>WIP</em></td></tr>
+<tr><td rowspan="2" style="vertical-align:middle">Get order</td><td>REST</td><td>Stocks</td><td>GetOrder</td><td align="center">✓</td><td><em>WIP</em></td></tr>
+<tr><td>Java</td><td>Stocks</td><td>GetOrder</td><td align="center">✓</td><td><em>WIP</em></td></tr>
+<tr><td rowspan="2" style="vertical-align:middle">Cancel order</td><td>REST</td><td>Stocks</td><td>CancelOrder</td><td align="center">✓</td><td><em>WIP</em></td></tr>
+<tr><td>Java</td><td>Stocks</td><td>CancelOrder</td><td align="center">✓</td><td><em>WIP</em></td></tr>
 </table>
 
 ### Algo Container Samples
