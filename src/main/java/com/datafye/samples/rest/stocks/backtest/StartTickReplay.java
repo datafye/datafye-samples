@@ -62,6 +62,11 @@ public class StartTickReplay {
         StringBuilder json = new StringBuilder("{");
         json.append("\"dataset\":\"").append(dataset).append("\"");
         json.append(",\"date\":\"").append(date).append("\"");
+        // startPoint (offset from start-of-day) is required by the replay API; default to the
+        // regular session: start immediately, position at market open, replay 6.5 hours.
+        json.append(",\"startTime\":\"now\"");
+        json.append(",\"startPoint\":\"9.5h\"");
+        json.append(",\"duration\":\"6.5h\"");
         json.append("}");
 
         // start the replay

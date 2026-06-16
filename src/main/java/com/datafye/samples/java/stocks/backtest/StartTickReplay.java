@@ -42,7 +42,10 @@ public class StartTickReplay {
 
         // start the replay
         StartHistoricalStocksTickReplayRequestMessage request = StartHistoricalStocksTickReplayRequestMessage.create();
-        request.serializer().date(date).rateType(HistoricalFeedRateType.Exact).done();
+        // startPoint (offset from start-of-day) is required by the replay API; default to the
+        // regular session: start immediately, position at market open, replay 6.5 hours.
+        request.serializer().date(date).rateType(HistoricalFeedRateType.Exact)
+            .startTime("now").startPoint("9.5h").duration("6.5h").done();
         StartHistoricalStocksTickReplayResponseMessage response = client.startHistoricalTickReplay(request);
         response.dispose();
 
