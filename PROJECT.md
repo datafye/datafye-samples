@@ -1,5 +1,7 @@
 # PROJECT.md — Datafye Samples
 
+> **Tracking:** Datafye open work lives in **Linear** (GTM project, team Datafye: https://linear.app/datafye). The `gtm/datafye/TODO.md` file is retired — moved to Linear 2026-06-24.
+
 ## What This Project Is
 
 This repository is a cookbook for the Datafye platform. It covers two types of Datafye environments:
