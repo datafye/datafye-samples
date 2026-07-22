@@ -62,7 +62,7 @@ public class StartTradeDownload {
         StringBuilder json = new StringBuilder("{");
         json.append("\"date\":\"").append(date).append("\"");
         json.append(",\"numDays\":1");
-        if (symbols != null) json.append(",\"symbols\":\"").append(symbols).append("\"");
+        if (symbols != null) json.append(",\"symbols\":\"").append(symbols).append("\""); else json.append(",\"allSymbols\":true");
         json.append("}");
 
         // start the download
