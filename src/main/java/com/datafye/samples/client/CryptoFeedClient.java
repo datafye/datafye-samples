@@ -58,15 +58,15 @@ public class CryptoFeedClient {
     // --- Replay ---
 
     public StartHistoricalCryptoTickReplayResponseMessage startHistoricalTickReplay(StartHistoricalCryptoTickReplayRequestMessage request) {
-        return cryptoClient.startHistoricalReplay(request);
+        return cryptoClient.startHistoricalTickReplay(request);
     }
 
     public IsHistoricalCryptoTickReplayRunningResponsetMessage isHistoricalTickReplayRunning(IsHistoricalCryptoTickReplayRunningRequestMessage request) {
-        return cryptoClient.isHistoricalReplayRunning(request);
+        return cryptoClient.isHistoricalTickReplayRunning(request);
     }
 
     public StopHistoricalCryptoTickReplayResponseMessage stopHistoricalTickReplay(StopHistoricalCryptoTickReplayRequestMessage request) {
-        return cryptoClient.stopHistoricalReplay(request);
+        return cryptoClient.stopHistoricalTickReplay(request);
     }
 
     // --- Lifecycle ---
