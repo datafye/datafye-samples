@@ -390,3 +390,20 @@ The old `GetHistoricalOHLCsRequestMessage` became `GetHistoricalStocksOHLCsReque
 | REST API | `api.rest.rumi.local:7776` |
 | WebSocket API | `api.stream.rumi.local:7775` |
 | Wiki (run guides) | [wiki](../../wiki) |
+
+## ⚠️ Parity with the REST API — check on every platform change
+
+Every `/datafye-api/v1/...` path referenced under `src/` and `bin/` must exist in
+`datafye-api-rest/target/classes/META-INF/openAPI/datafye-api.yaml`. A sample
+calling a path that no longer exists is a live break for anyone following the
+docs; the reverse (spec paths no sample touches) is only coverage and is fine.
+
+Checked 2026-08-26: 27 paths referenced, all present, zero broken.
+
+`sanity-test.sh` is the shipping certification and already self-checks that every
+sample id registered in `bin/run.sh` was exercised — so a sample added without
+being wired in fails the cert rather than passing silently.
+
+⚠️ **It requires root** (`id -u` check at the top) and Docker, plus a
+crypto-entitled `POLYGON_API_KEY` for the SIP and Crypto legs; without the key it
+certifies Synthetic only and reports the other two as NOT CERTIFIED.
