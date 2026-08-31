@@ -34,7 +34,10 @@ import lombok.ToString;
 @ToString
 public class CryptoTrade {
     private String symbol;
-    private int exchangeID;
+    // the venue NAME (e.g. "Coinbase", "Binance"), not a number: the platform reports a Datafye
+    // exchange identity rather than the provider's numbering (DAT-251). Crypto venues have no MIC,
+    // so unlike the stocks datasets this is the venue name.
+    private String exchangeID;
     private long exchangeTimestamp;
     private String tradeID;
     private double tradePrice;

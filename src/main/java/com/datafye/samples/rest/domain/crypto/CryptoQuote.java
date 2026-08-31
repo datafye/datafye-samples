@@ -35,7 +35,10 @@ import lombok.ToString;
 public class CryptoQuote {
     private String symbol;
     private long exchangeTimestamp;
-    private int exchangeID;
+    // the venue NAME (e.g. "Coinbase", "Binance"), not a number: the platform reports a Datafye
+    // exchange identity rather than the provider's numbering (DAT-251). Crypto venues have no MIC,
+    // so unlike the stocks datasets this is the venue name.
+    private String exchangeID;
     private double bidPrice;
     private double bidSize;
     private double askPrice;
