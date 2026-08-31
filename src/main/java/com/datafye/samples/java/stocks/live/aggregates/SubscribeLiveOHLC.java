@@ -127,26 +127,49 @@ public class SubscribeLiveOHLC {
      * (StocksSecondOHLCMessage / StocksMinuteOHLCMessage / StocksHourOHLCMessage), so a client just adds
      * a handler for the frequency it cares about and the engine's type-based dispatch does the filtering.
      */
+    /*
+     * (!) The prices are passed as Double, not double, because a bar can legitimately have NONE.
+     *
+     * Volume eligibility and price eligibility are decided separately: an odd lot contributes its
+     * shares and no price. A bucket in which every print was volume-only therefore carries real
+     * volume with no last-sale price behind it, and the price fields come back ABSENT. Reading them
+     * with getOpen() alone would render that as 0.0 -- a price no trade ever happened at, and a
+     * spike to zero in anything you go on to plot. Test hasOpen() and friends first.
+     *
+     * This is most visible at Second frequency and rare at Minute and above.
+     */
     private void onBar(final String frequency, final String symbol, final long timestamp,
-                       final double open, final double high, final double low, final double close, final long volume) {
+                       final Double open, final Double high, final Double low, final Double close, final long volume) {
         System.out.println("<-- StocksOHLC[" + frequency + "] {" + symbol + "," + timestamp + ","
-                           + open + "," + high + "," + low + "," + close + "," + volume + "}");
+                           + price(open) + "," + price(high) + "," + price(low) + "," + price(close) + ","
+                           + volume + "}");
         _numBarsReceived++;
+    }
+
+    /** Renders an absent price as "-" rather than inventing a number for it. */
+    private static String price(final Double value) {
+        return value == null ? "-" : value.toString();
     }
 
     @EventHandler
     final public void onStocksSecondOHLC(final StocksSecondOHLCMessage m) {
-        onBar("Second", m.getSymbol(), m.getTimestamp(), m.getOpen(), m.getHigh(), m.getLow(), m.getClose(), m.getVolume());
+        onBar("Second", m.getSymbol(), m.getTimestamp(),
+              m.hasOpen() ? m.getOpen() : null, m.hasHigh() ? m.getHigh() : null,
+              m.hasLow() ? m.getLow() : null, m.hasClose() ? m.getClose() : null, m.getVolume());
     }
 
     @EventHandler
     final public void onStocksMinuteOHLC(final StocksMinuteOHLCMessage m) {
-        onBar("Minute", m.getSymbol(), m.getTimestamp(), m.getOpen(), m.getHigh(), m.getLow(), m.getClose(), m.getVolume());
+        onBar("Minute", m.getSymbol(), m.getTimestamp(),
+              m.hasOpen() ? m.getOpen() : null, m.hasHigh() ? m.getHigh() : null,
+              m.hasLow() ? m.getLow() : null, m.hasClose() ? m.getClose() : null, m.getVolume());
     }
 
     @EventHandler
     final public void onStocksHourOHLC(final StocksHourOHLCMessage m) {
-        onBar("Hour", m.getSymbol(), m.getTimestamp(), m.getOpen(), m.getHigh(), m.getLow(), m.getClose(), m.getVolume());
+        onBar("Hour", m.getSymbol(), m.getTimestamp(),
+              m.hasOpen() ? m.getOpen() : null, m.hasHigh() ? m.getHigh() : null,
+              m.hasLow() ? m.getLow() : null, m.hasClose() ? m.getClose() : null, m.getVolume());
     }
 
     public static void main(String args[]) throws Exception {
