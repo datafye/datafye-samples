@@ -35,10 +35,13 @@ import lombok.ToString;
 public class Quote {
     private String symbol;
     private long exchangeTimestamp;
-    private int bidExchangeID;
+    // MICs, not numbers -- see Trade.exchangeID (DAT-250)
+    private String bidExchangeID;
     private double bidPrice;
     private int bidSize;
-    private int askExchangeID;
+    private String askExchangeID;
     private double askPrice;
     private int askSize;
+    // where the SYMBOL lists
+    private String listingExchange;
 }

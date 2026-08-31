@@ -34,7 +34,12 @@ import lombok.ToString;
 @ToString
 public class Trade {
     private String symbol;
-    private int exchangeID;
+    // the venue's MIC (e.g. "XNAS", "ARCX"), not a number: the platform reports a Datafye exchange
+    // identity rather than the provider's numbering (DAT-250)
+    private String exchangeID;
+    // where the SYMBOL lists, as opposed to exchangeID which is where THIS print executed. the two
+    // are equal exactly on the symbol's own opening or closing auction
+    private String listingExchange;
     private long exchangeTimestamp;
     private int trfID;
     private long trfTimestamp;
