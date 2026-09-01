@@ -364,6 +364,29 @@ This is a subtle but important design improvement. When the routing decision liv
 
 The old `GetHistoricalOHLCsRequestMessage` became `GetHistoricalStocksOHLCsRequestMessage`. The insertion of `Stocks` is deliberate — Datafye 2.0 supports multiple asset classes (Stocks, Crypto), and the message names now encode the asset class. If you see a message name without an asset class qualifier, it's probably from 1.5.
 
+### 11. An absent OHLC price is not a price of zero
+
+`SubscribeLiveOHLC` passes the four stock OHLC prices around as `Double`, not `double`, and prints
+a missing one as `-`. That looks like needless boxing until you know what the platform can now
+emit: since DAT-256, a trade's eligibility to move the price fields and its eligibility to count
+toward volume are decided **separately**. A minute bucket whose every print was volume-only — odd
+lots and the like — therefore carries real shares with **no last-sale price at all**, and
+`hasOpen()`/`hasHigh()`/`hasLow()`/`hasClose()` all come back false.
+
+Read those fields into a primitive and the absent price renders as `0.0` — a price no trade
+happened at, which plots as a spike to zero and looks like a data outage rather than a quiet
+minute. The samples make the check visible at the call site rather than hiding it in a helper,
+because the point being taught is that you have to ask:
+
+```java
+m.hasOpen() ? m.getOpen() : null, m.hasHigh() ? m.getHigh() : null, ...
+```
+
+This is **stocks only**. Crypto carries no sale conditions, so a crypto bar can never be in that
+state, and boxing its prices would teach a distinction that does not exist there. The general
+lesson is the one that keeps recurring in market data: *absent* and *zero* are different answers,
+and a primitive type cannot tell you which one you got.
+
 ## How Good Engineers Think About This
 
 **Start simple, add complexity only when you need it.** The REST samples are ~60 lines each. They do one thing, clearly. When that's not enough — when you need streaming, zero-copy deserialization, or sub-millisecond latency — the Java Client samples show you the next step. The codebase doesn't try to be clever. It tries to be clear.
